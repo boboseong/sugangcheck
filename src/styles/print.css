@@ -1,0 +1,232 @@
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+
+  :root {
+    background: #ffffff;
+  }
+
+  body {
+    background: #ffffff;
+    color: #111827;
+    font-size: 8pt;
+    min-height: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    min-height: 0;
+  }
+
+  .sidebar,
+  .topbar,
+  .page-header,
+  .student-selector,
+  .report-actions,
+  .class-print-panel,
+  .nav,
+  .button,
+  .icon-button {
+    display: none !important;
+  }
+
+  .app-shell,
+  .shell-main {
+    display: block;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .page {
+    width: 100%;
+    padding: 0;
+  }
+
+  .student-report {
+    border: 0;
+    display: block;
+    padding: 0;
+  }
+
+  .student-report > * + * {
+    margin-top: 3mm;
+  }
+
+  .student-report + .student-report {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .student-report h2 {
+    font-size: 14pt;
+    line-height: 1.2;
+  }
+
+  .student-report h3 {
+    margin-bottom: 1.5mm;
+    font-size: 9pt;
+    line-height: 1.2;
+  }
+
+  .student-report p {
+    font-size: 8pt;
+  }
+
+  .student-report__header {
+    align-items: flex-end;
+    padding-bottom: 2mm;
+    border-bottom: 2px solid #111827;
+    break-inside: avoid;
+  }
+
+  .student-report__summary-strip {
+    gap: 1.5mm;
+  }
+
+  .student-report__summary-strip span,
+  .student-report__summary-strip .status-badge {
+    padding: 1.2mm 1.8mm;
+    border-radius: 2mm;
+    font-size: 7.5pt;
+    line-height: 1;
+  }
+
+  .student-report__summary-strip strong {
+    font-size: 9pt;
+  }
+
+  .student-report__summary-strip small {
+    font-size: 6.5pt;
+  }
+
+  .student-report__section {
+    break-inside: avoid;
+  }
+
+  .student-report-sheet,
+  .student-report-credit-table {
+    display: table;
+    table-layout: fixed;
+    overflow: visible;
+    page-break-inside: avoid;
+  }
+
+  .student-report-sheet th,
+  .student-report-sheet td,
+  .student-report-credit-table th,
+  .student-report-credit-table td {
+    padding: 1mm 1.2mm;
+    font-size: 6.6pt;
+    line-height: 1.12;
+  }
+
+  .student-report-sheet thead th:nth-child(1),
+  .student-report-sheet tbody th:nth-child(1) {
+    width: 12mm;
+  }
+
+  .student-report-sheet thead th:nth-child(2),
+  .student-report-sheet tbody th:nth-child(2) {
+    width: 12mm;
+  }
+
+  .student-report-sheet thead th:nth-child(4),
+  .student-report-sheet thead th:nth-child(5),
+  .student-report-sheet tbody td:nth-child(4),
+  .student-report-sheet tbody td:nth-child(5),
+  .student-report-sheet tfoot td {
+    width: 10mm;
+  }
+
+  .student-report-subjects {
+    gap: 0.6mm 1mm;
+  }
+
+  .student-report-subject {
+    font-size: 6.3pt;
+  }
+
+  .student-report-subject small,
+  .student-report-credit-table small {
+    font-size: 5.5pt;
+  }
+
+  .student-report__notes {
+    padding: 1.8mm 2mm;
+    break-inside: avoid;
+  }
+
+  .report-error-list {
+    display: block;
+    margin: 0;
+    padding-left: 4mm;
+    font-size: 7.2pt;
+    line-height: 1.25;
+  }
+
+  .report-error-list li + li {
+    margin-top: 0.8mm;
+  }
+
+  .student-report-sheet tr,
+  .student-report-credit-table tr {
+    break-inside: avoid;
+  }
+
+  .student-report-semester-grid {
+    gap: 1.2mm;
+  }
+
+  .student-report-semester {
+    gap: 0.7mm;
+    padding: 0.9mm;
+    break-inside: avoid;
+  }
+
+  .student-report-semester__heading h4 {
+    font-size: 7.2pt;
+    line-height: 1;
+  }
+
+  .student-report-semester__heading span,
+  .student-report-total-row {
+    font-size: 6.2pt;
+    line-height: 1;
+  }
+
+  .student-report-matrix-table {
+    table-layout: fixed;
+    page-break-inside: avoid;
+  }
+
+  .student-report-matrix-table th,
+  .student-report-matrix-table td {
+    padding: 0.6mm 0.7mm;
+    font-size: 5.25pt;
+    line-height: 1.05;
+  }
+
+  .student-report-matrix-table th {
+    width: auto;
+  }
+
+  .student-report-credit-table__group-button {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .student-report-matrix-table td strong {
+    font-size: 5.4pt;
+  }
+
+  .student-report-total-row {
+    gap: 2mm;
+    padding: 1mm 1.4mm;
+  }
+}

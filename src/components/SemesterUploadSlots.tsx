@@ -1,0 +1,237 @@
+import type { ChangeEvent, DragEvent } from "react";
+import { useId, useRef, useState } from "react";
+import { FileSpreadsheet, FolderOpen, Trash2, Upload } from "lucide-react";
+import { Button } from "./ui/Button";
+import { IconButton } from "./ui/IconButton";
+import { StatusBadge, type StatusTone } from "./ui/StatusBadge";
+import type {
+  ImportSourceType,
+  ImportStatus,
+  SemesterImportStatus
+} from "../types/importStatus";
+import type { Semester } from "../types/semester";
+import { semesterKeys } from "../types/semester";
+import { isSameSemester, parseSemesterKey, semesterLabel } from "../utils/semester";
+
+type SemesterUploadSlotsProps = {
+  sourceType: ImportSourceType;
+  statuses: readonly SemesterImportStatus[];
+  accept?: string;
+  compact?: boolean;
+  correctionCompletedSemesters?: readonly Semester[];
+  onFilesSelected: (files: File[], target?: Semester) => void | Promise<void>;
+  onClearSemester?: (target: Semester) => void;
+  showUploadActions?: boolean;
+};
+
+const statusLabels: Record<ImportStatus, string> = {
+  empty: "미업로드",
+  imported: "가져옴",
+  error: "오류",
+  needsReview: "확인 필요"
+};
+
+const statusTones: Record<ImportStatus, StatusTone> = {
+  empty: "empty",
+  imported: "ready",
+  error: "error",
+  needsReview: "warning"
+};
+
+function statusForTarget(
+  statuses: readonly SemesterImportStatus[],
+  sourceType: ImportSourceType,
+  target: Semester
+): SemesterImportStatus {
+  return (
+    statuses.find(
+      (status) =>
+        status.sourceType === sourceType &&
+        status.target.grade === target.grade &&
+        status.target.semester === target.semester
+    ) ?? {
+      id: `${sourceType}-${target.grade}-${target.semester}`,
+      sourceType,
+      target,
+      status: "empty"
+    }
+  );
+}
+
+function filesFromInput(event: ChangeEvent<HTMLInputElement>): File[] {
+  return Array.from(event.target.files ?? []);
+}
+
+function statusMessageParts(
+  status: SemesterImportStatus,
+  correctionCompleted: boolean
+): string[] {
+  const messageParts =
+    status.message
+      ?.split(" · ")
+      .filter(
+        (message) =>
+          !(correctionCompleted && message.startsWith("미등록 과목 "))
+      ) ?? [];
+
+  if (correctionCompleted) {
+    messageParts.push("미등록 과목 보정 완료");
+  }
+
+  return messageParts;
+}
+
+export function SemesterUploadSlots({
+  sourceType,
+  statuses,
+  accept = ".xls,.xlsx,.xlsm",
+  compact = false,
+  correctionCompletedSemesters = [],
+  onFilesSelected,
+  onClearSemester,
+  showUploadActions = true
+}: SemesterUploadSlotsProps) {
+  const id = useId();
+  const batchInputRef = useRef<HTMLInputElement>(null);
+  const [draggingKey, setDraggingKey] = useState<string>();
+
+  const handleInputChange =
+    (target?: Semester) => async (event: ChangeEvent<HTMLInputElement>) => {
+      const files = filesFromInput(event);
+      event.target.value = "";
+
+      if (files.length > 0) {
+        await onFilesSelected(files, target);
+      }
+    };
+
+  const handleDrop =
+    (target: Semester) => async (event: DragEvent<HTMLDivElement>) => {
+      if (!showUploadActions) {
+        return;
+      }
+
+      event.preventDefault();
+      setDraggingKey(undefined);
+
+      const files = Array.from(event.dataTransfer.files ?? []);
+
+      if (files.length > 0) {
+        await onFilesSelected(files, target);
+      }
+    };
+
+  return (
+    <div className={compact ? "upload-slots upload-slots--compact" : "upload-slots"}>
+      {showUploadActions ? (
+        <div className="upload-slots__toolbar">
+          <Button
+            icon={<FolderOpen size={17} />}
+            onClick={() => batchInputRef.current?.click()}
+            variant="secondary"
+          >
+            6개 파일 일괄 선택
+          </Button>
+          <input
+            ref={batchInputRef}
+            accept={accept}
+            className="visually-hidden"
+            multiple
+            onChange={handleInputChange()}
+            type="file"
+          />
+        </div>
+      ) : null}
+      <div className="upload-slot-grid">
+        {semesterKeys.map((key) => {
+          const target = parseSemesterKey(key);
+
+          if (!target) {
+            return null;
+          }
+
+          const status = statusForTarget(statuses, sourceType, target);
+          const correctionCompleted = correctionCompletedSemesters.some((semester) =>
+            isSameSemester(semester, target)
+          );
+          const showCorrectionCompleted =
+            correctionCompleted && status.status !== "error";
+          const messageParts = statusMessageParts(status, showCorrectionCompleted);
+          const hasOutstandingReview =
+            showCorrectionCompleted &&
+            status.status === "needsReview" &&
+            messageParts.some((message) => message !== "미등록 과목 보정 완료");
+          const message = messageParts.join(" · ") || undefined;
+          const statusLabel = showCorrectionCompleted && !hasOutstandingReview
+            ? "보정 완료"
+            : statusLabels[status.status];
+          const statusTone = showCorrectionCompleted && !hasOutstandingReview
+            ? "ready"
+            : statusTones[status.status];
+          const inputId = `${id}-${sourceType}-${key}`;
+          const isDragging = draggingKey === key;
+
+          return (
+            <div
+              className={[
+                "upload-slot",
+                isDragging ? "upload-slot--dragging" : ""
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              key={key}
+              onDragLeave={
+                showUploadActions ? () => setDraggingKey(undefined) : undefined
+              }
+              onDragOver={
+                showUploadActions
+                  ? (event) => {
+                      event.preventDefault();
+                      setDraggingKey(key);
+                    }
+                  : undefined
+              }
+              onDrop={showUploadActions ? handleDrop(target) : undefined}
+            >
+              <div className="upload-slot__heading">
+                <FileSpreadsheet size={18} aria-hidden="true" />
+                <strong>{semesterLabel(target)}</strong>
+                <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+              </div>
+              <p className="upload-slot__file">{status.fileName ?? "파일 없음"}</p>
+              {message ? (
+                <p className="upload-slot__message">{message}</p>
+              ) : null}
+              {showUploadActions || onClearSemester ? (
+                <div className="upload-slot__actions">
+                  {showUploadActions ? (
+                    <>
+                      <label className="button button--secondary" htmlFor={inputId}>
+                        <Upload size={16} aria-hidden="true" />
+                        <span>선택</span>
+                      </label>
+                      <input
+                        accept={accept}
+                        className="visually-hidden"
+                        id={inputId}
+                        onChange={handleInputChange(target)}
+                        type="file"
+                      />
+                    </>
+                  ) : null}
+                  {onClearSemester ? (
+                  <IconButton
+                    icon={<Trash2 size={16} />}
+                    label={`${semesterLabel(target)} 파일 비우기`}
+                    onClick={() => onClearSemester(target)}
+                  />
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

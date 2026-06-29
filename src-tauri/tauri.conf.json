@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "수강신청 오류 검증",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "identifier": "kr.school.sugangcheck",
   "build": {
     "frontendDist": "../dist",

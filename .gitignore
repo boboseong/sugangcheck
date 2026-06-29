@@ -16,7 +16,6 @@ blob-report/
 node_modules/.tmp/
 
 # Tauri / Rust generated files
-src-tauri/
 src-tauri/target/
 src-tauri/gen/schemas/
 

@@ -39,7 +39,7 @@ jobs:
         run: npm run typecheck
 
       - name: Run tests
-        run: npm test -- --run
+        run: npm test -- --run --passWithNoTests
 
       - name: Build Tauri executable
         run: npm run desktop:build

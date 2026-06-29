@@ -4,16 +4,16 @@ import { useSearchParams } from "react-router-dom";
 import { StudentSelector } from "../components/StudentSelector";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
+import { useCourseSelectionRecordBuild } from "../hooks/useCourseSelectionRecordBuild";
 import { StudentCourseReport } from "../reports/StudentCourseReport";
 import { printStudentReport } from "../reports/printStudentReport";
-import { useNormalizedCourseSelectionStore } from "../state/normalizedCourseSelectionStore";
 import { useStudentStore } from "../state/studentStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import type { Student } from "../types/student";
 
 export function StudentReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { courseSelectionRecords } = useNormalizedCourseSelectionStore();
+  const { records: courseSelectionRecords } = useCourseSelectionRecordBuild();
   const { students } = useStudentStore();
   const { validationErrors } = useValidationResultStore();
   const studentIdFromUrl = searchParams.get("studentId") ?? undefined;

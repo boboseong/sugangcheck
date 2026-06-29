@@ -66,7 +66,7 @@ export function HomePage() {
     <section className="page">
       <PageHeader
         title="수강신청 오류 검증"
-        description="운영과목, 수강신청 결과, 전입생 및 외부 이수 입력을 브라우저 안에서 정리하고 점검하는 정적 웹앱의 기본 구조입니다."
+        description="학생들의 수강신청 결과를 점검하기 위한 앱입니다. 모든 정보는 오프라인으로 처리되며 서버에 업로드 되는 자료는 없습니다."
         versionLabel={`ver ${dashboardVersion}`}
       />
 

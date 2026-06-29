@@ -1,6 +1,5 @@
 import { ArrowRight } from "lucide-react";
 import type { ValidationError } from "../types/validation";
-import { semesterLabel } from "../utils/semester";
 import { validationRuleLabel } from "../utils/validationRuleLabels";
 
 type ValidationErrorTableProps = {
@@ -26,7 +25,6 @@ export function ValidationErrorTable({
         <tr>
           <th>유형</th>
           <th>학생</th>
-          <th>학기</th>
           <th>메시지</th>
           <th>이동</th>
         </tr>
@@ -40,7 +38,6 @@ export function ValidationErrorTable({
               <br />
               <span className="muted-text">{error.studentNo}</span>
             </td>
-            <td>{error.semester ? semesterLabel(error.semester) : "-"}</td>
             <td>{error.message}</td>
             <td>
               <button

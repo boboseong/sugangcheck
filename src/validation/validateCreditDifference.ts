@@ -2,6 +2,7 @@ import { createValidationError } from "./validationEngine";
 import { groupByStudent, representativeRecord, sumCredits } from "./validationUtils";
 import type { CourseSelectionRecord } from "../types/courseSelection";
 import type { ValidationError } from "../types/validation";
+import { semesterLabel } from "../utils/semester";
 import type { ValidationRuleContext } from "./types";
 
 function semesterKey(record: CourseSelectionRecord): string {
@@ -52,10 +53,11 @@ export function validateCreditDifference({
             studentId: firstRecord.studentId,
             studentNo: firstRecord.studentNo,
             studentName: firstRecord.studentName,
-            message: `같은 학기 최빈 이수학점 ${commonTotal}학점과 ${Math.abs(
+            message: `${semesterLabel(firstRecord.target)} 최빈 이수학점 ${commonTotal}학점과 ${Math.abs(
               total - commonTotal
             )}학점 차이가 납니다.`,
-            relatedRecordIds: studentRecords.map((record) => record.id)
+            relatedRecordIds: studentRecords.map((record) => record.id),
+            semester: firstRecord.target
           })
         );
       }

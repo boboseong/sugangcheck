@@ -1,4 +1,5 @@
 import type { CourseSelectionRecord } from "../types/courseSelection";
+import type { Semester } from "../types/semester";
 import type {
   ValidationError,
   ValidationRuleId,
@@ -41,5 +42,6 @@ export type CreateValidationErrorInput = {
   studentName: string;
   message: string;
   relatedRecordIds: string[];
+  semester?: Semester;
   fixHint?: string;
 };

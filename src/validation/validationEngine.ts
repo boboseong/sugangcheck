@@ -55,6 +55,7 @@ export function createValidationError({
   studentName,
   message,
   relatedRecordIds,
+  semester,
   fixHint
 }: CreateValidationErrorInput): ValidationError {
   return {
@@ -66,6 +67,7 @@ export function createValidationError({
     studentName,
     message,
     relatedRecordIds,
+    semester,
     fixHint
   };
 }

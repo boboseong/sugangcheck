@@ -5,16 +5,12 @@ import { validationRuleLabel } from "../utils/validationRuleLabels";
 
 type ValidationErrorTableProps = {
   errors: readonly ValidationError[];
-  selectedErrorId?: string;
   onOpenStudentReport: (studentId: string) => void;
-  onSelectError: (error: ValidationError) => void;
 };
 
 export function ValidationErrorTable({
   errors,
-  onOpenStudentReport,
-  selectedErrorId,
-  onSelectError
+  onOpenStudentReport
 }: ValidationErrorTableProps) {
   if (errors.length === 0) {
     return (
@@ -37,11 +33,7 @@ export function ValidationErrorTable({
       </thead>
       <tbody>
         {errors.map((error) => (
-          <tr
-            className={selectedErrorId === error.id ? "selected-row" : ""}
-            key={error.id}
-            onClick={() => onSelectError(error)}
-          >
+          <tr key={error.id}>
             <td>{validationRuleLabel(error.type)}</td>
             <td>
               {error.studentName}

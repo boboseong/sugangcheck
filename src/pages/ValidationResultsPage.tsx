@@ -8,7 +8,6 @@ import {
 } from "../components/ErrorFilters";
 import { OperatingSubjectRegistrationNotice } from "../components/OperatingSubjectRegistrationNotice";
 import { PageHeader } from "../components/ui/PageHeader";
-import { ValidationErrorDetailPanel } from "../components/ValidationErrorDetailPanel";
 import { ValidationErrorTable } from "../components/ValidationErrorTable";
 import {
   exportValidationErrorsXlsx,
@@ -22,7 +21,6 @@ import { useValidationRun } from "../hooks/useValidationRun";
 import { useProjectMetaStore } from "../state/projectMetaStore";
 import { useStudentStore } from "../state/studentStore";
 import { useValidationResultStore } from "../state/validationResultStore";
-import type { ValidationError } from "../types/validation";
 import { downloadBlob } from "../utils/downloadBlob";
 
 const defaultFilters: ValidationErrorFilters = {
@@ -41,7 +39,6 @@ export function ValidationResultsPage() {
   const { students } = useStudentStore();
   const { lastValidationResult, validationErrors } = useValidationResultStore();
   const [filters, setFilters] = useState(defaultFilters);
-  const [selectedError, setSelectedError] = useState<ValidationError>();
   const [isCreatingTeacherShare, setIsCreatingTeacherShare] = useState(false);
   const [
     showOperatingSubjectRegistrationNotice,
@@ -69,7 +66,6 @@ export function ValidationResultsPage() {
     }
 
     runValidation();
-    setSelectedError(undefined);
     setShowOperatingSubjectRegistrationNotice(false);
   }
 
@@ -98,7 +94,6 @@ export function ValidationResultsPage() {
         validationErrors: validationResult.errors
       });
 
-      setSelectedError(undefined);
       await downloadBlob(blob, teacherSharePackageFileName(generatedAt));
     } finally {
       setIsCreatingTeacherShare(false);
@@ -163,17 +158,12 @@ export function ValidationResultsPage() {
           filters={filters}
           onChange={setFilters}
         />
-        <div className="results-layout">
-          <ValidationErrorTable
-            errors={filteredErrors}
-            onOpenStudentReport={(studentId) =>
-              navigate(`/student-report?studentId=${encodeURIComponent(studentId)}`)
-            }
-            onSelectError={setSelectedError}
-            selectedErrorId={selectedError?.id}
-          />
-          <ValidationErrorDetailPanel error={selectedError} />
-        </div>
+        <ValidationErrorTable
+          errors={filteredErrors}
+          onOpenStudentReport={(studentId) =>
+            navigate(`/student-report?studentId=${encodeURIComponent(studentId)}`)
+          }
+        />
       </div>
     </section>
   );

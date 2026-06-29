@@ -1627,47 +1627,6 @@ label.button {
   padding: 6px 8px;
 }
 
-.results-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 14px;
-  align-items: start;
-}
-
-.selected-row {
-  background: #f3f7ff;
-}
-
-.error-detail-panel {
-  display: grid;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid #dce3ef;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.error-detail-panel__header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.error-detail-panel h2,
-.error-detail-panel h3,
-.error-detail-panel p {
-  margin: 0;
-}
-
-.error-detail-panel h2 {
-  font-size: 18px;
-}
-
-.error-detail-panel h3 {
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
 .student-selector {
   display: grid;
   grid-template-columns: 160px minmax(180px, 1fr) minmax(220px, 1fr);

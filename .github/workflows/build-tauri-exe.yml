@@ -1,0 +1,61 @@
+name: Build Tauri Windows EXE
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tauri-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows-exe:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-msvc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --run
+
+      - name: Build Tauri executable
+        run: npm run desktop:build
+
+      - name: Verify executable
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "src-tauri/target/release/sugangcheck.exe")) {
+            throw "Expected executable was not created."
+          }
+          Get-Item "src-tauri/target/release/sugangcheck.exe"
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: sugangcheck-${{ github.ref_name }}-windows-exe
+          path: src-tauri/target/release/sugangcheck.exe
+          if-no-files-found: error
+          retention-days: 7

@@ -112,8 +112,8 @@ export function ExternalCoursesPage() {
     (input) => input.studentId === selectedStudent?.studentId
   );
 
-  function handleDownloadTemplate() {
-    downloadBlob(
+  async function handleDownloadTemplate() {
+    await downloadBlob(
       createXlsxBlob(
         createExternalCourseTemplateWorkbook({
           inputs: externalCourseInputs,

@@ -48,8 +48,8 @@ export function ValidationResultsPage() {
     setSelectedError(undefined);
   }
 
-  function handleDownloadErrors() {
-    downloadBlob(
+  async function handleDownloadErrors() {
+    await downloadBlob(
       exportValidationErrorsXlsx(filteredErrors),
       validationErrorListFileName
     );
@@ -74,7 +74,7 @@ export function ValidationResultsPage() {
       });
 
       setSelectedError(undefined);
-      downloadBlob(blob, teacherSharePackageFileName(generatedAt));
+      await downloadBlob(blob, teacherSharePackageFileName(generatedAt));
     } finally {
       setIsCreatingTeacherShare(false);
     }

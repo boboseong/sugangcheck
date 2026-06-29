@@ -267,8 +267,8 @@ export function OperatingSubjectsPage() {
     clearOperatingSubjectsForSemester(target);
   }
 
-  function handleDownloadTemplate() {
-    downloadBlob(
+  async function handleDownloadTemplate() {
+    await downloadBlob(
       createXlsxBlob(createOperatingSubjectTemplateWorkbook(operatingSubjects)),
       templateFileNames.operatingSubject
     );

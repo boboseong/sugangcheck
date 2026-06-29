@@ -154,11 +154,14 @@ export function ProjectManager() {
         includesValidationResults
       });
 
-      downloadBlob(
+      const saved = await downloadBlob(
         blob,
         projectTransferPackageFileName(sourceState.projectName, savedAt)
       );
-      setExportDialogOpen(false);
+
+      if (saved) {
+        setExportDialogOpen(false);
+      }
     });
   }
 

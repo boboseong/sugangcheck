@@ -41,7 +41,7 @@ export const requiredSubjectGroupCredits: RequiredSubjectGroupCreditCriteria[] =
   { subjectGroup: "체육", requiredCredits: 10 },
   { subjectGroup: "예술", requiredCredits: 10 },
   {
-    subjectGroup: "기술·가정 등",
+    subjectGroup: "생활·교양",
     requiredCredits: 16,
     equivalentSubjectGroups: ["기술·가정/정보", "제2외국어/한문", "교양"]
   }

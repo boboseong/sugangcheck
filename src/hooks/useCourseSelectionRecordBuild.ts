@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import { useExternalCourseInputStore } from "../state/externalCourseInputStore";
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
-import { useSubjectOverrideStore } from "../state/subjectOverrideStore";
 import {
   buildCourseSelectionRecords,
   type BuildCourseSelectionRecordsResult
@@ -12,7 +11,6 @@ export function useCourseSelectionRecordBuild(): BuildCourseSelectionRecordsResu
   const { courseSelectionRows } = useCourseSelectionRawStore();
   const { externalCourseInputs } = useExternalCourseInputStore();
   const { operatingSubjects } = useOperatingSubjectStore();
-  const { subjectOverrides } = useSubjectOverrideStore();
 
   return useMemo(
     () =>
@@ -20,9 +18,8 @@ export function useCourseSelectionRecordBuild(): BuildCourseSelectionRecordsResu
         mode: "full",
         courseSelectionRows,
         externalCourseInputs,
-        operatingSubjects,
-        subjectOverrides
+        operatingSubjects
       }),
-    [courseSelectionRows, externalCourseInputs, operatingSubjects, subjectOverrides]
+    [courseSelectionRows, externalCourseInputs, operatingSubjects]
   );
 }

@@ -5,7 +5,6 @@ import { useExternalCourseInputStore } from "../state/externalCourseInputStore";
 import { useNormalizedCourseSelectionStore } from "../state/normalizedCourseSelectionStore";
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { useStudentStore } from "../state/studentStore";
-import { useSubjectOverrideStore } from "../state/subjectOverrideStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { OperatingSubject } from "../types/subject";
@@ -59,7 +58,6 @@ function resetStores() {
   });
   useOperatingSubjectStore.setState({ operatingSubjects: [] });
   useStudentStore.setState({ students: [] });
-  useSubjectOverrideStore.setState({ subjectOverrides: [] });
   useValidationResultStore.setState({
     lastValidationResult: undefined,
     validationErrors: []
@@ -80,8 +78,7 @@ describe("StudentReportPage", () => {
       mode: "full",
       courseSelectionRows: [courseSelectionRow],
       externalCourseInputs: [],
-      operatingSubjects: [initialOperatingSubject],
-      subjectOverrides: []
+      operatingSubjects: [initialOperatingSubject]
     });
 
     useCourseSelectionRawStore.setState({
@@ -96,7 +93,6 @@ describe("StudentReportPage", () => {
       operatingSubjects: [initialOperatingSubject]
     });
     useStudentStore.setState({ students: [student] });
-    useSubjectOverrideStore.setState({ subjectOverrides: [] });
 
     await act(async () => {
       render(

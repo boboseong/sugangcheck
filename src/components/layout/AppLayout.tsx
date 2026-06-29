@@ -1,5 +1,5 @@
-import { Outlet } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
+import { NavLink, Outlet } from "react-router-dom";
+import { Info, ShieldCheck } from "lucide-react";
 import { IconButton } from "../ui/IconButton";
 import { Navigation } from "./Navigation";
 import { useProjectMetaStore } from "../../state/projectMetaStore";
@@ -18,7 +18,21 @@ export function AppLayout() {
           <p className="brand__subtitle">브라우저 로컬 전용 점검 도구</p>
         </div>
         <Navigation />
-        <p className="sidebar__credit">부산광역시교육청 교사 권보성</p>
+        <NavLink
+          to="/about"
+          className={({ isActive }) =>
+            isActive
+              ? "sidebar__credit-button sidebar__credit-button--active"
+              : "sidebar__credit-button"
+          }
+        >
+          <Info size={16} aria-hidden="true" />
+          <span>
+            부산광역시교육청 시간표지원단
+            <br />
+            교사 권보성
+          </span>
+        </NavLink>
       </aside>
       <div className="shell-main">
         <header className="topbar">

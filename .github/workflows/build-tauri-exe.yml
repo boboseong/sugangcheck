@@ -6,7 +6,7 @@ on:
       - "v*.*.*"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: tauri-build-${{ github.ref }}
@@ -52,10 +52,96 @@ jobs:
           }
           Get-Item "src-tauri/target/release/sugangcheck.exe"
 
-      - name: Upload executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: sugangcheck-${{ github.ref_name }}-windows-exe
-          path: src-tauri/target/release/sugangcheck.exe
-          if-no-files-found: error
-          retention-days: 7
+      - name: Prepare release asset
+        shell: pwsh
+        run: |
+          $assetDir = "release"
+          $assetPath = Join-Path $assetDir "sugangcheck-${{ github.ref_name }}-windows.exe"
+
+          New-Item -ItemType Directory -Path $assetDir -Force | Out-Null
+          Copy-Item `
+            -LiteralPath "src-tauri/target/release/sugangcheck.exe" `
+            -Destination $assetPath `
+            -Force
+
+          Get-Item $assetPath
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $repo = "${{ github.repository }}"
+          $assetPath = "release/sugangcheck-$tag-windows.exe"
+
+          if (Get-Variable PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+            $PSNativeCommandUseErrorActionPreference = $false
+          }
+
+          gh release view $tag --repo $repo *> $null
+          $releaseViewExitCode = $LASTEXITCODE
+
+          if ($releaseViewExitCode -eq 0) {
+            gh release upload $tag $assetPath --repo $repo --clobber
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to upload release asset for $tag."
+            }
+          } else {
+            gh release create $tag $assetPath `
+              --repo $repo `
+              --title "Release $tag" `
+              --notes "Windows executable for $tag." `
+              --verify-tag
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to create release for $tag."
+            }
+          }
+
+      - name: Build GitHub Pages site
+        run: npx vite build --base /sugangcheck/
+
+      - name: Deploy GitHub Pages branch
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          if (Get-Variable PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+            $PSNativeCommandUseErrorActionPreference = $true
+          }
+
+          $deployDir = Join-Path $env:RUNNER_TEMP "gh-pages"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages:refs/remotes/origin/gh-pages --depth=1
+
+          if (Test-Path $deployDir) {
+            git worktree remove $deployDir --force
+          }
+
+          git worktree add $deployDir origin/gh-pages
+
+          Get-ChildItem -LiteralPath $deployDir -Force |
+            Where-Object { $_.Name -ne ".git" } |
+            Remove-Item -Recurse -Force
+
+          Copy-Item -Path "dist\*" -Destination $deployDir -Recurse -Force
+          New-Item -ItemType File -Path (Join-Path $deployDir ".nojekyll") -Force | Out-Null
+
+          Push-Location $deployDir
+          try {
+            git add --all
+            $changes = git status --porcelain
+
+            if (-not $changes) {
+              Write-Host "No GitHub Pages changes to deploy."
+            } else {
+              git commit -m "Deploy web page for ${{ github.ref_name }}"
+              git push origin HEAD:gh-pages
+            }
+          } finally {
+            Pop-Location
+          }
+
+          git worktree remove $deployDir --force

@@ -116,14 +116,27 @@ textarea {
   color: #175cd3;
 }
 
-.sidebar__credit {
+.sidebar__credit-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
   margin: auto 6px 0;
-  padding-top: 16px;
+  padding: 16px 8px 8px;
   border-top: 1px solid #e7ecf3;
   color: #667085;
   font-size: 12px;
   font-weight: 700;
   line-height: 1.5;
+}
+
+.sidebar__credit-button:hover,
+.sidebar__credit-button--active {
+  color: #175cd3;
+}
+
+.sidebar__credit-button span {
+  min-width: 0;
 }
 
 .shell-main {
@@ -519,6 +532,73 @@ textarea {
   margin: 0;
   font-size: 18px;
   line-height: 1.35;
+}
+
+.about-media-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 14px;
+  align-items: start;
+}
+
+.about-video {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #111827;
+}
+
+.about-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.about-profile-card {
+  min-height: 120px;
+  align-content: center;
+}
+
+.about-link-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.about-link-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 92px;
+  padding: 16px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.about-link-card:hover {
+  border-color: #b7c8ea;
+  background: #f7faff;
+}
+
+.about-link-card strong,
+.about-link-card span span {
+  display: block;
+}
+
+.about-link-card strong {
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.about-link-card span span {
+  color: #526070;
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .button {
@@ -2061,6 +2141,8 @@ label.button {
 
   .dashboard-grid,
   .metric-row,
+  .about-media-layout,
+  .about-link-grid,
   .change-file-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2114,6 +2196,8 @@ label.button {
   .nav,
   .dashboard-grid,
   .metric-row,
+  .about-media-layout,
+  .about-link-grid,
   .change-file-grid,
   .upload-slot-grid,
   .student-search-panel,

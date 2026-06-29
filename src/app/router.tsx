@@ -1,5 +1,6 @@
 import { createHashRouter } from "react-router-dom";
 import { AppLayout } from "../components/layout/AppLayout";
+import { AboutPage } from "../pages/AboutPage";
 import { CourseSelectionsPage } from "../pages/CourseSelectionsPage";
 import { ExternalCoursesPage } from "../pages/ExternalCoursesPage";
 import { HomePage } from "../pages/HomePage";
@@ -23,6 +24,7 @@ export const router = createHashRouter([
       { path: "results", element: <ValidationResultsPage /> },
       { path: "student-report", element: <StudentReportPage /> },
       { path: "misc-tools", element: <MiscToolsPage /> },
+      { path: "about", element: <AboutPage /> },
       { path: "privacy", element: <PrivacyNoticePage /> }
     ]
   }

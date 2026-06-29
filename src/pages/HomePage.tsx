@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FileSpreadsheet, Play, ShieldCheck } from "lucide-react";
 import { DataPreparationDashboard } from "../components/DataPreparationDashboard";
+import { OperatingSubjectRegistrationNotice } from "../components/OperatingSubjectRegistrationNotice";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useValidationRun } from "../hooks/useValidationRun";
@@ -32,8 +34,33 @@ export function HomePage() {
     canRunValidation,
     courseSelectionRecords,
     dataPreparationStatus,
+    hasOperatingSubjectRegistrationIssue,
     runValidation
   } = useValidationRun();
+  const [
+    showOperatingSubjectRegistrationNotice,
+    setShowOperatingSubjectRegistrationNotice
+  ] = useState(false);
+
+  useEffect(() => {
+    if (!hasOperatingSubjectRegistrationIssue) {
+      setShowOperatingSubjectRegistrationNotice(false);
+    }
+  }, [hasOperatingSubjectRegistrationIssue]);
+
+  function handleRunValidation() {
+    if (hasOperatingSubjectRegistrationIssue) {
+      setShowOperatingSubjectRegistrationNotice(true);
+      return;
+    }
+
+    if (!canRunValidation) {
+      return;
+    }
+
+    setShowOperatingSubjectRegistrationNotice(false);
+    runValidation();
+  }
 
   return (
     <section className="page">
@@ -56,14 +83,17 @@ export function HomePage() {
           </div>
           <button
             className="button"
-            disabled={!canRunValidation}
-            onClick={runValidation}
+            disabled={!canRunValidation && !hasOperatingSubjectRegistrationIssue}
+            onClick={handleRunValidation}
             type="button"
           >
             <Play size={18} />
             <span>점검</span>
           </button>
         </div>
+        {showOperatingSubjectRegistrationNotice ? (
+          <OperatingSubjectRegistrationNotice />
+        ) : null}
         <div className="prep-status-row">
           <StatusBadge tone={courseSelectionRecords.length > 0 ? "ready" : "empty"}>
             {`생성 기록 ${courseSelectionRecords.length.toLocaleString()}개`}

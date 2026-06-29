@@ -1,8 +1,25 @@
-import type { DataPreparationStatus } from "../types/importStatus";
+import { FileSpreadsheet } from "lucide-react";
+import { Link } from "react-router-dom";
+import type { DataPreparationStatus, ImportSourceType } from "../types/importStatus";
+import { unregisteredOperatingSubjectIssueMessage } from "../validation/dataPreparationIssues";
 import { StatusBadge } from "./ui/StatusBadge";
 
 type DataPreparationDashboardProps = {
   status: DataPreparationStatus;
+};
+
+const sourceTypeActions: Record<
+  ImportSourceType,
+  { label: string; to: string }
+> = {
+  operatingSubjects: {
+    label: "운영과목 이동",
+    to: "/operating-subjects"
+  },
+  courseSelections: {
+    label: "수강신청 결과 이동",
+    to: "/course-selections"
+  }
 };
 
 export function DataPreparationDashboard({ status }: DataPreparationDashboardProps) {
@@ -24,6 +41,48 @@ export function DataPreparationDashboard({ status }: DataPreparationDashboardPro
       value: String(status.counts.missingCreditSubjectCount)
     }
   ];
+
+  function renderIssueLink(issueItem: DataPreparationStatus["issues"][number]) {
+    const action =
+      issueItem.code === "unregisteredOperatingSubject"
+        ? sourceTypeActions.operatingSubjects
+        : issueItem.relatedSourceType
+          ? sourceTypeActions[issueItem.relatedSourceType]
+          : undefined;
+
+    if (!action) {
+      return null;
+    }
+
+    return (
+      <Link className="button button--secondary button--compact" to={action.to}>
+        <FileSpreadsheet size={15} />
+        <span>{action.label}</span>
+      </Link>
+    );
+  }
+
+  function renderIssueContent(issueItem: DataPreparationStatus["issues"][number]) {
+    if (issueItem.code === "unregisteredOperatingSubject") {
+      return (
+        <div className="issue-action-cell">
+          <span>{unregisteredOperatingSubjectIssueMessage}</span>
+          {renderIssueLink(issueItem)}
+        </div>
+      );
+    }
+
+    const issueLink = renderIssueLink(issueItem);
+
+    return issueLink ? (
+      <div className="issue-action-cell">
+        <span>{issueItem.message}</span>
+        {issueLink}
+      </div>
+    ) : (
+      issueItem.message
+    );
+  }
 
   return (
     <div className="data-prep-dashboard">
@@ -61,7 +120,7 @@ export function DataPreparationDashboard({ status }: DataPreparationDashboardPro
                 <td>
                   <StatusBadge tone="warning">확인 필요</StatusBadge>
                 </td>
-                <td>{issueItem.message}</td>
+                <td>{renderIssueContent(issueItem)}</td>
               </tr>
             ))
           )}

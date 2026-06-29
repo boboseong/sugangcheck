@@ -11,6 +11,7 @@ import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { checkDataPreparationStatus } from "../validation/checkDataPreparationStatus";
+import { hasUnregisteredOperatingSubjectIssue } from "../validation/dataPreparationIssues";
 import {
   createDefaultValidationRuleFunctionMap,
   runValidationEngine
@@ -72,6 +73,8 @@ export function useValidationRun() {
     canRunValidation: dataPreparationStatus.canRunFullValidation,
     courseSelectionRecords,
     dataPreparationStatus,
+    hasOperatingSubjectRegistrationIssue:
+      hasUnregisteredOperatingSubjectIssue(dataPreparationStatus),
     runValidation
   };
 }

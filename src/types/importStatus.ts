@@ -17,6 +17,7 @@ export type SemesterImportStatus = {
 
 export type DataPreparationIssueCode =
   | "missingOperatingSubjects"
+  | "unregisteredOperatingSubject"
   | "missingCourseSelections"
   | "importError"
   | "needsReview"
@@ -33,6 +34,7 @@ export type DataPreparationIssue = {
   code: DataPreparationIssueCode;
   blocksFullValidation: boolean;
   message: string;
+  relatedSourceType?: ImportSourceType;
   relatedSemester?: Semester;
   relatedIds?: string[];
 };

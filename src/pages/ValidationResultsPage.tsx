@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -6,6 +6,7 @@ import {
   filterValidationErrors,
   type ValidationErrorFilters
 } from "../components/ErrorFilters";
+import { OperatingSubjectRegistrationNotice } from "../components/OperatingSubjectRegistrationNotice";
 import { PageHeader } from "../components/ui/PageHeader";
 import { ValidationErrorDetailPanel } from "../components/ValidationErrorDetailPanel";
 import { ValidationErrorTable } from "../components/ValidationErrorTable";
@@ -31,21 +32,45 @@ const defaultFilters: ValidationErrorFilters = {
 
 export function ValidationResultsPage() {
   const navigate = useNavigate();
-  const { canRunValidation, runValidation } = useValidationRun();
+  const {
+    canRunValidation,
+    hasOperatingSubjectRegistrationIssue,
+    runValidation
+  } = useValidationRun();
   const { projectName } = useProjectMetaStore();
   const { students } = useStudentStore();
   const { lastValidationResult, validationErrors } = useValidationResultStore();
   const [filters, setFilters] = useState(defaultFilters);
   const [selectedError, setSelectedError] = useState<ValidationError>();
   const [isCreatingTeacherShare, setIsCreatingTeacherShare] = useState(false);
+  const [
+    showOperatingSubjectRegistrationNotice,
+    setShowOperatingSubjectRegistrationNotice
+  ] = useState(false);
   const filteredErrors = useMemo(
     () => filterValidationErrors(validationErrors, filters),
     [filters, validationErrors]
   );
 
+  useEffect(() => {
+    if (!hasOperatingSubjectRegistrationIssue) {
+      setShowOperatingSubjectRegistrationNotice(false);
+    }
+  }, [hasOperatingSubjectRegistrationIssue]);
+
   function handleRunValidation() {
+    if (hasOperatingSubjectRegistrationIssue) {
+      setShowOperatingSubjectRegistrationNotice(true);
+      return;
+    }
+
+    if (!canRunValidation) {
+      return;
+    }
+
     runValidation();
     setSelectedError(undefined);
+    setShowOperatingSubjectRegistrationNotice(false);
   }
 
   function handleDownloadErrors() {
@@ -95,7 +120,7 @@ export function ValidationResultsPage() {
         </span>
         <button
           className="button button--compact"
-          disabled={!canRunValidation}
+          disabled={!canRunValidation && !hasOperatingSubjectRegistrationIssue}
           onClick={handleRunValidation}
           type="button"
         >
@@ -129,6 +154,9 @@ export function ValidationResultsPage() {
           </span>
         ) : null}
       </div>
+      {showOperatingSubjectRegistrationNotice ? (
+        <OperatingSubjectRegistrationNotice />
+      ) : null}
       <div className="section">
         <ErrorFilters
           errors={validationErrors}

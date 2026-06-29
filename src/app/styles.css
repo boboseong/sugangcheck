@@ -1417,6 +1417,35 @@ label.button {
   background: #ffffff;
 }
 
+.validation-run-notice {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #f4c36f;
+  border-radius: 8px;
+  background: #fff8e8;
+}
+
+.validation-run-notice p {
+  margin: 0;
+  color: #7a4a05;
+  font-weight: 800;
+}
+
+.validation-run-notice__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.issue-action-cell {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
 .button:disabled {
   opacity: 0.45;
   cursor: not-allowed;

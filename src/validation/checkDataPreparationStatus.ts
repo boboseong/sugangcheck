@@ -12,7 +12,8 @@ import type { StudentSemesterPresence } from "../types/student";
 import type { OperatingSubject, SubjectOverride } from "../types/subject";
 import type { PrerequisiteRule, ValidationRuleSetting } from "../types/validation";
 import { semesterKeys, type Semester } from "../types/semester";
-import { isSameSemester, parseSemesterKey } from "../utils/semester";
+import { isSameSemester, parseSemesterKey, semesterLabel } from "../utils/semester";
+import { unregisteredOperatingSubjectIssueMessage } from "./dataPreparationIssues";
 
 function emptyStatusCounts(): Record<ImportStatus, number> {
   return {
@@ -87,14 +88,31 @@ function effectiveImportStatuses(input: {
 function issue(
   code: DataPreparationIssueCode,
   message: string,
-  blocksFullValidation = true
+  blocksFullValidation = true,
+  related?: Pick<
+    DataPreparationIssue,
+    "relatedIds" | "relatedSemester" | "relatedSourceType"
+  >
 ): DataPreparationIssue {
   return {
     id: `${code}-${message}`,
     code,
     blocksFullValidation,
-    message
+    message,
+    ...related
   };
+}
+
+const sourceTypeLabels: Record<ImportSourceType, string> = {
+  operatingSubjects: "운영과목",
+  courseSelections: "수강신청 결과"
+};
+
+function reviewIssueMessage(status: SemesterImportStatus): string {
+  const label = `${sourceTypeLabels[status.sourceType]} 탭 ${semesterLabel(status.target)}`;
+  const detail = status.message ? `: ${status.message}` : "";
+
+  return `${label} 업로드 확인이 필요합니다${detail}`;
 }
 
 export function checkDataPreparationStatus(input: {
@@ -139,6 +157,12 @@ export function checkDataPreparationStatus(input: {
   const subjectOverrideConflictCount = input.subjectOverrides.filter(
     (override) => override.conflictStatus === "needsReview"
   ).length;
+  const hasUnregisteredOperatingSubjectInfo =
+    input.operatingSubjects.some(
+      (subject) => subject.masterMatchStatus === "unmatched"
+    ) ||
+    incompleteSubjectOverrideCount > 0 ||
+    subjectOverrideConflictCount > 0;
   const resolutionStatus = checkSubjectResolutionStatus({
     courseSelectionRows: input.courseSelectionRows,
     externalCourseInputs: input.externalCourseInputs,
@@ -157,6 +181,15 @@ export function checkDataPreparationStatus(input: {
     issues.push(issue("missingOperatingSubjects", "운영과목 6개 학기가 모두 업로드되지 않았습니다."));
   }
 
+  if (hasUnregisteredOperatingSubjectInfo) {
+    issues.push(
+      issue(
+        "unregisteredOperatingSubject",
+        unregisteredOperatingSubjectIssueMessage
+      )
+    );
+  }
+
   if (courseSelectionsByStatus.empty > 0) {
     issues.push(issue("missingCourseSelections", "수강신청 결과 6개 학기가 모두 업로드되지 않았습니다."));
   }
@@ -165,9 +198,17 @@ export function checkDataPreparationStatus(input: {
     issues.push(issue("importError", "업로드 오류 상태인 학기가 있습니다."));
   }
 
-  if (operatingSubjectsByStatus.needsReview + courseSelectionsByStatus.needsReview > 0) {
-    issues.push(issue("needsReview", "검토가 필요한 업로드 학기가 있습니다."));
-  }
+  importStatuses
+    .filter((status) => status.status === "needsReview")
+    .forEach((status) => {
+      issues.push(
+        issue("needsReview", reviewIssueMessage(status), true, {
+          relatedIds: [status.id],
+          relatedSemester: status.target,
+          relatedSourceType: status.sourceType
+        })
+      );
+    });
 
   if (unknownStudentSemesterCount > 0) {
     issues.push(

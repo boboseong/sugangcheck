@@ -72,7 +72,7 @@ export function ValidationRulesPage() {
     }
 
     const confirmed = window.confirm(
-      "검증 규칙 설정, 위계 규칙, 세부 제약 목록을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
+      "점검 규칙 설정, 위계 규칙, 세부 제약 목록을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
     );
 
     if (!confirmed) {
@@ -91,13 +91,13 @@ export function ValidationRulesPage() {
       setDetailedConstraintRules(result.detailedConstraintRules);
       clearDerivedValidationState();
       window.alert(
-        `검증 설정 ${result.validationRuleSettings.length.toLocaleString()}건, 위계 규칙 ${result.prerequisiteRules.length.toLocaleString()}건, 세부 제약 ${result.detailedConstraintRules.length.toLocaleString()}건을 가져왔습니다.`
+        `점검 설정 ${result.validationRuleSettings.length.toLocaleString()}건, 위계 규칙 ${result.prerequisiteRules.length.toLocaleString()}건, 세부 제약 ${result.detailedConstraintRules.length.toLocaleString()}건을 가져왔습니다.`
       );
     } catch (error) {
       window.alert(
         error instanceof Error
           ? error.message
-          : "검증 규칙 템플릿을 읽지 못했습니다."
+          : "점검 규칙 템플릿을 읽지 못했습니다."
       );
     }
   }
@@ -105,7 +105,7 @@ export function ValidationRulesPage() {
   return (
     <section className="page">
       <PageHeader
-        title="검증 규칙 설정"
+        title="점검 규칙 설정"
         description="점검 항목별 사용 여부, 전입/외부 이수 포함 여부, 기본 기준값을 관리합니다."
       />
       <div className="template-action-bar">

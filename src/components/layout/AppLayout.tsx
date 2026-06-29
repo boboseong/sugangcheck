@@ -14,7 +14,7 @@ export function AppLayout() {
       <ProjectPersistenceProvider />
       <aside className="sidebar" aria-label="주 메뉴">
         <div className="brand">
-          <p className="brand__title">수강신청 오류 검증</p>
+          <p className="brand__title">수강신청 오류 점검</p>
           <p className="brand__subtitle">브라우저 로컬 전용 점검 도구</p>
         </div>
         <Navigation />

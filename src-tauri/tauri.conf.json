@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "수강신청 오류 검증",
+  "productName": "수강신청 오류 점검",
   "version": "0.1.2",
   "identifier": "kr.school.sugangcheck",
   "build": {
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "수강신청 오류 검증",
+        "title": "수강신청 오류 점검",
         "width": 1280,
         "height": 800,
         "resizable": true,

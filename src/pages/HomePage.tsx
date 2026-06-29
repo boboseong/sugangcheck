@@ -21,7 +21,7 @@ const steps = [
   },
   {
     title: "점검 및 확인서",
-    text: "검증 결과와 학생별 확인서 화면은 이후 단계에서 검증 엔진과 연결됩니다.",
+    text: "점검 결과와 학생별 확인서 화면은 이후 단계에서 점검 엔진과 연결됩니다.",
     badge: "후속 단계"
   }
 ];
@@ -63,7 +63,7 @@ export function HomePage() {
   return (
     <section className="page">
       <PageHeader
-        title="수강신청 오류 검증"
+        title="수강신청 오류 점검"
         description="학생들의 수강신청 결과를 점검하기 위한 앱입니다. 모든 정보는 오프라인으로 처리되며 서버에 업로드 되는 자료는 없습니다."
         versionLabel={`ver ${appVersion}`}
       />
@@ -76,7 +76,7 @@ export function HomePage() {
             <h2 id="validation-run-title">점검 실행</h2>
             <p>
               점검 버튼을 누르면 업로드한 수강신청 자료와 전입/외부 이수 입력을
-              함께 정리해 검증할 데이터를 준비합니다.
+              함께 정리해 점검할 데이터를 준비합니다.
             </p>
           </div>
           <button
@@ -123,7 +123,7 @@ export function HomePage() {
           </Link>
           <Link className="button button--secondary" to="/results">
             <Play size={18} />
-            <span>검증 결과 화면</span>
+            <span>점검 결과 화면</span>
           </Link>
           <Link className="button button--secondary" to="/privacy">
             <ShieldCheck size={18} />

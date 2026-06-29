@@ -351,7 +351,7 @@ export function MiscToolsPage() {
     <section className="page">
       <PageHeader
         title="기타 도구"
-        description="검증 본 작업과 별도로 필요한 보조 작업을 실행합니다. 수강신청 변경 추적은 두 결과 파일을 비교해 학기별 취소 과목과 신청 과목을 확인합니다."
+        description="점검 본 작업과 별도로 필요한 보조 작업을 실행합니다. 수강신청 변경 추적은 두 결과 파일을 비교해 학기별 취소 과목과 신청 과목을 확인합니다."
       />
       <div className="tool-tab-bar" aria-label="기타 도구 목록">
         <button className="tool-tab tool-tab--active" type="button">

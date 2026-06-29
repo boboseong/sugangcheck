@@ -227,7 +227,7 @@ export function checkDataPreparationStatus(input: {
   }
 
   if (input.validationRuleSettings.length === 0) {
-    issues.push(issue("missingValidationRuleSettings", "검증 규칙 설정을 읽을 수 없습니다."));
+    issues.push(issue("missingValidationRuleSettings", "점검 규칙 설정을 읽을 수 없습니다."));
   }
 
   const availablePartialSemesters = importStatuses

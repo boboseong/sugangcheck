@@ -1,7 +1,7 @@
 [package]
 name = "sugangcheck"
 version = "0.1.2"
-description = "수강신청 오류 검증 데스크톱 앱"
+description = "수강신청 오류 점검 데스크톱 앱"
 authors = ["신정고등학교"]
 license = ""
 repository = ""

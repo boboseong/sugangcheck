@@ -19,7 +19,7 @@ export function ValidationErrorTable({
   if (errors.length === 0) {
     return (
       <div className="empty-panel">
-        <p>표시할 검증 오류가 없습니다.</p>
+        <p>표시할 점검 오류가 없습니다.</p>
       </div>
     );
   }

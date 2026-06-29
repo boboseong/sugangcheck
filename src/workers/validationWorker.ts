@@ -44,7 +44,7 @@ self.addEventListener("message", (event: MessageEvent<ValidationWorkerRequest>) 
   } catch (error) {
     const response: ValidationWorkerResponse = {
       type: "validationError",
-      message: error instanceof Error ? error.message : "검증 실행 중 오류가 발생했습니다."
+      message: error instanceof Error ? error.message : "점검 실행 중 오류가 발생했습니다."
     };
     self.postMessage(response);
   }

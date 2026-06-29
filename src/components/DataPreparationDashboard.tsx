@@ -112,7 +112,7 @@ export function DataPreparationDashboard({ status }: DataPreparationDashboardPro
               <td>
                 <StatusBadge tone="ready">준비됨</StatusBadge>
               </td>
-              <td>검증 실행을 막는 준비 문제가 없습니다.</td>
+              <td>점검 실행을 막는 준비 문제가 없습니다.</td>
             </tr>
           ) : (
             status.issues.map((issueItem) => (

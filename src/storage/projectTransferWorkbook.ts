@@ -22,8 +22,8 @@ const workbookLabels: Record<ProjectTransferWorkbookId, string> = {
   operatingSubjects: "운영과목",
   courseSelections: "수강신청",
   externalCourses: "전입외부이수",
-  validationRules: "검증규칙",
-  validationResults: "검증결과"
+  validationRules: "점검규칙",
+  validationResults: "점검결과"
 };
 
 const fieldLabels: Partial<Record<keyof ProjectState, string>> = {
@@ -35,13 +35,13 @@ const fieldLabels: Partial<Record<keyof ProjectState, string>> = {
   studentSemesterPresence: "학기별존재",
   courseSelectionRows: "수강신청행",
   externalCourseInputs: "전입외부이수",
-  validationRuleSettings: "검증규칙설정",
+  validationRuleSettings: "점검규칙설정",
   prerequisiteRules: "위계규칙",
   detailedConstraintRules: "세부제약",
-  validationErrors: "검증오류",
+  validationErrors: "점검오류",
   courseSelectionRecords: "정규화수강",
   dataPreparationStatus: "데이터준비상태",
-  lastValidationResult: "최근검증결과"
+  lastValidationResult: "최근점검결과"
 };
 
 const workbookFields: Record<ProjectTransferWorkbookId, readonly (keyof ProjectState)[]> =

@@ -289,7 +289,7 @@ export function ProjectManager() {
     }
 
     const confirmed = window.confirm(
-      "현재 프로젝트의 업로드 자료, 입력값, 검증 결과를 초기화합니다. 다른 프로젝트는 유지됩니다. 계속할까요?"
+      "현재 프로젝트의 업로드 자료, 입력값, 점검 결과를 초기화합니다. 다른 프로젝트는 유지됩니다. 계속할까요?"
     );
 
     if (!confirmed) {
@@ -466,11 +466,11 @@ export function ProjectManager() {
                   }
                   type="checkbox"
                 />
-                <span>검증 결과</span>
+                <span>점검 결과</span>
               </label>
               <p className="project-transfer-dialog__note">
                 선택한 항목은 각각 xlsx 파일로 변환되어 zip 안에 저장됩니다.
-                검증 결과는 전체 데이터를 내보낼 때에만 포함됩니다.
+                점검 결과는 전체 데이터를 내보낼 때에만 포함됩니다.
               </p>
             </fieldset>
             <div className="project-transfer-dialog__actions">

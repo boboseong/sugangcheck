@@ -108,8 +108,8 @@ export function ValidationResultsPage() {
   return (
     <section className="page">
       <PageHeader
-        title="검증 결과"
-        description="검증 오류를 유형, 학생 또는 과목 기준으로 확인합니다."
+        title="점검 결과"
+        description="점검 오류를 유형, 학생 또는 과목 기준으로 확인합니다."
       />
       <div className="prep-status-row">
         <span className="status-badge status-badge--empty">

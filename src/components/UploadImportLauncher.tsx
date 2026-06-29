@@ -33,7 +33,7 @@ type UploadImportLauncherProps = {
 
 const sectionLabels: Record<ProjectImportSection, string> = {
   operatingSubjects: "운영과목",
-  validationRules: "검증 규칙",
+  validationRules: "점검 규칙",
   courseSelections: "수강신청 결과",
   externalCourses: "전입/외부 이수"
 };

@@ -29,7 +29,7 @@ export const templateFileNames = {
   operatingSubject: "운영과목_템플릿.xlsx",
   courseSelection: "수강신청결과_템플릿.xlsx",
   externalCourse: "전입외부이수_템플릿.xlsx",
-  validationRules: "검증규칙_템플릿.xlsx",
+  validationRules: "점검규칙_템플릿.xlsx",
   prerequisiteRule: "위계설정_템플릿.xlsx",
   detailedConstraintRule: "세부제약_템플릿.xlsx"
 } as const;
@@ -1081,14 +1081,14 @@ export function createValidationRulesTemplateWorkbook(input: {
   ].map((wch) => ({ wch }));
   detailedSubjectSheet["!cols"] = [24, 10, 10, 24].map((wch) => ({ wch }));
 
-  utils.book_append_sheet(workbook, settingsSheet, "검증설정");
+  utils.book_append_sheet(workbook, settingsSheet, "점검설정");
   utils.book_append_sheet(workbook, prerequisiteSheet, "위계설정");
   utils.book_append_sheet(workbook, detailedSummarySheet, "세부제약");
   utils.book_append_sheet(workbook, detailedSubjectSheet, "기타제한과목");
 
   addInstructionSheet(workbook, [
     ["항목", "작성 방법"],
-    ["검증설정", "첫 번째 시트에서 각 검사별 사용 여부와 전입/외부 포함 여부를 예/아니오로 입력합니다."],
+    ["점검설정", "첫 번째 시트에서 각 검사별 사용 여부와 전입/외부 포함 여부를 예/아니오로 입력합니다."],
     ["위계설정", "과목 위계 점검에 필요한 선이수/후이수 과목과 병행 허용 여부를 입력합니다."],
     ["세부제약", "연계과목 또는 기타제한 규칙을 입력합니다."],
     ["기타제한과목", "세부제약 시트의 기타제한 규칙명에 연결할 과목 목록을 입력합니다."]
@@ -1568,12 +1568,12 @@ function parseValidationRuleSettingsTemplateSheet(
   workbook: WorkBook,
   currentSettings: readonly ValidationRuleSetting[]
 ): ValidationRuleSetting[] {
-  const matrix = sheetMatrixByName(workbook, "검증설정", "검증 설정");
+  const matrix = sheetMatrixByName(workbook, "점검설정", "점검 설정");
   const { headerRowIndex, columnMap } = findHeaderRow(
     matrix,
     validationRuleSettingHeaderAliases,
     ["enabled", "includeExternalInputs"],
-    "검증 설정"
+    "점검 설정"
   );
   const issues: ParseIssue[] = [];
   const parsedSettings = new Map<
@@ -1607,7 +1607,7 @@ function parseValidationRuleSettingsTemplateSheet(
     if (!ruleId) {
       issues.push({
         rowNumber,
-        message: "검사 ID 또는 검사명을 현재 검증 항목과 맞게 입력하세요."
+        message: "검사 ID 또는 검사명을 현재 점검 항목과 맞게 입력하세요."
       });
       return;
     }
@@ -1630,12 +1630,12 @@ function parseValidationRuleSettingsTemplateSheet(
   if (parsedSettings.size === 0) {
     issues.push({
       rowNumber: headerRowIndex + 1,
-      message: "가져올 검증 설정 행이 없습니다."
+      message: "가져올 점검 설정 행이 없습니다."
     });
   }
 
   if (issues.length > 0) {
-    summarizeIssues("검증 설정", issues);
+    summarizeIssues("점검 설정", issues);
   }
 
   const now = new Date().toISOString();

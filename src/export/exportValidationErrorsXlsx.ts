@@ -2,7 +2,7 @@ import { utils, write, type WorkBook } from "xlsx";
 import type { ValidationError } from "../types/validation";
 import { validationRuleLabel } from "../utils/validationRuleLabels";
 
-export const validationErrorListFileName = "검증오류_명렬.xlsx";
+export const validationErrorListFileName = "점검오류_명렬.xlsx";
 
 function validationErrorRows(errors: readonly ValidationError[]): unknown[][] {
   return errors.map((error, index) => [

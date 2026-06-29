@@ -17,7 +17,7 @@ export const projectTransferSections = [
   },
   {
     id: "validationRules",
-    label: "검증 규칙"
+    label: "점검 규칙"
   }
 ] as const;
 

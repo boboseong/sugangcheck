@@ -71,7 +71,7 @@ export function OperatingSubjectReviewTable({
 }: OperatingSubjectReviewTableProps) {
   const [editingSubjectId, setEditingSubjectId] = useState<string>();
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
-  const [filter, setFilter] = useState<SubjectFilter>("unmatched");
+  const [filter, setFilter] = useState<SubjectFilter>("all");
   const [sort, setSort] = useState<SubjectSort>("status");
   const visibleSubjects = useMemo(() => {
     const filteredSubjects =

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Semester } from "../types/semester";
 import type { OperatingSubject } from "../types/subject";
@@ -45,7 +45,7 @@ const subjects = [
 ];
 
 describe("OperatingSubjectReviewTable", () => {
-  it("defaults to the unmatched-subject filter", () => {
+  it("defaults to the all-subject filter", () => {
     render(
       <OperatingSubjectReviewTable
         onUpdateSubject={vi.fn()}
@@ -53,9 +53,10 @@ describe("OperatingSubjectReviewTable", () => {
       />
     );
 
+    expect(screen.getByDisplayValue("전체")).toBeInTheDocument();
     expect(screen.getByText("알파미등록")).toBeInTheDocument();
-    expect(screen.queryByText("베타수정")).not.toBeInTheDocument();
-    expect(screen.queryByText("감마일치")).not.toBeInTheDocument();
+    expect(screen.getByText("베타수정")).toBeInTheDocument();
+    expect(screen.getByText("감마일치")).toBeInTheDocument();
   });
 
   it("keeps unmatched subjects first when viewing all rows", () => {
@@ -65,10 +66,6 @@ describe("OperatingSubjectReviewTable", () => {
         subjects={subjects}
       />
     );
-
-    fireEvent.change(screen.getByDisplayValue("미등록"), {
-      target: { value: "all" }
-    });
 
     const firstBodyRow = screen.getAllByRole("row").slice(1)[0];
 

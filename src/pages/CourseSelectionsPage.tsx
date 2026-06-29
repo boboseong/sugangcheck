@@ -239,8 +239,8 @@ export function CourseSelectionsPage() {
     markSemesterUnknown(nextStudents, target);
   }
 
-  function handleDownloadTemplate() {
-    downloadBlob(
+  async function handleDownloadTemplate() {
+    await downloadBlob(
       createXlsxBlob(createCourseSelectionTemplateWorkbook(courseSelectionRows)),
       templateFileNames.courseSelection
     );

@@ -14,6 +14,9 @@
     "desktop:build": "tauri build --no-bundle"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
     "dexie": "4.4.4",
     "jszip": "^3.10.1",
     "lucide-react": "1.21.0",

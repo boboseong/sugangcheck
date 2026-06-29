@@ -52,8 +52,8 @@ export function ValidationRulesPage() {
   const detailedConstraintValidationEnabled =
     detailedConstraintRuleSetting?.enabled ?? false;
 
-  function handleDownloadValidationRulesTemplate() {
-    downloadBlob(
+  async function handleDownloadValidationRulesTemplate() {
+    await downloadBlob(
       createXlsxBlob(
         createValidationRulesTemplateWorkbook({
           validationRuleSettings,

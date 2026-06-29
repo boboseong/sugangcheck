@@ -1,13 +1,12 @@
 import { subjectMasterItems } from "../data/subjectMaster";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
-import type { OperatingSubject, SubjectOverride } from "../types/subject";
+import type { OperatingSubject } from "../types/subject";
 import { semesterLabel } from "../utils/semester";
 import { StatusBadge } from "./ui/StatusBadge";
 
 type CourseSelectionReviewTableProps = {
   rows: readonly ParsedCourseSelectionRow[];
   operatingSubjects: readonly OperatingSubject[];
-  subjectOverrides: readonly SubjectOverride[];
   maxRows?: number;
 };
 
@@ -29,19 +28,9 @@ function hasSubjectMaster(row: ParsedCourseSelectionRow): boolean {
   );
 }
 
-function findOverride(
-  row: ParsedCourseSelectionRow,
-  overrides: readonly SubjectOverride[]
-): SubjectOverride | undefined {
-  return overrides.find(
-    (override) => override.normalizedSubjectName === row.normalizedSubjectName
-  );
-}
-
 export function CourseSelectionReviewTable({
   rows,
   operatingSubjects,
-  subjectOverrides,
   maxRows = 200
 }: CourseSelectionReviewTableProps) {
   if (rows.length === 0) {
@@ -74,16 +63,13 @@ export function CourseSelectionReviewTable({
         <tbody>
           {visibleRows.map((row) => {
             const operatingSubject = findOperatingSubject(row, operatingSubjects);
-            const override = findOverride(row, subjectOverrides);
             const hasMaster = hasSubjectMaster(row);
-            const credits = row.credits ?? operatingSubject?.credits ?? override?.credits;
-            const referenceStatus = override
-              ? "보정값"
-              : operatingSubject
-                ? "운영과목"
-                : hasMaster
-                  ? "마스터"
-                  : "미등록";
+            const credits = row.credits ?? operatingSubject?.credits;
+            const referenceStatus = operatingSubject
+              ? "운영과목"
+              : hasMaster
+                ? "마스터"
+                : "미등록";
 
             return (
               <tr key={row.id}>

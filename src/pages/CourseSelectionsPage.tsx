@@ -29,7 +29,6 @@ import {
   mergeStudentsFromCourseSelectionRows,
   useStudentStore
 } from "../state/studentStore";
-import { useSubjectOverrideStore } from "../state/subjectOverrideStore";
 import {
   createCourseSelectionTemplateWorkbook,
   createXlsxBlob,
@@ -117,7 +116,6 @@ export function CourseSelectionsPage() {
     replaceCourseSelectionRowsForSemester
   } = useCourseSelectionRawStore();
   const { operatingSubjects } = useOperatingSubjectStore();
-  const { subjectOverrides } = useSubjectOverrideStore();
   const { setStudents } = useStudentStore();
   const {
     markSemesterUnknown,
@@ -288,7 +286,6 @@ export function CourseSelectionsPage() {
         <CourseSelectionReviewTable
           operatingSubjects={operatingSubjects}
           rows={courseSelectionRows}
-          subjectOverrides={subjectOverrides}
         />
       </div>
       <div className="section">

@@ -6,7 +6,7 @@ import type {
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
 import type { Semester } from "../types/semester";
-import type { OperatingSubject, SubjectOverride } from "../types/subject";
+import type { OperatingSubject } from "../types/subject";
 
 export type ValidationMode = "full" | "partial";
 
@@ -46,7 +46,6 @@ export function buildCourseSelectionRecords(input: {
   courseSelectionRows: readonly ParsedCourseSelectionRow[];
   externalCourseInputs: readonly ExternalCourseInput[];
   operatingSubjects: readonly OperatingSubject[];
-  subjectOverrides: readonly SubjectOverride[];
 }): BuildCourseSelectionRecordsResult {
   const sources = [
     ...input.courseSelectionRows.filter((row) =>
@@ -62,13 +61,11 @@ export function buildCourseSelectionRecords(input: {
   for (const source of sources) {
     const metadata = resolveSubjectMetadata({
       source,
-      operatingSubjects: input.operatingSubjects,
-      subjectOverrides: input.subjectOverrides
+      operatingSubjects: input.operatingSubjects
     });
     const credits = resolveCredits({
       source,
-      operatingSubjects: input.operatingSubjects,
-      subjectOverrides: input.subjectOverrides
+      operatingSubjects: input.operatingSubjects
     });
 
     if (

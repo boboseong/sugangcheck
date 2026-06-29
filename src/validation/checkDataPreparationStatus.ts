@@ -9,7 +9,7 @@ import type {
 } from "../types/importStatus";
 import type { ParsedCourseSelectionRow, ExternalCourseInput } from "../types/courseSelection";
 import type { StudentSemesterPresence } from "../types/student";
-import type { OperatingSubject, SubjectOverride } from "../types/subject";
+import type { OperatingSubject } from "../types/subject";
 import type { PrerequisiteRule, ValidationRuleSetting } from "../types/validation";
 import { semesterKeys, type Semester } from "../types/semester";
 import { isSameSemester, parseSemesterKey, semesterLabel } from "../utils/semester";
@@ -120,7 +120,6 @@ export function checkDataPreparationStatus(input: {
   studentSemesterPresence: readonly StudentSemesterPresence[];
   operatingSubjects: readonly OperatingSubject[];
   courseSelectionRows: readonly ParsedCourseSelectionRow[];
-  subjectOverrides: readonly SubjectOverride[];
   externalCourseInputs: readonly ExternalCourseInput[];
   prerequisiteRules: readonly PrerequisiteRule[];
   validationRuleSettings: readonly ValidationRuleSetting[];
@@ -151,23 +150,14 @@ export function checkDataPreparationStatus(input: {
         .length,
     0
   );
-  const incompleteSubjectOverrideCount = input.subjectOverrides.filter(
-    (override) => !override.subjectGroup || !override.selectionType
-  ).length;
-  const subjectOverrideConflictCount = input.subjectOverrides.filter(
-    (override) => override.conflictStatus === "needsReview"
-  ).length;
   const hasUnregisteredOperatingSubjectInfo =
     input.operatingSubjects.some(
       (subject) => subject.masterMatchStatus === "unmatched"
-    ) ||
-    incompleteSubjectOverrideCount > 0 ||
-    subjectOverrideConflictCount > 0;
+    );
   const resolutionStatus = checkSubjectResolutionStatus({
     courseSelectionRows: input.courseSelectionRows,
     externalCourseInputs: input.externalCourseInputs,
-    operatingSubjects: input.operatingSubjects,
-    subjectOverrides: input.subjectOverrides
+    operatingSubjects: input.operatingSubjects
   });
   const incompleteExternalCourseInputCount = input.externalCourseInputs.filter(
     (externalInput) => !externalInput.subjectName || externalInput.credits === undefined
@@ -214,14 +204,6 @@ export function checkDataPreparationStatus(input: {
     issues.push(
       issue("unknownStudentSemester", "학생 학기별 존재 여부에 미확인 값이 남아 있습니다.")
     );
-  }
-
-  if (incompleteSubjectOverrideCount > 0) {
-    issues.push(issue("unresolvedSubjectOverride", "완료되지 않은 과목 보정값이 있습니다."));
-  }
-
-  if (subjectOverrideConflictCount > 0) {
-    issues.push(issue("subjectOverrideConflict", "충돌 확인이 필요한 과목 보정값이 있습니다."));
   }
 
   if (resolutionStatus.missingCreditCount > 0) {
@@ -291,8 +273,6 @@ export function checkDataPreparationStatus(input: {
       courseSelectionsByStatus,
       unknownStudentSemesterCount,
       absentStudentSemesterCount,
-      incompleteSubjectOverrideCount,
-      subjectOverrideConflictCount,
       missingCreditSubjectCount: resolutionStatus.missingCreditCount,
       incompleteExternalCourseInputCount,
       pendingPrerequisiteCandidateCount

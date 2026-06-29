@@ -3,11 +3,10 @@ import type {
   ExternalCourseInput,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
-import type { OperatingSubject, SubjectMasterItem, SubjectOverride } from "../types/subject";
+import type { OperatingSubject, SubjectMasterItem } from "../types/subject";
 
 export type CreditResolutionSource =
   | "directInput"
-  | "subjectOverride"
   | "operatingSubject"
   | "rawCourseSelection"
   | "subjectMaster"
@@ -23,7 +22,6 @@ export type ResolvedCredits = {
 export type ResolveCreditsInput = {
   source: ParsedCourseSelectionRow | ExternalCourseInput;
   operatingSubjects: readonly OperatingSubject[];
-  subjectOverrides: readonly SubjectOverride[];
   subjectMasterItems?: readonly SubjectMasterItem[];
 };
 
@@ -31,38 +29,6 @@ function isExternalCourseInput(
   source: ParsedCourseSelectionRow | ExternalCourseInput
 ): source is ExternalCourseInput {
   return "sourceType" in source;
-}
-
-function overrideAppliesToSource(
-  override: SubjectOverride,
-  source: ParsedCourseSelectionRow | ExternalCourseInput
-): boolean {
-  const scopeSourceType = override.scope.sourceType ?? "all";
-
-  if (override.normalizedSubjectName !== source.normalizedSubjectName) {
-    return false;
-  }
-
-  if (
-    scopeSourceType !== "all" &&
-    scopeSourceType !==
-      (isExternalCourseInput(source) ? "externalInput" : "courseSelections")
-  ) {
-    return false;
-  }
-
-  if (override.scope.grade && override.scope.grade !== source.target.grade) {
-    return false;
-  }
-
-  if (
-    override.scope.semester &&
-    override.scope.semester !== source.target.semester
-  ) {
-    return false;
-  }
-
-  return true;
 }
 
 function findOperatingSubject(
@@ -80,13 +46,9 @@ function findOperatingSubject(
 export function resolveCredits({
   source,
   operatingSubjects,
-  subjectOverrides,
   subjectMasterItems = defaultSubjectMasterItems
 }: ResolveCreditsInput): ResolvedCredits {
   const directCredits = isExternalCourseInput(source) ? source.credits : undefined;
-  const override = subjectOverrides.find((candidate) =>
-    overrideAppliesToSource(candidate, source)
-  );
   const operatingSubject = findOperatingSubject(source, operatingSubjects);
   const masterItem = subjectMasterItems.find(
     (item) => item.normalizedSubjectName === source.normalizedSubjectName
@@ -97,7 +59,6 @@ export function resolveCredits({
     relatedId?: string;
   }[] = [
     { credits: directCredits, source: "directInput" },
-    { credits: override?.credits, source: "subjectOverride", relatedId: override?.id },
     {
       credits: operatingSubject?.credits,
       source: "operatingSubject",

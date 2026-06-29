@@ -5,6 +5,7 @@ import type {
 } from "../types/courseSelection";
 import type { ProjectFile, ProjectState } from "../types/project";
 import type { Student, StudentSemesterPresence } from "../types/student";
+import type { OperatingSubject } from "../types/subject";
 import type { ValidationError } from "../types/validation";
 import type { ValidationEngineResult } from "../validation/types";
 import {
@@ -12,14 +13,20 @@ import {
   createStudentAuxiliaryKey
 } from "../utils/studentKey";
 
-export const currentProjectSchemaVersion = 3;
+export const currentProjectSchemaVersion = 4;
+
+type LegacyOperatingSubject = OperatingSubject & {
+  overrideId?: unknown;
+};
 
 type MigratableProjectState = Omit<
   ProjectState,
-  "schemaVersion" | "detailedConstraintRules"
+  "schemaVersion" | "detailedConstraintRules" | "operatingSubjects"
 > & {
   schemaVersion: number;
   detailedConstraintRules?: ProjectState["detailedConstraintRules"];
+  operatingSubjects: LegacyOperatingSubject[];
+  subjectOverrides?: unknown;
 };
 
 type MigratableProjectFile = Omit<ProjectFile, "schemaVersion" | "data"> & {
@@ -45,7 +52,7 @@ type IdentitySource = {
   currentNumber?: unknown;
 };
 
-const supportedProjectSchemaVersions = [1, 2, currentProjectSchemaVersion] as const;
+const supportedProjectSchemaVersions = [1, 2, 3, currentProjectSchemaVersion] as const;
 
 function normalizeIdentifier(value: unknown): string {
   return String(value ?? "").normalize("NFKC").trim().replace(/\s+/g, "");
@@ -255,12 +262,18 @@ function migrateValidationResult(
   };
 }
 
+function migrateOperatingSubject(subject: LegacyOperatingSubject): OperatingSubject {
+  const { overrideId: _overrideId, ...nextSubject } = subject;
+
+  return nextSubject;
+}
+
 export function migrateProjectState(
   projectState: MigratableProjectState
 ): ProjectState {
   if (
     !supportedProjectSchemaVersions.includes(
-      projectState.schemaVersion as 1 | 2 | 3
+      projectState.schemaVersion as 1 | 2 | 3 | 4
     )
   ) {
     throw new Error(
@@ -269,11 +282,14 @@ export function migrateProjectState(
   }
 
   const identityByOldId = createIdentityMap(projectState);
+  const { subjectOverrides: _subjectOverrides, ...stateWithoutSubjectOverrides } =
+    projectState;
 
   return {
-    ...projectState,
+    ...stateWithoutSubjectOverrides,
     schemaVersion: currentProjectSchemaVersion,
     detailedConstraintRules: projectState.detailedConstraintRules ?? [],
+    operatingSubjects: projectState.operatingSubjects.map(migrateOperatingSubject),
     students: projectState.students.map((student) =>
       migrateStudent(identityByOldId, student)
     ),

@@ -1,6 +1,7 @@
 import Dexie, { type Table } from "dexie";
 import type { ProjectFile } from "../types/project";
 import { createProjectFile } from "./projectFileExport";
+import { migrateProjectFile } from "./projectMigration";
 
 export type StoredProjectRecord = {
   id: string;
@@ -134,8 +135,38 @@ export async function saveProjectRecord(record: StoredProjectRecord) {
   await db.projects.put(record);
 }
 
+function projectFileHasLegacySubjectOverrides(projectFile: ProjectFile): boolean {
+  return "subjectOverrides" in (projectFile.data as Record<string, unknown>);
+}
+
 export async function loadProjectRecord(id = "default") {
-  return db.projects.get(id);
+  const record = await db.projects.get(id);
+
+  if (!record) {
+    return undefined;
+  }
+
+  const migratedProjectFile = migrateProjectFile(record.data);
+  const needsSave =
+    migratedProjectFile.schemaVersion !== record.data.schemaVersion ||
+    projectFileHasLegacySubjectOverrides(record.data);
+
+  if (!needsSave) {
+    return record;
+  }
+
+  const migratedRecord: StoredProjectRecord = {
+    ...record,
+    schemaVersion: migratedProjectFile.schemaVersion,
+    appVersion: migratedProjectFile.appVersion,
+    projectName: migratedProjectFile.projectName,
+    savedAt: migratedProjectFile.savedAt,
+    data: migratedProjectFile
+  };
+
+  await saveProjectRecord(migratedRecord);
+
+  return migratedRecord;
 }
 
 export async function cloneProjectRecord(

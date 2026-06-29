@@ -814,6 +814,26 @@ label.button {
   min-width: 1080px;
 }
 
+.operating-subject-review__toolbar {
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.placeholder-table .operating-subject-review__actions-column {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 112px;
+  background: #ffffff;
+  box-shadow: 1px 0 0 #e7ecf3;
+}
+
+.placeholder-table th.operating-subject-review__actions-column {
+  z-index: 2;
+  background: #f8fafc;
+}
+
 .operating-subject-semester-controls,
 .operating-subject-actions {
   display: flex;
@@ -844,11 +864,6 @@ label.button {
   text-overflow: ellipsis;
 }
 
-.subject-override-layout {
-  display: grid;
-  gap: 12px;
-}
-
 .placeholder-table select,
 .placeholder-table input {
   width: 100%;
@@ -858,46 +873,6 @@ label.button {
   padding: 6px 8px;
   background: #ffffff;
   color: #172033;
-}
-
-.override-summary {
-  display: grid;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid #dce3ef;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.override-summary h3,
-.override-summary p {
-  margin: 0;
-}
-
-.override-summary h3 {
-  font-size: 15px;
-}
-
-.override-summary p {
-  color: #526070;
-  font-size: 14px;
-}
-
-.override-summary ul {
-  display: grid;
-  gap: 8px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.override-summary li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 32px;
-  font-size: 14px;
 }
 
 .table-toolbar {

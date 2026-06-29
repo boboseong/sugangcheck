@@ -18,9 +18,9 @@ type SemesterUploadSlotsProps = {
   statuses: readonly SemesterImportStatus[];
   accept?: string;
   compact?: boolean;
-  correctionCompletedSemesters?: readonly Semester[];
   onFilesSelected: (files: File[], target?: Semester) => void | Promise<void>;
   onClearSemester?: (target: Semester) => void;
+  reviewCompletedSemesters?: readonly Semester[];
   showUploadActions?: boolean;
 };
 
@@ -64,18 +64,18 @@ function filesFromInput(event: ChangeEvent<HTMLInputElement>): File[] {
 
 function statusMessageParts(
   status: SemesterImportStatus,
-  correctionCompleted: boolean
+  reviewCompleted: boolean
 ): string[] {
   const messageParts =
     status.message
       ?.split(" · ")
       .filter(
         (message) =>
-          !(correctionCompleted && message.startsWith("미등록 과목 "))
+          !(reviewCompleted && message.startsWith("미등록 과목 "))
       ) ?? [];
 
-  if (correctionCompleted) {
-    messageParts.push("미등록 과목 보정 완료");
+  if (reviewCompleted) {
+    messageParts.push("미등록 과목 검토 완료");
   }
 
   return messageParts;
@@ -86,9 +86,9 @@ export function SemesterUploadSlots({
   statuses,
   accept = ".xls,.xlsx,.xlsm",
   compact = false,
-  correctionCompletedSemesters = [],
   onFilesSelected,
   onClearSemester,
+  reviewCompletedSemesters = [],
   showUploadActions = true
 }: SemesterUploadSlotsProps) {
   const id = useId();
@@ -151,21 +151,21 @@ export function SemesterUploadSlots({
           }
 
           const status = statusForTarget(statuses, sourceType, target);
-          const correctionCompleted = correctionCompletedSemesters.some((semester) =>
+          const reviewCompleted = reviewCompletedSemesters.some((semester) =>
             isSameSemester(semester, target)
           );
-          const showCorrectionCompleted =
-            correctionCompleted && status.status !== "error";
-          const messageParts = statusMessageParts(status, showCorrectionCompleted);
+          const showReviewCompleted =
+            reviewCompleted && status.status !== "error";
+          const messageParts = statusMessageParts(status, showReviewCompleted);
           const hasOutstandingReview =
-            showCorrectionCompleted &&
+            showReviewCompleted &&
             status.status === "needsReview" &&
-            messageParts.some((message) => message !== "미등록 과목 보정 완료");
+            messageParts.some((message) => message !== "미등록 과목 검토 완료");
           const message = messageParts.join(" · ") || undefined;
-          const statusLabel = showCorrectionCompleted && !hasOutstandingReview
-            ? "보정 완료"
+          const statusLabel = showReviewCompleted && !hasOutstandingReview
+            ? "검토 완료"
             : statusLabels[status.status];
-          const statusTone = showCorrectionCompleted && !hasOutstandingReview
+          const statusTone = showReviewCompleted && !hasOutstandingReview
             ? "ready"
             : statusTones[status.status];
           const inputId = `${id}-${sourceType}-${key}`;

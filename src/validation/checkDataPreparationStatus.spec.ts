@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SemesterImportStatus } from "../types/importStatus";
 import type { Semester } from "../types/semester";
 import { semesterKeys } from "../types/semester";
-import type { OperatingSubject, SubjectOverride } from "../types/subject";
+import type { OperatingSubject } from "../types/subject";
 import { parseSemesterKey } from "../utils/semester";
 import { checkDataPreparationStatus } from "./checkDataPreparationStatus";
 import {
@@ -60,14 +60,12 @@ function createOperatingSubject(
 
 function createStatus(input: {
   operatingSubjects: OperatingSubject[];
-  subjectOverrides?: SubjectOverride[];
 }) {
   return checkDataPreparationStatus({
     importStatuses: createImportStatuses(),
     studentSemesterPresence: [],
     operatingSubjects: input.operatingSubjects,
     courseSelectionRows: [],
-    subjectOverrides: input.subjectOverrides ?? [],
     externalCourseInputs: [],
     prerequisiteRules: [],
     validationRuleSettings: [
@@ -132,7 +130,6 @@ describe("checkDataPreparationStatus", () => {
       studentSemesterPresence: [],
       operatingSubjects: [createOperatingSubject(target, "matched")],
       courseSelectionRows: [],
-      subjectOverrides: [],
       externalCourseInputs: [],
       prerequisiteRules: [],
       validationRuleSettings: [

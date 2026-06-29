@@ -12,7 +12,6 @@ import {
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
 import { useStudentStore } from "../state/studentStore";
-import { useSubjectOverrideStore } from "../state/subjectOverrideStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 
@@ -64,7 +63,6 @@ export function ProjectPersistenceProvider() {
       useCourseSelectionRawStore.subscribe(scheduleSave),
       useStudentStore.subscribe(scheduleSave),
       useStudentSemesterPresenceStore.subscribe(scheduleSave),
-      useSubjectOverrideStore.subscribe(scheduleSave),
       useExternalCourseInputStore.subscribe(scheduleSave),
       useValidationRuleSettingStore.subscribe(scheduleSave),
       usePrerequisiteRuleStore.subscribe(scheduleSave),

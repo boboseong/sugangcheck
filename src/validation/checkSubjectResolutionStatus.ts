@@ -7,7 +7,7 @@ import type {
   ExternalCourseInput,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
-import type { OperatingSubject, SubjectMasterItem, SubjectOverride } from "../types/subject";
+import type { OperatingSubject, SubjectMasterItem } from "../types/subject";
 
 export type SubjectResolutionIssue = {
   sourceId: string;
@@ -29,7 +29,6 @@ export function checkSubjectResolutionStatus(input: {
   courseSelectionRows: readonly ParsedCourseSelectionRow[];
   externalCourseInputs: readonly ExternalCourseInput[];
   operatingSubjects: readonly OperatingSubject[];
-  subjectOverrides: readonly SubjectOverride[];
   subjectMasterItems?: readonly SubjectMasterItem[];
 }): SubjectResolutionStatus {
   const sources = [...input.courseSelectionRows, ...input.externalCourseInputs];
@@ -39,13 +38,11 @@ export function checkSubjectResolutionStatus(input: {
     const metadata = resolveSubjectMetadata({
       source,
       operatingSubjects: input.operatingSubjects,
-      subjectOverrides: input.subjectOverrides,
       subjectMasterItems: input.subjectMasterItems
     });
     const credits = resolveCredits({
       source,
       operatingSubjects: input.operatingSubjects,
-      subjectOverrides: input.subjectOverrides,
       subjectMasterItems: input.subjectMasterItems
     });
 

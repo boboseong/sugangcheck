@@ -5,7 +5,7 @@ import { createEmptyProjectState } from "./projectWorkspace";
 export const projectTransferSections = [
   {
     id: "operatingSubjects",
-    label: "운영과목/과목 보정"
+    label: "운영과목"
   },
   {
     id: "courseSelections",
@@ -127,7 +127,6 @@ export function createProjectTransferState(
 
   if (sectionSet.has("operatingSubjects")) {
     transferState.operatingSubjects = clone(sourceState.operatingSubjects);
-    transferState.subjectOverrides = clone(sourceState.subjectOverrides);
   }
 
   if (sectionSet.has("courseSelections")) {

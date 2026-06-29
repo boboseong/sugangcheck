@@ -22,8 +22,6 @@ export type DataPreparationIssueCode =
   | "importError"
   | "needsReview"
   | "unknownStudentSemester"
-  | "unresolvedSubjectOverride"
-  | "subjectOverrideConflict"
   | "missingCredits"
   | "incompleteExternalCourseInput"
   | "pendingPrerequisiteCandidate"
@@ -44,8 +42,6 @@ export type DataPreparationCounts = {
   courseSelectionsByStatus: Record<ImportStatus, number>;
   unknownStudentSemesterCount: number;
   absentStudentSemesterCount: number;
-  incompleteSubjectOverrideCount: number;
-  subjectOverrideConflictCount: number;
   missingCreditSubjectCount: number;
   incompleteExternalCourseInputCount: number;
   pendingPrerequisiteCandidateCount: number;

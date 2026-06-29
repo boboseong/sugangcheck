@@ -5,7 +5,7 @@ import type {
 } from "./courseSelection";
 import type { DataPreparationStatus, SemesterImportStatus } from "./importStatus";
 import type { Student, StudentSemesterPresence } from "./student";
-import type { OperatingSubject, SubjectMasterItem, SubjectOverride } from "./subject";
+import type { OperatingSubject, SubjectMasterItem } from "./subject";
 import type {
   DetailedConstraintRule,
   PrerequisiteRule,
@@ -14,7 +14,7 @@ import type {
 } from "./validation";
 import type { ValidationEngineResult } from "../validation/types";
 
-export type AppSchemaVersion = 3;
+export type AppSchemaVersion = 4;
 
 export type ProjectEnvelope = {
   schemaVersion: AppSchemaVersion;
@@ -35,7 +35,6 @@ export type ProjectState = {
   studentSemesterPresence: StudentSemesterPresence[];
   operatingSubjects: OperatingSubject[];
   courseSelectionRows: ParsedCourseSelectionRow[];
-  subjectOverrides: SubjectOverride[];
   externalCourseInputs: ExternalCourseInput[];
   validationRuleSettings: ValidationRuleSetting[];
   prerequisiteRules: PrerequisiteRule[];

@@ -1,7 +1,6 @@
 import { create } from "zustand";
-import type { OperatingSubject, SubjectOverride } from "../types/subject";
+import type { OperatingSubject } from "../types/subject";
 import type { Semester } from "../types/semester";
-import { applySubjectOverridesToOperatingSubjects } from "./subjectOverrideStore";
 
 function sameSemester(subject: OperatingSubject, target: Semester): boolean {
   return (
@@ -30,14 +29,7 @@ export function updateOperatingSubjectInList(
   );
 }
 
-export function buildIntegratedOperatingSubjects(
-  subjects: readonly OperatingSubject[],
-  overrides: readonly SubjectOverride[]
-): OperatingSubject[] {
-  return applySubjectOverridesToOperatingSubjects(subjects, overrides);
-}
-
-export function hasCompletedSubjectOverridesForSemester(
+export function hasCompletedOperatingSubjectReviewForSemester(
   subjects: readonly OperatingSubject[],
   target: Semester
 ): boolean {
@@ -59,7 +51,6 @@ type OperatingSubjectStore = {
     subjects: OperatingSubject[]
   ) => void;
   updateOperatingSubject: (subject: OperatingSubject) => void;
-  applySubjectOverrides: (overrides: SubjectOverride[]) => void;
   clearOperatingSubjectsForSemester: (target: Semester) => void;
 };
 
@@ -78,13 +69,6 @@ export const useOperatingSubjectStore = create<OperatingSubjectStore>((set) => (
       operatingSubjects: updateOperatingSubjectInList(
         state.operatingSubjects,
         subject
-      )
-    })),
-  applySubjectOverrides: (overrides) =>
-    set((state) => ({
-      operatingSubjects: applySubjectOverridesToOperatingSubjects(
-        state.operatingSubjects,
-        overrides
       )
     })),
   clearOperatingSubjectsForSemester: (target) =>

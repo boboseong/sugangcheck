@@ -3,7 +3,6 @@ import { useState } from "react";
 import { FilePreviewTable } from "../components/FilePreviewTable";
 import { OperatingSubjectReviewTable } from "../components/OperatingSubjectReviewTable";
 import { SemesterUploadSlots } from "../components/SemesterUploadSlots";
-import { SubjectOverrideTable } from "../components/SubjectOverrideTable";
 import { UploadImportLauncher } from "../components/UploadImportLauncher";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
@@ -24,22 +23,16 @@ import {
   useImportStatusStore
 } from "../state/importStatusStore";
 import {
-  hasCompletedSubjectOverridesForSemester,
+  hasCompletedOperatingSubjectReviewForSemester,
   useOperatingSubjectStore
 } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
-import {
-  applySubjectOverridesToOperatingSubjects,
-  upsertSubjectOverrideInList,
-  useSubjectOverrideStore
-} from "../state/subjectOverrideStore";
 import {
   createOperatingSubjectTemplateWorkbook,
   createXlsxBlob,
   templateFileNames
 } from "../templates/xlsxTemplates";
 import type { Semester } from "../types/semester";
-import type { SubjectOverride } from "../types/subject";
 import { assignFilesToSemesters } from "../utils/detectSemesterFromFileName";
 import { downloadBlob } from "../utils/downloadBlob";
 import { isSameSemester, semesterLabel } from "../utils/semester";
@@ -136,7 +129,6 @@ export function OperatingSubjectsPage() {
   const generateCandidatesFromOperatingSubjects = usePrerequisiteRuleStore(
     (state) => state.generateCandidatesFromOperatingSubjects
   );
-  const { setSubjectOverrides, subjectOverrides } = useSubjectOverrideStore();
   const [preview, setPreview] = useState<WorkbookPreviewTable>();
 
   async function importFileForSemester(
@@ -159,11 +151,7 @@ export function OperatingSubjectsPage() {
         target,
         fileName: file.name
       });
-      const subjectsWithOverrides = applySubjectOverridesToOperatingSubjects(
-        parseResult.subjects,
-        subjectOverrides
-      );
-      const unmatchedCount = subjectsWithOverrides.filter(
+      const unmatchedCount = parseResult.subjects.filter(
         (subject) => subject.masterMatchStatus === "unmatched"
       ).length;
       const hasReviewItems =
@@ -173,7 +161,7 @@ export function OperatingSubjectsPage() {
         unmatchedCount > 0;
 
       setPreview(nextPreview);
-      replaceOperatingSubjectsForSemester(target, subjectsWithOverrides);
+      replaceOperatingSubjectsForSemester(target, parseResult.subjects);
       generateCandidatesFromOperatingSubjects(
         useOperatingSubjectStore.getState().operatingSubjects
       );
@@ -182,7 +170,7 @@ export function OperatingSubjectsPage() {
         sourceType: "operatingSubjects",
         status: hasReviewItems ? "needsReview" : "imported",
         fileName: file.name,
-        rowCount: subjectsWithOverrides.length,
+        rowCount: parseResult.subjects.length,
         message: hasReviewItems
           ? [
               needsReview
@@ -256,12 +244,6 @@ export function OperatingSubjectsPage() {
     }
   }
 
-  function handleSaveOverride(override: SubjectOverride) {
-    const nextOverrides = upsertSubjectOverrideInList(subjectOverrides, override);
-    setSubjectOverrides(nextOverrides);
-    useOperatingSubjectStore.getState().applySubjectOverrides(nextOverrides);
-  }
-
   function handleClearSemester(target: Semester) {
     clearSemesterImportStatus("operatingSubjects", target);
     clearOperatingSubjectsForSemester(target);
@@ -274,14 +256,14 @@ export function OperatingSubjectsPage() {
     );
   }
 
-  const unmatchedSubjects = operatingSubjects.filter(
-    (subject) => subject.masterMatchStatus === "unmatched"
-  );
-  const correctionCompletedSemesters = importStatuses
+  const reviewCompletedSemesters = importStatuses
     .filter(
       (status) =>
         status.sourceType === "operatingSubjects" &&
-        hasCompletedSubjectOverridesForSemester(operatingSubjects, status.target)
+        hasCompletedOperatingSubjectReviewForSemester(
+          operatingSubjects,
+          status.target
+        )
     )
     .map((status) => status.target);
 
@@ -307,20 +289,12 @@ export function OperatingSubjectsPage() {
       <div className="section">
         <SemesterUploadSlots
           compact
-          correctionCompletedSemesters={correctionCompletedSemesters}
           onClearSemester={handleClearSemester}
           onFilesSelected={handleFilesSelected}
+          reviewCompletedSemesters={reviewCompletedSemesters}
           showUploadActions={false}
           sourceType="operatingSubjects"
           statuses={importStatuses}
-        />
-      </div>
-      <div className="section">
-        <h2>미등록 과목 보정</h2>
-        <SubjectOverrideTable
-          onSaveOverride={handleSaveOverride}
-          overrides={subjectOverrides}
-          unmatchedSubjects={unmatchedSubjects}
         />
       </div>
       <div className="section">

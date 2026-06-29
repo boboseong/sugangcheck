@@ -3,11 +3,10 @@ import type {
   ExternalCourseInput,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
-import type { OperatingSubject, SubjectMasterItem, SubjectOverride } from "../types/subject";
+import type { OperatingSubject, SubjectMasterItem } from "../types/subject";
 
 export type SubjectMetadataSource =
   | "directInput"
-  | "subjectOverride"
   | "operatingSubject"
   | "subjectMaster"
   | "rawCourseSelection"
@@ -34,7 +33,6 @@ export type ResolvedSubjectMetadata = {
 export type ResolveSubjectMetadataInput = {
   source: ParsedCourseSelectionRow | ExternalCourseInput;
   operatingSubjects: readonly OperatingSubject[];
-  subjectOverrides: readonly SubjectOverride[];
   subjectMasterItems?: readonly SubjectMasterItem[];
 };
 
@@ -42,38 +40,6 @@ function isExternalCourseInput(
   source: ParsedCourseSelectionRow | ExternalCourseInput
 ): source is ExternalCourseInput {
   return "sourceType" in source;
-}
-
-function overrideAppliesToSource(
-  override: SubjectOverride,
-  source: ParsedCourseSelectionRow | ExternalCourseInput
-): boolean {
-  const scopeSourceType = override.scope.sourceType ?? "all";
-
-  if (override.normalizedSubjectName !== source.normalizedSubjectName) {
-    return false;
-  }
-
-  if (
-    scopeSourceType !== "all" &&
-    scopeSourceType !==
-      (isExternalCourseInput(source) ? "externalInput" : "courseSelections")
-  ) {
-    return false;
-  }
-
-  if (override.scope.grade && override.scope.grade !== source.target.grade) {
-    return false;
-  }
-
-  if (
-    override.scope.semester &&
-    override.scope.semester !== source.target.semester
-  ) {
-    return false;
-  }
-
-  return true;
 }
 
 function findOperatingSubject(
@@ -137,51 +103,41 @@ function conflictMessagesFor(
 export function resolveSubjectMetadata({
   source,
   operatingSubjects,
-  subjectOverrides,
   subjectMasterItems = defaultSubjectMasterItems
 }: ResolveSubjectMetadataInput): ResolvedSubjectMetadata {
   const directInput = isExternalCourseInput(source) ? source : undefined;
-  const override = subjectOverrides.find((candidate) =>
-    overrideAppliesToSource(candidate, source)
-  );
   const operatingSubject = findOperatingSubject(source, operatingSubjects);
   const masterItem = findSubjectMasterItem(source, subjectMasterItems);
   const conflictMessages = conflictMessagesFor(operatingSubject, masterItem);
-  const relatedIds = [
-    override?.id,
-    operatingSubject?.id,
-    masterItem?.id
-  ].filter(Boolean) as string[];
+  const relatedIds = [operatingSubject?.id, masterItem?.id].filter(Boolean) as string[];
   const resolved = {
     subjectName: source.subjectName,
     normalizedSubjectName: source.normalizedSubjectName,
     subjectGroup:
       directInput?.subjectGroup ??
-      override?.subjectGroup ??
       operatingSubject?.subjectGroup ??
       masterItem?.subjectGroup,
     selectionType:
       directInput?.selectionType ??
-      override?.selectionType ??
       operatingSubject?.selectionType ??
       masterItem?.selectionType,
     groupType:
       directInput?.groupType ??
-      override?.groupType ??
       operatingSubject?.groupType ??
       masterItem?.groupType
   };
-  const sourceName: SubjectMetadataSource = directInput?.subjectGroup
+  const hasDirectMetadata = Boolean(
+    directInput?.subjectGroup || directInput?.selectionType || directInput?.groupType
+  );
+  const sourceName: SubjectMetadataSource = hasDirectMetadata
     ? "directInput"
-    : override
-      ? "subjectOverride"
-      : operatingSubject
-        ? "operatingSubject"
-        : masterItem
-          ? "subjectMaster"
-          : isExternalCourseInput(source)
-            ? "directInput"
-            : "rawCourseSelection";
+    : operatingSubject
+      ? "operatingSubject"
+      : masterItem
+        ? "subjectMaster"
+        : isExternalCourseInput(source)
+          ? "directInput"
+          : "rawCourseSelection";
   const complete = hasCompleteMetadata(resolved);
   const status: SubjectMetadataResolutionStatus =
     conflictMessages.length > 0

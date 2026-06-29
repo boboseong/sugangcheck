@@ -17,7 +17,7 @@ import type { ProjectState } from "../types/project";
 import type { ImportSourceType, SemesterImportStatus } from "../types/importStatus";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { Semester } from "../types/semester";
-import type { OperatingSubject, SubjectOverride } from "../types/subject";
+import type { OperatingSubject } from "../types/subject";
 import {
   createEmptySemesterImportStatus,
   createInitialImportStatuses
@@ -45,10 +45,6 @@ import {
   useStudentStore
 } from "./studentStore";
 import { useDetailedConstraintRuleStore } from "./detailedConstraintRuleStore";
-import {
-  markSubjectOverrideConflicts,
-  useSubjectOverrideStore
-} from "./subjectOverrideStore";
 import { useValidationResultStore } from "./validationResultStore";
 import { useValidationRuleSettingStore } from "./validationRuleSettingStore";
 
@@ -128,71 +124,6 @@ function replaceImportStatusForTarget(
     : [...replaced, nextStatus];
 }
 
-function subjectOverrideAppliesToOperatingSubject(
-  override: SubjectOverride,
-  subject: OperatingSubject
-): boolean {
-  const { scope } = override;
-
-  if (override.normalizedSubjectName !== subject.normalizedSubjectName) {
-    return false;
-  }
-
-  if (
-    scope.sourceType &&
-    scope.sourceType !== "all" &&
-    scope.sourceType !== "operatingSubjects"
-  ) {
-    return false;
-  }
-
-  if (scope.grade && scope.grade !== subject.target.grade) {
-    return false;
-  }
-
-  if (scope.semester && scope.semester !== subject.target.semester) {
-    return false;
-  }
-
-  return true;
-}
-
-function subjectOverridesUsedByOperatingSubjects(
-  overrides: readonly SubjectOverride[],
-  subjects: readonly OperatingSubject[]
-): SubjectOverride[] {
-  const explicitOverrideIds = new Set(
-    subjects.flatMap((subject) => (subject.overrideId ? [subject.overrideId] : []))
-  );
-
-  return overrides.filter(
-    (override) =>
-      explicitOverrideIds.has(override.id) ||
-      subjects.some(
-        (subject) =>
-          subject.masterMatchStatus === "manual" &&
-          subjectOverrideAppliesToOperatingSubject(override, subject)
-      )
-  );
-}
-
-function mergeSubjectOverridesById(
-  currentOverrides: readonly SubjectOverride[],
-  incomingOverrides: readonly SubjectOverride[]
-): SubjectOverride[] {
-  const byId = new Map<string, SubjectOverride>();
-
-  for (const override of currentOverrides) {
-    byId.set(override.id, override);
-  }
-
-  for (const override of incomingOverrides) {
-    byId.set(override.id, clone(override));
-  }
-
-  return markSubjectOverrideConflicts([...byId.values()]);
-}
-
 function rebuildPresenceFromCourseSelections(
   rows: readonly ParsedCourseSelectionRow[],
   statuses: readonly SemesterImportStatus[]
@@ -232,7 +163,6 @@ export function createEmptyProjectState(
     studentSemesterPresence: [],
     operatingSubjects: [],
     courseSelectionRows: [],
-    subjectOverrides: [],
     externalCourseInputs: [],
     validationRuleSettings: clone(defaultValidationRuleSettings),
     prerequisiteRules: clone(defaultPrerequisiteRules),
@@ -261,7 +191,6 @@ export function collectProjectState(now = new Date().toISOString()): ProjectStat
     courseSelectionRows: clone(
       useCourseSelectionRawStore.getState().courseSelectionRows
     ),
-    subjectOverrides: clone(useSubjectOverrideStore.getState().subjectOverrides),
     externalCourseInputs: clone(
       useExternalCourseInputStore.getState().externalCourseInputs
     ),
@@ -312,9 +241,6 @@ export function applyProjectState(
     useStudentSemesterPresenceStore.setState({
       studentSemesterPresence: clone(projectState.studentSemesterPresence)
     });
-    useSubjectOverrideStore.setState({
-      subjectOverrides: clone(projectState.subjectOverrides)
-    });
     useExternalCourseInputStore.setState({
       externalCourseInputs: clone(projectState.externalCourseInputs)
     });
@@ -356,9 +282,6 @@ export function importProjectSection(
       usePrerequisiteRuleStore
         .getState()
         .generateCandidatesFromOperatingSubjects(sourceState.operatingSubjects);
-      useSubjectOverrideStore.setState({
-        subjectOverrides: clone(sourceState.subjectOverrides)
-      });
       useImportStatusStore.setState((current) => ({
         importStatuses: replaceImportStatusesForSource(
           current.importStatuses,
@@ -433,25 +356,14 @@ export function importProjectSectionSemester(
       const sourceSemesterSubjects = sourceState.operatingSubjects.filter((subject) =>
         isSameSemester(subject.target, target)
       );
-      const sourceSemesterOverrides = subjectOverridesUsedByOperatingSubjects(
-        sourceState.subjectOverrides,
-        sourceSemesterSubjects
-      );
       const nextSubjects = replaceOperatingSubjectsForSemesterInList(
         useOperatingSubjectStore.getState().operatingSubjects,
         target,
         clone(sourceSemesterSubjects)
       );
-      const nextOverrides = mergeSubjectOverridesById(
-        useSubjectOverrideStore.getState().subjectOverrides,
-        sourceSemesterOverrides
-      );
 
       useOperatingSubjectStore.setState({
         operatingSubjects: nextSubjects
-      });
-      useSubjectOverrideStore.setState({
-        subjectOverrides: nextOverrides
       });
       usePrerequisiteRuleStore
         .getState()

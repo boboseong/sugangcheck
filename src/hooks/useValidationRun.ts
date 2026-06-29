@@ -6,7 +6,6 @@ import { useNormalizedCourseSelectionStore } from "../state/normalizedCourseSele
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
-import { useSubjectOverrideStore } from "../state/subjectOverrideStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
@@ -25,7 +24,6 @@ export function useValidationRun() {
   const { operatingSubjects } = useOperatingSubjectStore();
   const { prerequisiteRules } = usePrerequisiteRuleStore();
   const { studentSemesterPresence } = useStudentSemesterPresenceStore();
-  const { subjectOverrides } = useSubjectOverrideStore();
   const { validationRuleSettings } = useValidationRuleSettingStore();
   const { buildIssues, courseSelectionRecords, setBuildResult } =
     useNormalizedCourseSelectionStore();
@@ -35,7 +33,6 @@ export function useValidationRun() {
     studentSemesterPresence,
     operatingSubjects,
     courseSelectionRows,
-    subjectOverrides,
     externalCourseInputs,
     prerequisiteRules,
     validationRuleSettings
@@ -46,8 +43,7 @@ export function useValidationRun() {
       mode: "full",
       courseSelectionRows,
       externalCourseInputs,
-      operatingSubjects,
-      subjectOverrides
+      operatingSubjects
     });
     const validationResult = runValidationEngine(
       {

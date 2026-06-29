@@ -1,5 +1,5 @@
 import { Pencil, Save, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   groupTypes,
   selectionTypes,
@@ -21,11 +21,19 @@ type OperatingSubjectReviewTableProps = {
 const statusLabels: Record<OperatingSubject["masterMatchStatus"], string> = {
   matched: "마스터 일치",
   unmatched: "미등록",
-  manual: "수동 보정"
+  manual: "수동 수정"
 };
 
 const grades = [1, 2, 3] as const satisfies readonly Grade[];
 const semesterTerms = [1, 2] as const satisfies readonly SemesterTerm[];
+type SubjectFilter = "all" | OperatingSubject["masterMatchStatus"];
+type SubjectSort = "status" | "semester" | "subjectName" | "credits";
+
+const statusOrder: Record<OperatingSubject["masterMatchStatus"], number> = {
+  unmatched: 0,
+  manual: 1,
+  matched: 2
+};
 
 type Draft = {
   grade: string;
@@ -63,6 +71,42 @@ export function OperatingSubjectReviewTable({
 }: OperatingSubjectReviewTableProps) {
   const [editingSubjectId, setEditingSubjectId] = useState<string>();
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [filter, setFilter] = useState<SubjectFilter>("unmatched");
+  const [sort, setSort] = useState<SubjectSort>("status");
+  const visibleSubjects = useMemo(() => {
+    const filteredSubjects =
+      filter === "all"
+        ? subjects
+        : subjects.filter((subject) => subject.masterMatchStatus === filter);
+
+    return [...filteredSubjects].sort((left, right) => {
+      const statusDifference =
+        statusOrder[left.masterMatchStatus] - statusOrder[right.masterMatchStatus];
+      const semesterDifference =
+        left.target.grade - right.target.grade ||
+        left.target.semester - right.target.semester;
+      const nameDifference = left.subjectName.localeCompare(
+        right.subjectName,
+        "ko",
+        { numeric: true }
+      );
+      const creditDifference = left.credits - right.credits;
+
+      if (sort === "semester") {
+        return semesterDifference || statusDifference || nameDifference;
+      }
+
+      if (sort === "subjectName") {
+        return nameDifference || semesterDifference || statusDifference;
+      }
+
+      if (sort === "credits") {
+        return creditDifference || statusDifference || semesterDifference || nameDifference;
+      }
+
+      return statusDifference || semesterDifference || nameDifference;
+    });
+  }, [filter, sort, subjects]);
 
   function draftFor(subject: OperatingSubject): Draft {
     return drafts[subject.id] ?? createDraft(subject);
@@ -124,8 +168,7 @@ export function OperatingSubjectReviewTable({
       selectionType: draft.selectionType.trim() || "미확인",
       groupType: draft.groupType.trim() || undefined,
       credits,
-      masterMatchStatus: "manual",
-      overrideId: undefined
+      masterMatchStatus: "manual"
     });
     clearDraft(subject.id);
     setEditingSubjectId(undefined);
@@ -141,9 +184,36 @@ export function OperatingSubjectReviewTable({
 
   return (
     <div className="preview-table-wrap operating-subject-review">
+      <div className="table-toolbar operating-subject-review__toolbar">
+        <label>
+          <span>필터</span>
+          <select
+            onChange={(event) => setFilter(event.target.value as SubjectFilter)}
+            value={filter}
+          >
+            <option value="all">전체</option>
+            <option value="unmatched">미등록</option>
+            <option value="manual">수동 수정</option>
+            <option value="matched">마스터 일치</option>
+          </select>
+        </label>
+        <label>
+          <span>정렬</span>
+          <select
+            onChange={(event) => setSort(event.target.value as SubjectSort)}
+            value={sort}
+          >
+            <option value="status">미등록 우선</option>
+            <option value="semester">학기순</option>
+            <option value="subjectName">과목명순</option>
+            <option value="credits">학점순</option>
+          </select>
+        </label>
+      </div>
       <table className="placeholder-table">
         <thead>
           <tr>
+            <th className="operating-subject-review__actions-column">수정</th>
             <th>학기</th>
             <th>과목명</th>
             <th>학점</th>
@@ -151,17 +221,52 @@ export function OperatingSubjectReviewTable({
             <th>교과군</th>
             <th>선택구분</th>
             <th>상태</th>
-            <th>수정</th>
           </tr>
         </thead>
         <tbody>
-          {subjects.map((subject) => {
+          {visibleSubjects.length === 0 ? (
+            <tr>
+              <td colSpan={8}>필터에 맞는 운영과목이 없습니다.</td>
+            </tr>
+          ) : null}
+          {visibleSubjects.map((subject) => {
             const isEditing = editingSubjectId === subject.id;
             const draft = draftFor(subject);
             const saveDisabled = !isValidDraft(draft);
 
             return (
               <tr key={subject.id}>
+                <td className="operating-subject-review__actions-column">
+                  {isEditing ? (
+                    <div className="operating-subject-actions">
+                      <Button
+                        className="button--compact"
+                        disabled={saveDisabled}
+                        icon={<Save size={15} />}
+                        onClick={() => saveDraft(subject)}
+                      >
+                        저장
+                      </Button>
+                      <Button
+                        className="button--compact"
+                        icon={<X size={15} />}
+                        onClick={() => cancelEditing(subject)}
+                        variant="secondary"
+                      >
+                        취소
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      className="button--compact"
+                      icon={<Pencil size={15} />}
+                      onClick={() => startEditing(subject)}
+                      variant="secondary"
+                    >
+                      수정
+                    </Button>
+                  )}
+                </td>
                 <td>
                   {isEditing ? (
                     <div className="operating-subject-semester-controls">
@@ -298,37 +403,6 @@ export function OperatingSubjectReviewTable({
                   >
                     {statusLabels[subject.masterMatchStatus]}
                   </StatusBadge>
-                </td>
-                <td>
-                  {isEditing ? (
-                    <div className="operating-subject-actions">
-                      <Button
-                        className="button--compact"
-                        disabled={saveDisabled}
-                        icon={<Save size={15} />}
-                        onClick={() => saveDraft(subject)}
-                      >
-                        저장
-                      </Button>
-                      <Button
-                        className="button--compact"
-                        icon={<X size={15} />}
-                        onClick={() => cancelEditing(subject)}
-                        variant="secondary"
-                      >
-                        취소
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      className="button--compact"
-                      icon={<Pencil size={15} />}
-                      onClick={() => startEditing(subject)}
-                      variant="secondary"
-                    >
-                      수정
-                    </Button>
-                  )}
                 </td>
               </tr>
             );

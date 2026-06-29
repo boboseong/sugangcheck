@@ -31,7 +31,6 @@ const fieldLabels: Partial<Record<keyof ProjectState, string>> = {
   subjectMasterVersion: "과목마스터버전",
   subjectMasterItems: "과목마스터",
   operatingSubjects: "운영과목",
-  subjectOverrides: "과목보정",
   students: "학생목록",
   studentSemesterPresence: "학기별존재",
   courseSelectionRows: "수강신청행",
@@ -51,8 +50,7 @@ const workbookFields: Record<ProjectTransferWorkbookId, readonly (keyof ProjectS
       "importStatuses",
       "subjectMasterVersion",
       "subjectMasterItems",
-      "operatingSubjects",
-      "subjectOverrides"
+      "operatingSubjects"
     ],
     courseSelections: [
       "importStatuses",

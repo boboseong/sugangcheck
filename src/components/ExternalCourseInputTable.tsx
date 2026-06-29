@@ -183,7 +183,7 @@ export function ExternalCourseInputTable({
             }
             value={draft.sourceType}
           >
-            <option value="transfer">전입 보완</option>
+            <option value="transfer">전입</option>
             <option value="externalCourse">외부 이수</option>
           </select>
         </label>

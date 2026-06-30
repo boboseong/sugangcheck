@@ -339,26 +339,6 @@ export function ProjectManager() {
         onChange={handleImportProjectFile}
         type="file"
       />
-      <Button
-        disabled={busy || !activeProjectId}
-        icon={<Download size={16} />}
-        onClick={handleDownloadTemplatePackage}
-        variant="secondary"
-      >
-        점검자료 다운로드
-      </Button>
-      <IconButton
-        disabled={busy}
-        icon={<Upload size={18} />}
-        label="프로젝트 불러오기"
-        onClick={handleOpenImportFilePicker}
-      />
-      <IconButton
-        disabled={busy || !activeProjectId}
-        icon={<Database size={18} />}
-        label="RawData 다운로드"
-        onClick={handleDownloadRawData}
-      />
       <IconButton
         disabled={busy}
         icon={<FilePlus2 size={18} />}
@@ -377,6 +357,20 @@ export function ProjectManager() {
         label="프로젝트 이름 변경"
         onClick={handleRenameProject}
       />
+      <Button
+        disabled={busy || !activeProjectId}
+        icon={<Download size={16} />}
+        onClick={handleDownloadTemplatePackage}
+        variant="secondary"
+      >
+        점검자료 다운로드
+      </Button>
+      <IconButton
+        disabled={busy}
+        icon={<Upload size={18} />}
+        label="프로젝트 불러오기"
+        onClick={handleOpenImportFilePicker}
+      />
       <IconButton
         disabled={busy || !activeProjectId}
         icon={<RotateCcw size={18} />}
@@ -388,6 +382,12 @@ export function ProjectManager() {
         icon={<Trash2 size={18} />}
         label="모든 프로젝트 삭제"
         onClick={handleClearAllProjects}
+      />
+      <IconButton
+        disabled={busy || !activeProjectId}
+        icon={<Database size={18} />}
+        label="RawData 다운로드"
+        onClick={handleDownloadRawData}
       />
     </div>
   );

@@ -1,9 +1,12 @@
 import { create } from "zustand";
 import { defaultValidationRuleSettings } from "../data/defaultValidationRules";
+import type { ParsedCourseSelectionRow } from "../types/courseSelection";
+import type { OperatingSubject } from "../types/subject";
 import type {
   ValidationRuleId,
   ValidationRuleSetting
 } from "../types/validation";
+import { seedSemesterCreditSubjectCriteriaInSettings } from "../validation/semesterCreditSubjectCriteria";
 
 function cloneDefaultSettings(): ValidationRuleSetting[] {
   return structuredClone(defaultValidationRuleSettings);
@@ -56,6 +59,10 @@ type ValidationRuleSettingStore = {
     ruleId: ValidationRuleId,
     criteriaPatch: Record<string, unknown>
   ) => void;
+  seedCreditDifferenceCriteriaFromInputs: (input: {
+    courseSelectionRows: readonly ParsedCourseSelectionRow[];
+    operatingSubjects: readonly OperatingSubject[];
+  }) => void;
   restoreDefaultValidationRuleSettings: () => void;
 };
 
@@ -88,6 +95,17 @@ export const useValidationRuleSettingStore =
           criteriaPatch
         )
       })),
+    seedCreditDifferenceCriteriaFromInputs: (input) =>
+      set((state) => {
+        const result = seedSemesterCreditSubjectCriteriaInSettings(
+          state.validationRuleSettings,
+          input
+        );
+
+        return result.changed
+          ? { validationRuleSettings: result.settings }
+          : state;
+      }),
     restoreDefaultValidationRuleSettings: () =>
       set({ validationRuleSettings: cloneDefaultSettings() })
   }));

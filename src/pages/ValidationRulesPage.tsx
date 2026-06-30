@@ -6,6 +6,7 @@ import { PrerequisiteRuleReviewTable } from "../components/PrerequisiteRuleRevie
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
 import { readWorkbookFromFile } from "../parsers/readWorkbook";
+import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import { useDetailedConstraintRuleStore } from "../state/detailedConstraintRuleStore";
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
@@ -22,12 +23,14 @@ import { downloadBlob } from "../utils/downloadBlob";
 export function ValidationRulesPage() {
   const {
     restoreDefaultValidationRuleSettings,
+    seedCreditDifferenceCriteriaFromInputs,
     setValidationRuleSettings,
     updateRuleCriteria,
     updateRuleEnabled,
     updateRuleIncludeExternalInputs,
     validationRuleSettings
   } = useValidationRuleSettingStore();
+  const { courseSelectionRows } = useCourseSelectionRawStore();
   const { operatingSubjects } = useOperatingSubjectStore();
   const {
     generateCandidatesFromOperatingSubjects,
@@ -87,6 +90,10 @@ export function ValidationRulesPage() {
       );
 
       setValidationRuleSettings(result.validationRuleSettings);
+      seedCreditDifferenceCriteriaFromInputs({
+        courseSelectionRows,
+        operatingSubjects
+      });
       setPrerequisiteRules(result.prerequisiteRules);
       setDetailedConstraintRules(result.detailedConstraintRules);
       clearDerivedValidationState();
@@ -100,6 +107,14 @@ export function ValidationRulesPage() {
           : "점검 규칙 템플릿을 읽지 못했습니다."
       );
     }
+  }
+
+  function handleRestoreDefaults() {
+    restoreDefaultValidationRuleSettings();
+    seedCreditDifferenceCriteriaFromInputs({
+      courseSelectionRows,
+      operatingSubjects
+    });
   }
 
   return (
@@ -127,7 +142,7 @@ export function ValidationRulesPage() {
         onCriteriaChange={updateRuleCriteria}
         onEnabledChange={updateRuleEnabled}
         onIncludeExternalInputsChange={updateRuleIncludeExternalInputs}
-        onRestoreDefaults={restoreDefaultValidationRuleSettings}
+        onRestoreDefaults={handleRestoreDefaults}
         settings={validationRuleSettings}
       />
       <div className="section">

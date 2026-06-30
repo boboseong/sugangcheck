@@ -22,11 +22,13 @@ import {
   createSemesterImportStatusId,
   useImportStatusStore
 } from "../state/importStatusStore";
+import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import {
   hasCompletedOperatingSubjectReviewForSemester,
   useOperatingSubjectStore
 } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
+import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import {
   createOperatingSubjectTemplateWorkbook,
   createXlsxBlob,
@@ -129,6 +131,9 @@ export function OperatingSubjectsPage() {
   const generateCandidatesFromOperatingSubjects = usePrerequisiteRuleStore(
     (state) => state.generateCandidatesFromOperatingSubjects
   );
+  const seedCreditDifferenceCriteriaFromInputs = useValidationRuleSettingStore(
+    (state) => state.seedCreditDifferenceCriteriaFromInputs
+  );
   const [preview, setPreview] = useState<WorkbookPreviewTable>();
 
   async function importFileForSemester(
@@ -162,9 +167,13 @@ export function OperatingSubjectsPage() {
 
       setPreview(nextPreview);
       replaceOperatingSubjectsForSemester(target, parseResult.subjects);
-      generateCandidatesFromOperatingSubjects(
-        useOperatingSubjectStore.getState().operatingSubjects
-      );
+      const nextOperatingSubjects =
+        useOperatingSubjectStore.getState().operatingSubjects;
+      generateCandidatesFromOperatingSubjects(nextOperatingSubjects);
+      seedCreditDifferenceCriteriaFromInputs({
+        courseSelectionRows: useCourseSelectionRawStore.getState().courseSelectionRows,
+        operatingSubjects: nextOperatingSubjects
+      });
       setSemesterImportStatus({
         target,
         sourceType: "operatingSubjects",

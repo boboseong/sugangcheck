@@ -1192,6 +1192,13 @@ label.button {
   font-size: 15px;
 }
 
+.rule-row__description {
+  margin: 8px 0 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .rule-row__controls,
 .rule-row__criteria {
   display: flex;
@@ -1238,6 +1245,87 @@ label.button {
 .rule-row__criteria--compact input {
   min-width: 84px;
   width: 84px;
+}
+
+.rule-row__criteria--centered {
+  align-items: end;
+}
+
+.rule-row__criteria--centered label {
+  text-align: center;
+}
+
+.rule-row__criteria--centered input {
+  text-align: center;
+}
+
+.rule-row__criteria--required-credits {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+.rule-row__criteria--required-credits label {
+  width: 100%;
+}
+
+.rule-row__criteria--required-credits input {
+  width: 100%;
+  min-width: 0;
+}
+
+.rule-row__criteria-table-wrap {
+  overflow-x: auto;
+}
+
+.rule-row__criteria-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rule-row__criteria-table--matrix {
+  min-width: 760px;
+}
+
+.rule-row__criteria-table th,
+.rule-row__criteria-table td {
+  padding: 8px;
+  border-top: 1px solid #edf1f7;
+  color: #526070;
+  font-size: 13px;
+  text-align: left;
+}
+
+.rule-row__criteria-table thead th {
+  border-top: 0;
+  color: #172033;
+  font-weight: 800;
+}
+
+.rule-row__criteria-table tbody th {
+  width: 140px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.rule-row__criteria-table--matrix th,
+.rule-row__criteria-table--matrix td,
+.rule-row__criteria-table--matrix thead th,
+.rule-row__criteria-table--matrix tbody th {
+  text-align: center;
+}
+
+.rule-row__criteria-table input {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #c9d4e5;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #ffffff;
+  color: #172033;
+  text-align: center;
 }
 
 .section-heading-row {
@@ -2221,7 +2309,8 @@ label.button {
   .metric-row,
   .about-media-layout,
   .about-link-grid,
-  .change-file-grid {
+  .change-file-grid,
+  .rule-row__criteria--required-credits {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2278,6 +2367,7 @@ label.button {
   .about-media-layout,
   .about-link-grid,
   .change-file-grid,
+  .rule-row__criteria--required-credits,
   .upload-slot-grid,
   .student-search-panel,
   .external-input-form {

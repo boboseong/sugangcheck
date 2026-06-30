@@ -49,6 +49,7 @@ function recordsForSetting(
 
 export function createValidationError({
   ruleId,
+  instanceId,
   type = ruleId,
   studentId,
   studentNo,
@@ -59,7 +60,9 @@ export function createValidationError({
   fixHint
 }: CreateValidationErrorInput): ValidationError {
   return {
-    id: `${ruleId}-${studentId}-${relatedRecordIds.join("-")}`,
+    id: [ruleId, instanceId, studentId, relatedRecordIds.join("-")]
+      .filter(Boolean)
+      .join("-"),
     ruleId,
     type,
     studentId,

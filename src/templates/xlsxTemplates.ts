@@ -5,7 +5,7 @@ import type {
   ExternalCourseInputSourceType,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
-import type { Semester, SemesterTerm } from "../types/semester";
+import { semesterKeys, type Semester, type SemesterKey, type SemesterTerm } from "../types/semester";
 import type { Student } from "../types/student";
 import type { OperatingSubject } from "../types/subject";
 import type {
@@ -22,8 +22,15 @@ import {
   createGeneratedStudentNo,
   createStudentAuxiliaryKey
 } from "../utils/studentKey";
-import { semesterLabel } from "../utils/semester";
+import { parseSemesterKey, semesterLabel } from "../utils/semester";
 import { validationRuleLabels } from "../utils/validationRuleLabels";
+import {
+  formatAllowedValues,
+  getSemesterCreditSubjectCriteria,
+  parseAllowedValuesText,
+  semesterCreditSubjectCriteriaByKey,
+  semesterCreditSubjectCriteriaKey
+} from "../validation/semesterCreditSubjectCriteria";
 
 export const templateFileNames = {
   operatingSubject: "운영과목_템플릿.xlsx",
@@ -112,8 +119,42 @@ const validationRuleSettingHeaderAliases: HeaderAliases = {
   ruleId: ["검사 ID", "규칙 ID", "ID"],
   label: ["검사명", "검사", "규칙명", "점검 항목"],
   enabled: ["사용 여부", "점검 여부", "사용", "점검"],
-  includeExternalInputs: ["전입/외부 포함", "외부 포함", "전입외부 포함"]
+  includeExternalInputs: ["전입/외부 포함", "외부 포함", "전입외부 포함"],
+  ...Object.fromEntries(
+    semesterKeys.flatMap((key) => {
+      const target = parseSemesterKey(key)!;
+
+      return [
+        [
+          semesterAllowedCreditsField(key),
+          [
+            `${semesterLabel(target)} 학점 허용값`,
+            `${key} 학점 허용값`,
+            `${semesterLabel(target)} 이수학점`,
+            `${key} 이수학점`
+          ]
+        ],
+        [
+          semesterAllowedSubjectCountsField(key),
+          [
+            `${semesterLabel(target)} 과목 수 허용값`,
+            `${key} 과목 수 허용값`,
+            `${semesterLabel(target)} 과목 허용값`,
+            `${key} 과목 허용값`
+          ]
+        ]
+      ];
+    })
+  )
 };
+
+function semesterAllowedCreditsField(key: SemesterKey): string {
+  return `${key}-allowedCredits`;
+}
+
+function semesterAllowedSubjectCountsField(key: SemesterKey): string {
+  return `${key}-allowedSubjectCounts`;
+}
 
 function compactString(value: unknown): string {
   return String(value ?? "").normalize("NFKC").trim().replace(/\s+/g, " ");
@@ -514,12 +555,32 @@ function validationRuleIdFromTemplateRow(input: {
 function validationRuleSettingRows(
   settings: readonly ValidationRuleSetting[]
 ): unknown[][] {
-  return settings.map((setting) => [
-    setting.id,
-    validationRuleLabels[setting.id],
-    booleanLabel(setting.enabled),
-    booleanLabel(setting.includeExternalInputs)
-  ]);
+  return settings.map((setting) => {
+    const semesterCriteria =
+      setting.id === "creditDifference"
+        ? semesterCreditSubjectCriteriaByKey(
+            getSemesterCreditSubjectCriteria(setting.criteria)
+          )
+        : undefined;
+    const semesterCells = semesterKeys.flatMap((key) => {
+      const criteria = semesterCriteria?.get(key);
+
+      return criteria
+        ? [
+            formatAllowedValues(criteria.allowedCredits),
+            formatAllowedValues(criteria.allowedSubjectCounts)
+          ]
+        : ["", ""];
+    });
+
+    return [
+      setting.id,
+      validationRuleLabels[setting.id],
+      booleanLabel(setting.enabled),
+      booleanLabel(setting.includeExternalInputs),
+      ...semesterCells
+    ];
+  });
 }
 
 function operatingSubjectRows(
@@ -1033,8 +1094,22 @@ export function createValidationRulesTemplateWorkbook(input: {
   detailedConstraintRules: readonly DetailedConstraintRule[];
 }): WorkBook {
   const workbook = utils.book_new();
+  const semesterSettingHeaders = semesterKeys.flatMap((key) => {
+    const target = parseSemesterKey(key)!;
+
+    return [
+      `${semesterLabel(target)} 학점 허용값`,
+      `${semesterLabel(target)} 과목 수 허용값`
+    ];
+  });
   const settingsSheet = utils.aoa_to_sheet([
-    ["검사 ID", "검사명", "사용 여부", "전입/외부 포함"],
+    [
+      "검사 ID",
+      "검사명",
+      "사용 여부",
+      "전입/외부 포함",
+      ...semesterSettingHeaders
+    ],
     ...validationRuleSettingRows(input.validationRuleSettings)
   ]);
   const prerequisiteSheet = utils.aoa_to_sheet([
@@ -1063,7 +1138,13 @@ export function createValidationRulesTemplateWorkbook(input: {
     ...detailedConstraintSubjectRows(input.detailedConstraintRules)
   ]);
 
-  settingsSheet["!cols"] = [28, 30, 14, 18].map((wch) => ({ wch }));
+  settingsSheet["!cols"] = [
+    28,
+    30,
+    14,
+    18,
+    ...Array(semesterSettingHeaders.length).fill(20)
+  ].map((wch) => ({ wch }));
   prerequisiteSheet["!cols"] = [14, 24, 24, 14, 18].map((wch) => ({ wch }));
   detailedSummarySheet["!cols"] = [
     14,
@@ -1088,7 +1169,14 @@ export function createValidationRulesTemplateWorkbook(input: {
 
   addInstructionSheet(workbook, [
     ["항목", "작성 방법"],
-    ["점검설정", "첫 번째 시트에서 각 검사별 사용 여부와 전입/외부 포함 여부를 예/아니오로 입력합니다."],
+    [
+      "점검설정",
+      "첫 번째 시트에서 각 검사별 사용 여부와 전입/외부 포함 여부를 예/아니오로 입력합니다."
+    ],
+    [
+      "학기별 허용값",
+      "학기별 이수학점/과목 수 행에는 여러 값을 쉼표로 구분해 입력할 수 있습니다."
+    ],
     ["위계설정", "과목 위계 점검에 필요한 선이수/후이수 과목과 병행 허용 여부를 입력합니다."],
     ["세부제약", "연계과목 또는 기타제한 규칙을 입력합니다."],
     ["기타제한과목", "세부제약 시트의 기타제한 규칙명에 연결할 과목 목록을 입력합니다."]
@@ -1564,6 +1652,94 @@ export function parseDetailedConstraintRuleTemplateWorkbook(
   return { rules };
 }
 
+function parseAllowedValuesTemplateCell(input: {
+  columnIndex?: number;
+  issues: ParseIssue[];
+  label: string;
+  row: unknown[];
+  rowNumber: number;
+}): { valid: boolean; values?: number[] } {
+  if (input.columnIndex === undefined) {
+    return { valid: true };
+  }
+
+  const raw = compactString(valueAt(input.row, input.columnIndex));
+
+  if (!raw) {
+    return { valid: true, values: [0] };
+  }
+
+  const parts = raw
+    .split(/[\s,;/]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const invalid = parts.some((part) => {
+    const parsed = Number(part);
+
+    return !Number.isFinite(parsed) || parsed < 0;
+  });
+
+  if (invalid) {
+    input.issues.push({
+      rowNumber: input.rowNumber,
+      message: `${input.label}은 0 이상의 숫자 또는 쉼표로 구분한 숫자여야 합니다.`
+    });
+
+    return { valid: false };
+  }
+
+  return { valid: true, values: parseAllowedValuesText(raw) };
+}
+
+function parseCreditDifferenceCriteriaFromTemplateRow(input: {
+  columnMap: Record<string, number | undefined>;
+  currentSetting?: ValidationRuleSetting;
+  issues: ParseIssue[];
+  row: unknown[];
+  rowNumber: number;
+}): { criteria?: Record<string, unknown>; valid: boolean } {
+  const baseCriteria = input.currentSetting?.criteria ?? {};
+  const currentSemesterCriteria = getSemesterCreditSubjectCriteria(baseCriteria);
+  let valid = true;
+
+  const semesterCreditSubjectCriteria = currentSemesterCriteria.map((criteria) => {
+    const key = `${criteria.target.grade}-${criteria.target.semester}` as SemesterKey;
+    const credits = parseAllowedValuesTemplateCell({
+      columnIndex: input.columnMap[semesterAllowedCreditsField(key)],
+      issues: input.issues,
+      label: `${semesterLabel(criteria.target)} 학점 허용값`,
+      row: input.row,
+      rowNumber: input.rowNumber
+    });
+    const subjectCounts = parseAllowedValuesTemplateCell({
+      columnIndex: input.columnMap[semesterAllowedSubjectCountsField(key)],
+      issues: input.issues,
+      label: `${semesterLabel(criteria.target)} 과목 수 허용값`,
+      row: input.row,
+      rowNumber: input.rowNumber
+    });
+
+    if (!credits.valid || !subjectCounts.valid) {
+      valid = false;
+    }
+
+    return {
+      ...criteria,
+      allowedCredits: credits.values ?? criteria.allowedCredits,
+      allowedSubjectCounts:
+        subjectCounts.values ?? criteria.allowedSubjectCounts
+    };
+  });
+
+  return {
+    valid,
+    criteria: {
+      ...baseCriteria,
+      [semesterCreditSubjectCriteriaKey]: semesterCreditSubjectCriteria
+    }
+  };
+}
+
 function parseValidationRuleSettingsTemplateSheet(
   workbook: WorkBook,
   currentSettings: readonly ValidationRuleSetting[]
@@ -1578,7 +1754,9 @@ function parseValidationRuleSettingsTemplateSheet(
   const issues: ParseIssue[] = [];
   const parsedSettings = new Map<
     ValidationRuleId,
-    Pick<ValidationRuleSetting, "enabled" | "includeExternalInputs">
+    Pick<ValidationRuleSetting, "enabled" | "includeExternalInputs"> & {
+      criteria?: Record<string, unknown>;
+    }
   >();
 
   matrix.slice(headerRowIndex + 1).forEach((row, offset) => {
@@ -1603,6 +1781,19 @@ function parseValidationRuleSettingsTemplateSheet(
       issues,
       rowNumber
     );
+    const currentSetting = ruleId
+      ? currentSettings.find((setting) => setting.id === ruleId)
+      : undefined;
+    const criteriaResult =
+      ruleId === "creditDifference"
+        ? parseCreditDifferenceCriteriaFromTemplateRow({
+            columnMap,
+            currentSetting,
+            issues,
+            row,
+            rowNumber
+          })
+        : { valid: true };
 
     if (!ruleId) {
       issues.push({
@@ -1620,11 +1811,19 @@ function parseValidationRuleSettingsTemplateSheet(
       return;
     }
 
-    if (enabled === undefined || includeExternalInputs === undefined) {
+    if (
+      enabled === undefined ||
+      includeExternalInputs === undefined ||
+      !criteriaResult.valid
+    ) {
       return;
     }
 
-    parsedSettings.set(ruleId, { enabled, includeExternalInputs });
+    parsedSettings.set(ruleId, {
+      enabled,
+      includeExternalInputs,
+      criteria: criteriaResult.criteria
+    });
   });
 
   if (parsedSettings.size === 0) {
@@ -1647,6 +1846,7 @@ function parseValidationRuleSettingsTemplateSheet(
       ? {
           ...setting,
           ...parsed,
+          criteria: parsed.criteria ?? setting.criteria,
           updatedAt: now
         }
       : setting;

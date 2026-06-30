@@ -3,7 +3,14 @@ import type {
   ValidationRuleId,
   ValidationRuleSetting
 } from "../types/validation";
+import { semesterToKey } from "../utils/semester";
 import { validationRuleLabels } from "../utils/validationRuleLabels";
+import {
+  formatAllowedValues,
+  getSemesterCreditSubjectCriteria,
+  parseAllowedValuesText,
+  semesterCreditSubjectCriteriaKey
+} from "../validation/semesterCreditSubjectCriteria";
 import { Button } from "./ui/Button";
 import { StatusBadge } from "./ui/StatusBadge";
 
@@ -22,16 +29,15 @@ type ValidationRuleSettingsFormProps = {
 };
 
 const compactRuleIds = new Set<ValidationRuleId>([
-  "creditDifference",
   "duplicateSubjects",
   "koreanMathEnglishLimit"
 ]);
 
 const displayRuleIds: ValidationRuleId[] = [
   "duplicateSubjects",
-  "creditDifference",
   "subjectMetadataMismatch",
   "koreanMathEnglishLimit",
+  "creditDifference",
   "requiredSubjectGroupCredits"
 ];
 
@@ -186,7 +192,7 @@ export function ValidationRuleSettingsForm({
             </label>
           </div>
         </div>
-        <div className="rule-row__criteria">
+        <div className="rule-row__criteria rule-row__criteria--centered rule-row__criteria--required-credits">
           {renderMinimumCreditsCriteria(minimumCreditsSetting)}
           {criteriaArray(
             subjectGroupSetting.criteria,
@@ -231,6 +237,114 @@ export function ValidationRuleSettingsForm({
               )}
             />
           </label>
+        </div>
+      </section>
+    );
+  }
+
+  function renderCreditDifferenceCriteria(setting: ValidationRuleSetting) {
+    const semesterCriteria = getSemesterCreditSubjectCriteria(setting.criteria);
+
+    function updateSemesterCriteria(
+      targetKey: string,
+      patch: {
+        allowedCredits?: number[];
+        allowedSubjectCounts?: number[];
+      }
+    ) {
+      onCriteriaChange(setting.id, {
+        [semesterCreditSubjectCriteriaKey]: semesterCriteria.map((criteria) =>
+          semesterToKey(criteria.target) === targetKey
+            ? {
+                ...criteria,
+                ...patch
+              }
+            : criteria
+        )
+      });
+    }
+
+    return (
+      <section className="rule-row" key={setting.id}>
+        <div className="rule-row__header">
+          <div>
+            <h2>{validationRuleLabels[setting.id]}</h2>
+            {renderStatusBadge(setting)}
+            <p className="rule-row__description">
+              여러 허용값은 쉼표로 입력할 수 있습니다.
+            </p>
+          </div>
+          {renderRuleControls(setting)}
+        </div>
+        <div className="rule-row__criteria-table-wrap">
+          <table className="rule-row__criteria-table rule-row__criteria-table--matrix">
+            <thead>
+              <tr>
+                <th>학기</th>
+                {semesterCriteria.map((criteria) => {
+                  const targetKey = semesterToKey(criteria.target);
+
+                  return <th key={targetKey}>{targetKey}</th>;
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">학점 허용값</th>
+                {semesterCriteria.map((criteria) => {
+                  const targetKey = semesterToKey(criteria.target);
+
+                  return (
+                    <td key={targetKey}>
+                      <input
+                        defaultValue={formatAllowedValues(criteria.allowedCredits)}
+                        inputMode="numeric"
+                        key={`${targetKey}-credits-${formatAllowedValues(
+                          criteria.allowedCredits
+                        )}`}
+                        onBlur={(event) =>
+                          updateSemesterCriteria(targetKey, {
+                            allowedCredits: parseAllowedValuesText(
+                              event.target.value
+                            )
+                          })
+                        }
+                        type="text"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+              <tr>
+                <th scope="row">과목 수 허용값</th>
+                {semesterCriteria.map((criteria) => {
+                  const targetKey = semesterToKey(criteria.target);
+
+                  return (
+                    <td key={targetKey}>
+                      <input
+                        defaultValue={formatAllowedValues(
+                          criteria.allowedSubjectCounts
+                        )}
+                        inputMode="numeric"
+                        key={`${targetKey}-subjects-${formatAllowedValues(
+                          criteria.allowedSubjectCounts
+                        )}`}
+                        onBlur={(event) =>
+                          updateSemesterCriteria(targetKey, {
+                            allowedSubjectCounts: parseAllowedValuesText(
+                              event.target.value
+                            )
+                          })
+                        }
+                        type="text"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     );
@@ -327,6 +441,10 @@ export function ValidationRuleSettingsForm({
               koreanHistorySetting
             );
           }
+        }
+
+        if (setting.id === "creditDifference") {
+          return renderCreditDifferenceCriteria(setting);
         }
 
         if (compactRuleIds.has(setting.id)) {

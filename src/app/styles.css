@@ -1903,13 +1903,6 @@ label.button {
   margin-top: 18px;
 }
 
-.danger-action-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .error-filter-bar {
   justify-content: flex-start;
 }

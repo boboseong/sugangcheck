@@ -3,7 +3,6 @@ import {
   FileSpreadsheet,
   Home,
   ListChecks,
-  Lock,
   Settings,
   Upload,
   UserRoundPlus,
@@ -19,8 +18,7 @@ const navItems = [
   { to: "/validation-rules", label: "점검 규칙", icon: Settings },
   { to: "/results", label: "점검 결과", icon: ListChecks },
   { to: "/student-report", label: "학생별 확인서", icon: ClipboardCheck },
-  { to: "/misc-tools", label: "기타 도구", icon: Wrench },
-  { to: "/privacy", label: "개인정보", icon: Lock }
+  { to: "/misc-tools", label: "기타 도구", icon: Wrench }
 ];
 
 export function Navigation() {

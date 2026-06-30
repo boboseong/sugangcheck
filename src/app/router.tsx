@@ -6,7 +6,6 @@ import { ExternalCoursesPage } from "../pages/ExternalCoursesPage";
 import { HomePage } from "../pages/HomePage";
 import { MiscToolsPage } from "../pages/MiscToolsPage";
 import { OperatingSubjectsPage } from "../pages/OperatingSubjectsPage";
-import { PrivacyNoticePage } from "../pages/PrivacyNoticePage";
 import { StudentReportPage } from "../pages/StudentReportPage";
 import { ValidationResultsPage } from "../pages/ValidationResultsPage";
 import { ValidationRulesPage } from "../pages/ValidationRulesPage";
@@ -24,8 +23,7 @@ export const router = createHashRouter([
       { path: "results", element: <ValidationResultsPage /> },
       { path: "student-report", element: <StudentReportPage /> },
       { path: "misc-tools", element: <MiscToolsPage /> },
-      { path: "about", element: <AboutPage /> },
-      { path: "privacy", element: <PrivacyNoticePage /> }
+      { path: "about", element: <AboutPage /> }
     ]
   }
 ]);

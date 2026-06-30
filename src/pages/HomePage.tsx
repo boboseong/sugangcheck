@@ -30,7 +30,7 @@ export function HomePage() {
       <PageHeader
         title="수강신청 오류 점검"
         className="page-header--single-line-description"
-        description="인터넷 연결없이 안정적인 사용을 위해 GitHub에서 Windows 실행 파일을 내려받아 사용하세요. 저장소에서는 릴리스 내역과 변경 사항을 확인할 수 있습니다."
+        description="학생들의 수강신청 결과를 점검하기 위한 앱입니다. 모든 정보는 오프라인으로 처리되며 서버에 업로드 되는 자료는 없습니다."
         versionLabel={`ver ${appVersion}`}
       />
 
@@ -46,11 +46,7 @@ export function HomePage() {
       >
         <div>
           <h2 id="dashboard-release-title">로컬 앱 다운로드</h2>
-          <p>
-            인터넷 연결이 불안정한 환경에서는 GitHub 최신 릴리스에서
-            Windows 실행 파일을 내려받아 사용하세요. 저장소에서는 릴리스 내역과
-            변경 사항을 확인할 수 있습니다.
-          </p>
+          <p>인터넷 연결없이 안정적인 사용을 위해 GitHub에서 Windows 실행 파일을 내려받아 사용하세요. 저장소에서는 릴리스 내역과 변경 사항을 확인할 수 있습니다</p>
         </div>
         <div className="dashboard-release-panel__actions">
           <a

@@ -1,7 +1,7 @@
 {
   "name": "sugangcheck",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -39,5 +39,23 @@
     "typescript": "6.0.3",
     "vite": "8.1.0",
     "vitest": "4.1.9"
-  }
+  },
+  "description": "",
+  "main": "vite.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boboseong/sugangcheck.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "types": "./vite.config.d.ts",
+  "bugs": {
+    "url": "https://github.com/boboseong/sugangcheck/issues"
+  },
+  "homepage": "https://github.com/boboseong/sugangcheck#readme"
 }

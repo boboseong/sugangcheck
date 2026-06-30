@@ -18,7 +18,6 @@ export function AppLayout() {
           <img className="brand__icon" src={sugangcheckIcon} alt="" aria-hidden="true" />
           <div className="brand__text">
             <p className="brand__title">수강신청 오류 점검</p>
-            <p className="brand__subtitle">브라우저 로컬 전용 점검 도구</p>
           </div>
         </div>
         <Navigation />

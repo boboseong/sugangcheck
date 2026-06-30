@@ -46,11 +46,7 @@ export function HomePage() {
       >
         <div>
           <h2 id="dashboard-release-title">로컬 앱 다운로드</h2>
-          <p>
-            인터넷 연결이 불안정한 환경에서는 GitHub 최신 릴리스에서
-            Windows 실행 파일을 내려받아 사용하세요. 저장소에서는 릴리스 내역과
-            변경 사항을 확인할 수 있습니다.
-          </p>
+          <p>인터넷 연결없이 안정적인 사용을 위해 GitHub에서 Windows 실행 파일을 내려받아 사용하세요. 저장소에서는 릴리스 내역과 변경 사항을 확인할 수 있습니다</p>
         </div>
         <div className="dashboard-release-panel__actions">
           <a

@@ -82,13 +82,6 @@ textarea {
   color: #172033;
 }
 
-.brand__subtitle {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #667085;
-}
-
 .nav {
   display: grid;
   gap: 4px;
@@ -2211,6 +2204,10 @@ label.button {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.student-report-page .report-actions {
+  margin-top: 20px;
 }
 
 .report-actions__next-error {

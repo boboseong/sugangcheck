@@ -133,7 +133,7 @@ export function StudentReportPage() {
   }
 
   return (
-    <section className="page">
+    <section className="page student-report-page">
       <PageHeader
         title="학생별 확인서"
         description="학생 1명의 6개 학기 수강 계획, 교과군별 학점 요약, 오류 내용을 확인서 형태로 확인합니다."

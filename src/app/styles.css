@@ -1194,6 +1194,42 @@ label.button {
   text-decoration: underline;
 }
 
+.non-overlapping-subject-table-wrap {
+  overflow-x: auto;
+}
+
+.non-overlapping-subject-table {
+  min-width: 980px;
+}
+
+.non-overlapping-subject-table th:nth-child(2),
+.non-overlapping-subject-table td:nth-child(2),
+.non-overlapping-subject-table th:nth-child(6),
+.non-overlapping-subject-table td:nth-child(6) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.non-overlapping-subject-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.non-overlapping-subject-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid #c9d4e5;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #243447;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 .subject-enrollment-modal {
   position: fixed;
   inset: 0;

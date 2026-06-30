@@ -13,13 +13,7 @@ import {
   exportValidationErrorsXlsx,
   validationErrorListFileName
 } from "../export/exportValidationErrorsXlsx";
-import {
-  createTeacherSharePackage,
-  teacherSharePackageFileName
-} from "../export/exportTeacherSharePackage";
 import { useValidationRun } from "../hooks/useValidationRun";
-import { useProjectMetaStore } from "../state/projectMetaStore";
-import { useStudentStore } from "../state/studentStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import { downloadBlob } from "../utils/downloadBlob";
 
@@ -35,11 +29,8 @@ export function ValidationResultsPage() {
     hasOperatingSubjectRegistrationIssue,
     runValidation
   } = useValidationRun();
-  const { projectName } = useProjectMetaStore();
-  const { students } = useStudentStore();
   const { lastValidationResult, validationErrors } = useValidationResultStore();
   const [filters, setFilters] = useState(defaultFilters);
-  const [isCreatingTeacherShare, setIsCreatingTeacherShare] = useState(false);
   const [
     showOperatingSubjectRegistrationNotice,
     setShowOperatingSubjectRegistrationNotice
@@ -76,30 +67,6 @@ export function ValidationResultsPage() {
     );
   }
 
-  async function handleDownloadTeacherShare() {
-    if (!canRunValidation || isCreatingTeacherShare) {
-      return;
-    }
-
-    setIsCreatingTeacherShare(true);
-
-    try {
-      const generatedAt = new Date();
-      const { buildResult, validationResult } = runValidation();
-      const blob = await createTeacherSharePackage({
-        projectName,
-        generatedAt,
-        students,
-        courseSelectionRecords: buildResult.records,
-        validationErrors: validationResult.errors
-      });
-
-      await downloadBlob(blob, teacherSharePackageFileName(generatedAt));
-    } finally {
-      setIsCreatingTeacherShare(false);
-    }
-  }
-
   return (
     <section className="page">
       <PageHeader
@@ -130,17 +97,6 @@ export function ValidationResultsPage() {
         >
           <Download size={16} />
           <span>오류 명렬 다운로드</span>
-        </button>
-        <button
-          className="button button--secondary button--compact"
-          disabled={!canRunValidation || isCreatingTeacherShare}
-          onClick={handleDownloadTeacherShare}
-          type="button"
-        >
-          <Download size={16} />
-          <span>
-            {isCreatingTeacherShare ? "공유 ZIP 생성 중" : "교사용 공유 ZIP"}
-          </span>
         </button>
         {lastValidationResult ? (
           <span className="muted-text">

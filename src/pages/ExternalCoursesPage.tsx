@@ -57,6 +57,10 @@ export function ExternalCoursesPage() {
     () => new Map(students.map((student) => [student.studentId, student])),
     [students]
   );
+  const studentsWithExternalInputs = useMemo(
+    () => new Set(externalCourseInputs.map((input) => input.studentId)),
+    [externalCourseInputs]
+  );
   const missingStudentCandidates = useMemo(
     () =>
       studentSemesterPresence
@@ -71,8 +75,12 @@ export function ExternalCoursesPage() {
             missingSemesters
           };
         })
-        .filter((candidate) => candidate.missingSemesters.length > 0),
-    [studentById, studentSemesterPresence]
+        .filter(
+          (candidate) =>
+            candidate.missingSemesters.length > 0 &&
+            !studentsWithExternalInputs.has(candidate.studentId)
+        ),
+    [studentById, studentSemesterPresence, studentsWithExternalInputs]
   );
   const missingStudentIds = useMemo(
     () => new Set(missingStudentCandidates.map((candidate) => candidate.studentId)),
@@ -191,7 +199,7 @@ export function ExternalCoursesPage() {
         <h2>누락 학생 후보</h2>
         {missingStudentCandidates.length === 0 ? (
           <div className="empty-panel">
-            <p>수강신청 결과에서 누락으로 표시된 학생이 없습니다.</p>
+            <p>전입/외부 입력이 필요한 누락 학생이 없습니다.</p>
           </div>
         ) : (
           <div className="preview-table-wrap">

@@ -115,6 +115,21 @@ function reviewIssueMessage(status: SemesterImportStatus): string {
   return `${label} 업로드 확인이 필요합니다${detail}`;
 }
 
+function countMissingExternalCourseStudents(input: {
+  externalCourseInputs: readonly ExternalCourseInput[];
+  studentSemesterPresence: readonly StudentSemesterPresence[];
+}): number {
+  const studentIdsWithExternalInputs = new Set(
+    input.externalCourseInputs.map((externalInput) => externalInput.studentId)
+  );
+
+  return input.studentSemesterPresence.filter(
+    (presence) =>
+      Object.values(presence.semesters).some((value) => value === "absent") &&
+      !studentIdsWithExternalInputs.has(presence.studentId)
+  ).length;
+}
+
 export function checkDataPreparationStatus(input: {
   importStatuses: readonly SemesterImportStatus[];
   studentSemesterPresence: readonly StudentSemesterPresence[];
@@ -150,10 +165,11 @@ export function checkDataPreparationStatus(input: {
         .length,
     0
   );
+  const unregisteredOperatingSubjectCount = input.operatingSubjects.filter(
+    (subject) => subject.masterMatchStatus === "unmatched"
+  ).length;
   const hasUnregisteredOperatingSubjectInfo =
-    input.operatingSubjects.some(
-      (subject) => subject.masterMatchStatus === "unmatched"
-    );
+    unregisteredOperatingSubjectCount > 0;
   const resolutionStatus = checkSubjectResolutionStatus({
     courseSelectionRows: input.courseSelectionRows,
     externalCourseInputs: input.externalCourseInputs,
@@ -162,6 +178,10 @@ export function checkDataPreparationStatus(input: {
   const incompleteExternalCourseInputCount = input.externalCourseInputs.filter(
     (externalInput) => !externalInput.subjectName || externalInput.credits === undefined
   ).length;
+  const missingExternalCourseStudentCount = countMissingExternalCourseStudents({
+    externalCourseInputs: input.externalCourseInputs,
+    studentSemesterPresence: input.studentSemesterPresence
+  });
   const pendingPrerequisiteCandidateCount = input.prerequisiteRules.filter(
     (rule) => rule.status === "candidate"
   ).length;
@@ -271,8 +291,10 @@ export function checkDataPreparationStatus(input: {
     counts: {
       operatingSubjectsByStatus,
       courseSelectionsByStatus,
+      unregisteredOperatingSubjectCount,
       unknownStudentSemesterCount,
       absentStudentSemesterCount,
+      missingExternalCourseStudentCount,
       missingCreditSubjectCount: resolutionStatus.missingCreditCount,
       incompleteExternalCourseInputCount,
       pendingPrerequisiteCandidateCount

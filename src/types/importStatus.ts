@@ -40,8 +40,10 @@ export type DataPreparationIssue = {
 export type DataPreparationCounts = {
   operatingSubjectsByStatus: Record<ImportStatus, number>;
   courseSelectionsByStatus: Record<ImportStatus, number>;
+  unregisteredOperatingSubjectCount: number;
   unknownStudentSemesterCount: number;
   absentStudentSemesterCount: number;
+  missingExternalCourseStudentCount: number;
   missingCreditSubjectCount: number;
   incompleteExternalCourseInputCount: number;
   pendingPrerequisiteCandidateCount: number;

@@ -463,6 +463,16 @@ textarea {
   line-height: 1.7;
 }
 
+.page-header--single-line-description p {
+  max-width: none;
+}
+
+@media (min-width: 1120px) {
+  .page-header--single-line-description p {
+    white-space: nowrap;
+  }
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -520,6 +530,73 @@ textarea {
   font-size: 24px;
   line-height: 1;
   font-weight: 800;
+}
+
+.workflow-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workflow-card {
+  min-height: 206px;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(44px, 1fr) auto;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.workflow-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #2457d6;
+}
+
+.workflow-card h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.workflow-card__value {
+  margin: 0;
+  color: #172033;
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.workflow-card__detail {
+  margin: 0;
+  color: #526070;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.workflow-card__action,
+.workflow-card__validation-action {
+  align-self: end;
+  justify-self: start;
+}
+
+.workflow-card__blocked {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #526070;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .section {
@@ -2140,6 +2217,7 @@ label.button {
   }
 
   .dashboard-grid,
+  .workflow-card-grid,
   .metric-row,
   .about-media-layout,
   .about-link-grid,
@@ -2195,6 +2273,7 @@ label.button {
 
   .nav,
   .dashboard-grid,
+  .workflow-card-grid,
   .metric-row,
   .about-media-layout,
   .about-link-grid,

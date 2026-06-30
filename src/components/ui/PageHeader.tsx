@@ -1,12 +1,18 @@
 type PageHeaderProps = {
+  className?: string;
   title: string;
   description: string;
   versionLabel?: string;
 };
 
-export function PageHeader({ title, description, versionLabel }: PageHeaderProps) {
+export function PageHeader({
+  className,
+  title,
+  description,
+  versionLabel
+}: PageHeaderProps) {
   return (
-    <header className="page-header">
+    <header className={className ? `page-header ${className}` : "page-header"}>
       <div className="page-header__title-row">
         <h1>{title}</h1>
         {versionLabel ? (

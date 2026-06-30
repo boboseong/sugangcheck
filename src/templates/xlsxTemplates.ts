@@ -54,6 +54,14 @@ export type ValidationRulesTemplateParseResult = {
   detailedConstraintRules: DetailedConstraintRule[];
 };
 
+type TemplateWorkbookOptions = {
+  includeExamples?: boolean;
+};
+
+type TemplateParseOptions = {
+  allowEmpty?: boolean;
+};
+
 type ParseIssue = {
   rowNumber: number;
   message: string;
@@ -112,7 +120,8 @@ const validationRuleSettingHeaderAliases: HeaderAliases = {
   ruleId: ["검사 ID", "규칙 ID", "ID"],
   label: ["검사명", "검사", "규칙명", "점검 항목"],
   enabled: ["사용 여부", "점검 여부", "사용", "점검"],
-  includeExternalInputs: ["전입/외부 포함", "외부 포함", "전입외부 포함"]
+  includeExternalInputs: ["전입/외부 포함", "외부 포함", "전입외부 포함"],
+  criteria: ["세부 기준(JSON)", "세부 기준", "기준", "criteria"]
 };
 
 function compactString(value: unknown): string {
@@ -518,15 +527,19 @@ function validationRuleSettingRows(
     setting.id,
     validationRuleLabels[setting.id],
     booleanLabel(setting.enabled),
-    booleanLabel(setting.includeExternalInputs)
+    booleanLabel(setting.includeExternalInputs),
+    JSON.stringify(setting.criteria)
   ]);
 }
 
 function operatingSubjectRows(
-  subjects: readonly OperatingSubject[] | undefined
+  subjects: readonly OperatingSubject[] | undefined,
+  options: TemplateWorkbookOptions = {}
 ): unknown[][] {
   if (!subjects || subjects.length === 0) {
-    return [[1, 1, "공통국어1", 4, "국어", "공통", "보통교과", 120]];
+    return options.includeExamples === false
+      ? []
+      : [[1, 1, "공통국어1", 4, "국어", "공통", "보통교과", 120]];
   }
 
   return subjects.map((subject) => [
@@ -586,10 +599,13 @@ function defaultCourseSelectionRows(target: Semester): unknown[][] {
 
 function courseSelectionRows(
   rows: readonly ParsedCourseSelectionRow[] | undefined,
-  target: Semester
+  target: Semester,
+  options: TemplateWorkbookOptions = {}
 ): unknown[][] {
   if (!rows || rows.length === 0) {
-    return defaultCourseSelectionRows(target);
+    return options.includeExamples === false
+      ? []
+      : defaultCourseSelectionRows(target);
   }
 
   const targetRows = rows.filter((row) => isSameTarget(row, target));
@@ -669,42 +685,44 @@ function courseSelectionWidths(
 function externalCourseRows(input?: {
   inputs: readonly ExternalCourseInput[];
   students: readonly Student[];
-}): unknown[][] {
+}, options: TemplateWorkbookOptions = {}): unknown[][] {
   if (!input || input.inputs.length === 0) {
-    return [
-      [
-        "10101",
-        1,
-        1,
-        1,
-        1,
-        "김하나",
-        "공통국어1",
-        "국어",
-        "공통",
-        "보통교과",
-        4,
-        "전입",
-        "이전 학교",
-        ""
-      ],
-      [
-        "10103",
-        1,
-        2,
-        1,
-        3,
-        "박세린",
-        "온라인 공동교육과정",
-        "교양",
-        "진로",
-        "보통교과",
-        2,
-        "외부이수",
-        "공동교육과정",
-        ""
-      ]
-    ];
+    return options.includeExamples === false
+      ? []
+      : [
+          [
+            "10101",
+            1,
+            1,
+            1,
+            1,
+            "김하나",
+            "공통국어1",
+            "국어",
+            "공통",
+            "보통교과",
+            4,
+            "전입",
+            "이전 학교",
+            ""
+          ],
+          [
+            "10103",
+            1,
+            2,
+            1,
+            3,
+            "박세린",
+            "온라인 공동교육과정",
+            "교양",
+            "진로",
+            "보통교과",
+            2,
+            "외부이수",
+            "공동교육과정",
+            ""
+          ]
+        ];
   }
 
   const studentById = new Map(
@@ -734,13 +752,16 @@ function externalCourseRows(input?: {
 }
 
 function prerequisiteRuleRows(
-  rules: readonly PrerequisiteRule[] | undefined
+  rules: readonly PrerequisiteRule[] | undefined,
+  options: TemplateWorkbookOptions = {}
 ): unknown[][] {
   if (!rules || rules.length === 0) {
-    return [
-      ["사용", "물리학", "역학과 에너지", "예", "예"],
-      ["미사용", "공통수학1", "공통수학2", "아니오", "예"]
-    ];
+    return options.includeExamples === false
+      ? []
+      : [
+          ["사용", "물리학", "역학과 에너지", "예", "예"],
+          ["미사용", "공통수학1", "공통수학2", "아니오", "예"]
+        ];
   }
 
   return rules.map((rule) => [
@@ -753,39 +774,42 @@ function prerequisiteRuleRows(
 }
 
 function detailedConstraintSummaryRows(
-  rules: readonly DetailedConstraintRule[] | undefined
+  rules: readonly DetailedConstraintRule[] | undefined,
+  options: TemplateWorkbookOptions = {}
 ): unknown[][] {
   if (!rules || rules.length === 0) {
-    return [
-      [
-        "사용",
-        "연계과목",
-        "물리학-역학 연계",
-        2,
-        1,
-        "물리학",
-        2,
-        2,
-        "역학과 에너지",
-        "",
-        "",
-        "예"
-      ],
-      [
-        "사용",
-        "기타제한",
-        "과학 선택 3개 이상",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "n개 이상이면 검출",
-        3,
-        "예"
-      ]
-    ];
+    return options.includeExamples === false
+      ? []
+      : [
+          [
+            "사용",
+            "연계과목",
+            "물리학-역학 연계",
+            2,
+            1,
+            "물리학",
+            2,
+            2,
+            "역학과 에너지",
+            "",
+            "",
+            "예"
+          ],
+          [
+            "사용",
+            "기타제한",
+            "과학 선택 3개 이상",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "n개 이상이면 검출",
+            3,
+            "예"
+          ]
+        ];
   }
 
   return rules.map((rule) => {
@@ -824,14 +848,17 @@ function detailedConstraintSummaryRows(
 }
 
 function detailedConstraintSubjectRows(
-  rules: readonly DetailedConstraintRule[] | undefined
+  rules: readonly DetailedConstraintRule[] | undefined,
+  options: TemplateWorkbookOptions = {}
 ): unknown[][] {
   if (!rules || rules.length === 0) {
-    return [
-      ["과학 선택 3개 이상", 2, 1, "물리학"],
-      ["과학 선택 3개 이상", 2, 1, "화학"],
-      ["과학 선택 3개 이상", 2, 2, "생명과학"]
-    ];
+    return options.includeExamples === false
+      ? []
+      : [
+          ["과학 선택 3개 이상", 2, 1, "물리학"],
+          ["과학 선택 3개 이상", 2, 1, "화학"],
+          ["과학 선택 3개 이상", 2, 2, "생명과학"]
+        ];
   }
 
   return rules.flatMap((rule) =>
@@ -858,7 +885,8 @@ export function createXlsxBlob(workbook: WorkBook): Blob {
 }
 
 export function createOperatingSubjectTemplateWorkbook(
-  subjects?: readonly OperatingSubject[]
+  subjects?: readonly OperatingSubject[],
+  options: TemplateWorkbookOptions = {}
 ): WorkBook {
   const workbook = workbookFromSheet(
     "운영과목",
@@ -873,7 +901,7 @@ export function createOperatingSubjectTemplateWorkbook(
         "과목구분",
         "수강인원"
       ],
-      ...operatingSubjectRows(subjects)
+      ...operatingSubjectRows(subjects, options)
     ],
     [10, 10, 24, 12, 16, 14, 14, 12]
   );
@@ -889,14 +917,15 @@ export function createOperatingSubjectTemplateWorkbook(
 }
 
 export function createCourseSelectionTemplateWorkbook(
-  rows?: readonly ParsedCourseSelectionRow[]
+  rows?: readonly ParsedCourseSelectionRow[],
+  options: TemplateWorkbookOptions = {}
 ): WorkBook {
   const workbook = utils.book_new();
 
   courseSelectionTemplateTargets.forEach((target) => {
     const sheet = utils.aoa_to_sheet([
       courseSelectionHeaders(rows, target),
-      ...courseSelectionRows(rows, target)
+      ...courseSelectionRows(rows, target, options)
     ]);
 
     sheet["!cols"] = courseSelectionWidths(rows, target).map((wch) => ({
@@ -919,7 +948,7 @@ export function createCourseSelectionTemplateWorkbook(
 export function createExternalCourseTemplateWorkbook(input?: {
   inputs: readonly ExternalCourseInput[];
   students: readonly Student[];
-}): WorkBook {
+}, options: TemplateWorkbookOptions = {}): WorkBook {
   const workbook = workbookFromSheet(
     "전입외부이수",
     [
@@ -939,7 +968,7 @@ export function createExternalCourseTemplateWorkbook(input?: {
         "기관명",
         "메모"
       ],
-      ...externalCourseRows(input)
+      ...externalCourseRows(input, options)
     ],
     [14, 10, 10, 10, 10, 16, 26, 16, 14, 14, 10, 14, 20, 28]
   );
@@ -955,13 +984,14 @@ export function createExternalCourseTemplateWorkbook(input?: {
 }
 
 export function createPrerequisiteRuleTemplateWorkbook(
-  rules?: readonly PrerequisiteRule[]
+  rules?: readonly PrerequisiteRule[],
+  options: TemplateWorkbookOptions = {}
 ): WorkBook {
   const workbook = workbookFromSheet(
     "위계설정",
     [
       ["점검 여부", "선이수 과목", "후이수 과목", "병행 허용", "전입/외부 포함"],
-      ...prerequisiteRuleRows(rules)
+      ...prerequisiteRuleRows(rules, options)
     ],
     [14, 24, 24, 14, 18]
   );
@@ -977,7 +1007,8 @@ export function createPrerequisiteRuleTemplateWorkbook(
 }
 
 export function createDetailedConstraintRuleTemplateWorkbook(
-  rules?: readonly DetailedConstraintRule[]
+  rules?: readonly DetailedConstraintRule[],
+  options: TemplateWorkbookOptions = {}
 ): WorkBook {
   const workbook = utils.book_new();
   const summarySheet = utils.aoa_to_sheet([
@@ -995,11 +1026,11 @@ export function createDetailedConstraintRuleTemplateWorkbook(
       "기준 개수",
       "전입/외부 포함"
     ],
-    ...detailedConstraintSummaryRows(rules)
+    ...detailedConstraintSummaryRows(rules, options)
   ]);
   const subjectSheet = utils.aoa_to_sheet([
     ["규칙명", "학년", "학기", "과목명"],
-    ...detailedConstraintSubjectRows(rules)
+    ...detailedConstraintSubjectRows(rules, options)
   ]);
 
   summarySheet["!cols"] = [14, 14, 24, 12, 12, 24, 12, 12, 24, 20, 12, 18].map(
@@ -1031,15 +1062,15 @@ export function createValidationRulesTemplateWorkbook(input: {
   validationRuleSettings: readonly ValidationRuleSetting[];
   prerequisiteRules: readonly PrerequisiteRule[];
   detailedConstraintRules: readonly DetailedConstraintRule[];
-}): WorkBook {
+}, options: TemplateWorkbookOptions = {}): WorkBook {
   const workbook = utils.book_new();
   const settingsSheet = utils.aoa_to_sheet([
-    ["검사 ID", "검사명", "사용 여부", "전입/외부 포함"],
+    ["검사 ID", "검사명", "사용 여부", "전입/외부 포함", "세부 기준(JSON)"],
     ...validationRuleSettingRows(input.validationRuleSettings)
   ]);
   const prerequisiteSheet = utils.aoa_to_sheet([
     ["점검 여부", "선이수 과목", "후이수 과목", "병행 허용", "전입/외부 포함"],
-    ...prerequisiteRuleRows(input.prerequisiteRules)
+    ...prerequisiteRuleRows(input.prerequisiteRules, options)
   ]);
   const detailedSummarySheet = utils.aoa_to_sheet([
     [
@@ -1056,14 +1087,14 @@ export function createValidationRulesTemplateWorkbook(input: {
       "기준 개수",
       "전입/외부 포함"
     ],
-    ...detailedConstraintSummaryRows(input.detailedConstraintRules)
+    ...detailedConstraintSummaryRows(input.detailedConstraintRules, options)
   ]);
   const detailedSubjectSheet = utils.aoa_to_sheet([
     ["규칙명", "학년", "학기", "과목명"],
-    ...detailedConstraintSubjectRows(input.detailedConstraintRules)
+    ...detailedConstraintSubjectRows(input.detailedConstraintRules, options)
   ]);
 
-  settingsSheet["!cols"] = [28, 30, 14, 18].map((wch) => ({ wch }));
+  settingsSheet["!cols"] = [28, 30, 14, 18, 42].map((wch) => ({ wch }));
   prerequisiteSheet["!cols"] = [14, 24, 24, 14, 18].map((wch) => ({ wch }));
   detailedSummarySheet["!cols"] = [
     14,
@@ -1088,7 +1119,7 @@ export function createValidationRulesTemplateWorkbook(input: {
 
   addInstructionSheet(workbook, [
     ["항목", "작성 방법"],
-    ["점검설정", "첫 번째 시트에서 각 검사별 사용 여부와 전입/외부 포함 여부를 예/아니오로 입력합니다."],
+    ["점검설정", "첫 번째 시트에서 각 검사별 사용 여부, 전입/외부 포함 여부, 세부 기준을 입력합니다."],
     ["위계설정", "과목 위계 점검에 필요한 선이수/후이수 과목과 병행 허용 여부를 입력합니다."],
     ["세부제약", "연계과목 또는 기타제한 규칙을 입력합니다."],
     ["기타제한과목", "세부제약 시트의 기타제한 규칙명에 연결할 과목 목록을 입력합니다."]
@@ -1099,7 +1130,8 @@ export function createValidationRulesTemplateWorkbook(input: {
 
 export function parseExternalCourseTemplateWorkbook(
   workbook: WorkBook,
-  currentStudents: readonly Student[]
+  currentStudents: readonly Student[],
+  options: TemplateParseOptions = {}
 ): ExternalCourseTemplateParseResult {
   const matrix = firstSheetMatrix(workbook, "전입/외부 이수");
   const { headerRowIndex, columnMap } = findHeaderRow(
@@ -1219,7 +1251,7 @@ export function parseExternalCourseTemplateWorkbook(
     summarizeIssues("전입/외부 이수", issues);
   }
 
-  if (inputs.length === 0) {
+  if (inputs.length === 0 && !options.allowEmpty) {
     throw new Error("전입/외부 이수 템플릿에 가져올 행이 없습니다.");
   }
 
@@ -1231,7 +1263,8 @@ export function parseExternalCourseTemplateWorkbook(
 }
 
 export function parsePrerequisiteRuleTemplateWorkbook(
-  workbook: WorkBook
+  workbook: WorkBook,
+  options: TemplateParseOptions = {}
 ): PrerequisiteRuleTemplateParseResult {
   const matrix = workbook.Sheets["위계설정"]
     ? sheetMatrixByName(workbook, "위계설정", "위계 설정")
@@ -1319,7 +1352,7 @@ export function parsePrerequisiteRuleTemplateWorkbook(
     summarizeIssues("위계 설정", issues);
   }
 
-  if (rules.length === 0) {
+  if (rules.length === 0 && !options.allowEmpty) {
     throw new Error("위계 설정 템플릿에 가져올 행이 없습니다.");
   }
 
@@ -1396,7 +1429,8 @@ function detailedConstraintSubjectMapFromWorkbook(
 }
 
 export function parseDetailedConstraintRuleTemplateWorkbook(
-  workbook: WorkBook
+  workbook: WorkBook,
+  options: TemplateParseOptions = {}
 ): DetailedConstraintRuleTemplateParseResult {
   const matrix = sheetMatrixByName(workbook, "세부제약", "세부 제약");
   const { headerRowIndex, columnMap } = findHeaderRow(
@@ -1557,7 +1591,7 @@ export function parseDetailedConstraintRuleTemplateWorkbook(
     summarizeIssues("세부 제약", issues);
   }
 
-  if (rules.length === 0) {
+  if (rules.length === 0 && !options.allowEmpty) {
     throw new Error("세부 제약 템플릿에 가져올 행이 없습니다.");
   }
 
@@ -1566,7 +1600,8 @@ export function parseDetailedConstraintRuleTemplateWorkbook(
 
 function parseValidationRuleSettingsTemplateSheet(
   workbook: WorkBook,
-  currentSettings: readonly ValidationRuleSetting[]
+  currentSettings: readonly ValidationRuleSetting[],
+  options: TemplateParseOptions = {}
 ): ValidationRuleSetting[] {
   const matrix = sheetMatrixByName(workbook, "점검설정", "점검 설정");
   const { headerRowIndex, columnMap } = findHeaderRow(
@@ -1578,7 +1613,9 @@ function parseValidationRuleSettingsTemplateSheet(
   const issues: ParseIssue[] = [];
   const parsedSettings = new Map<
     ValidationRuleId,
-    Pick<ValidationRuleSetting, "enabled" | "includeExternalInputs">
+    Pick<ValidationRuleSetting, "enabled" | "includeExternalInputs"> & {
+      criteria?: Record<string, unknown>;
+    }
   >();
 
   matrix.slice(headerRowIndex + 1).forEach((row, offset) => {
@@ -1603,6 +1640,8 @@ function parseValidationRuleSettingsTemplateSheet(
       issues,
       rowNumber
     );
+    let criteria: Record<string, unknown> | undefined;
+    const rawCriteria = compactString(valueAt(row, columnMap.criteria));
 
     if (!ruleId) {
       issues.push({
@@ -1620,14 +1659,40 @@ function parseValidationRuleSettingsTemplateSheet(
       return;
     }
 
+    if (rawCriteria) {
+      try {
+        const parsedCriteria: unknown = JSON.parse(rawCriteria);
+
+        if (
+          typeof parsedCriteria === "object" &&
+          parsedCriteria !== null &&
+          !Array.isArray(parsedCriteria)
+        ) {
+          criteria = parsedCriteria as Record<string, unknown>;
+        } else {
+          issues.push({
+            rowNumber,
+            message: "세부 기준은 JSON 객체 형식으로 입력하세요."
+          });
+          return;
+        }
+      } catch {
+        issues.push({
+          rowNumber,
+          message: "세부 기준 JSON을 해석하지 못했습니다."
+        });
+        return;
+      }
+    }
+
     if (enabled === undefined || includeExternalInputs === undefined) {
       return;
     }
 
-    parsedSettings.set(ruleId, { enabled, includeExternalInputs });
+    parsedSettings.set(ruleId, { enabled, includeExternalInputs, criteria });
   });
 
-  if (parsedSettings.size === 0) {
+  if (parsedSettings.size === 0 && !options.allowEmpty) {
     issues.push({
       rowNumber: headerRowIndex + 1,
       message: "가져올 점검 설정 행이 없습니다."
@@ -1647,6 +1712,7 @@ function parseValidationRuleSettingsTemplateSheet(
       ? {
           ...setting,
           ...parsed,
+          criteria: parsed.criteria ?? setting.criteria,
           updatedAt: now
         }
       : setting;
@@ -1655,15 +1721,17 @@ function parseValidationRuleSettingsTemplateSheet(
 
 export function parseValidationRulesTemplateWorkbook(
   workbook: WorkBook,
-  currentSettings: readonly ValidationRuleSetting[]
+  currentSettings: readonly ValidationRuleSetting[],
+  options: TemplateParseOptions = {}
 ): ValidationRulesTemplateParseResult {
   return {
     validationRuleSettings: parseValidationRuleSettingsTemplateSheet(
       workbook,
-      currentSettings
+      currentSettings,
+      options
     ),
-    prerequisiteRules: parsePrerequisiteRuleTemplateWorkbook(workbook).rules,
+    prerequisiteRules: parsePrerequisiteRuleTemplateWorkbook(workbook, options).rules,
     detailedConstraintRules:
-      parseDetailedConstraintRuleTemplateWorkbook(workbook).rules
+      parseDetailedConstraintRuleTemplateWorkbook(workbook, options).rules
   };
 }

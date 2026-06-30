@@ -9,7 +9,30 @@ import { StudentCourseReport } from "../reports/StudentCourseReport";
 import { printStudentReport } from "../reports/printStudentReport";
 import { useStudentStore } from "../state/studentStore";
 import { useValidationResultStore } from "../state/validationResultStore";
+import type { CourseSelectionRecord } from "../types/courseSelection";
 import type { Student } from "../types/student";
+import type { ValidationError } from "../types/validation";
+
+const emptyCourseSelectionRecords: readonly CourseSelectionRecord[] = [];
+const emptyValidationErrors: readonly ValidationError[] = [];
+const allStudentPrintConfirmMessage =
+  "오랜 시간이 소요됩니다. 반별 출력을 권장합니다.";
+
+function groupByStudentId<T extends { studentId: string }>(items: readonly T[]): Map<string, T[]> {
+  const groupedItems = new Map<string, T[]>();
+
+  for (const item of items) {
+    const existingItems = groupedItems.get(item.studentId);
+
+    if (existingItems) {
+      existingItems.push(item);
+    } else {
+      groupedItems.set(item.studentId, [item]);
+    }
+  }
+
+  return groupedItems;
+}
 
 export function StudentReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,7 +46,20 @@ export function StudentReportPage() {
   const [reportStudentIds, setReportStudentIds] = useState<string[] | undefined>();
   const [printRequestCount, setPrintRequestCount] = useState(0);
   const [classPrintOpen, setClassPrintOpen] = useState(false);
+  const [allPrintConfirmOpen, setAllPrintConfirmOpen] = useState(false);
   const [selectedPrintClassNo, setSelectedPrintClassNo] = useState("");
+  const studentIndexById = useMemo(
+    () => new Map(students.map((student, index) => [student.studentId, index])),
+    [students]
+  );
+  const recordsByStudentId = useMemo(
+    () => groupByStudentId(courseSelectionRecords),
+    [courseSelectionRecords]
+  );
+  const errorsByStudentId = useMemo(
+    () => groupByStudentId(validationErrors),
+    [validationErrors]
+  );
   const selectedStudent =
     students.find((student) => student.studentId === selectedStudentId) ?? students[0];
   const classOptions = useMemo(
@@ -50,25 +86,27 @@ export function StudentReportPage() {
       return errorStudents[0];
     }
 
-    const selectedStudentIndex = students.findIndex(
-      (student) => student.studentId === selectedStudent.studentId
-    );
+    const selectedStudentIndex = studentIndexById.get(selectedStudent.studentId) ?? -1;
 
     return (
       errorStudents.find(
         (student) =>
-          students.findIndex((candidate) => candidate.studentId === student.studentId) >
-          selectedStudentIndex
+          (studentIndexById.get(student.studentId) ?? -1) > selectedStudentIndex
       ) ?? errorStudents[0]
     );
-  }, [errorStudents, selectedStudent, students]);
-  const reportStudents = reportStudentIds
-    ? students.filter((student) => reportStudentIds.includes(student.studentId))
-    : selectedStudent
-      ? [selectedStudent]
-      : [];
-  const selectedClassStudents = students.filter(
-    (student) => student.currentClassNo === selectedPrintClassNo
+  }, [errorStudents, selectedStudent, studentIndexById]);
+  const reportStudents = useMemo(() => {
+    if (!reportStudentIds) {
+      return selectedStudent ? [selectedStudent] : [];
+    }
+
+    const reportStudentIdSet = new Set(reportStudentIds);
+
+    return students.filter((student) => reportStudentIdSet.has(student.studentId));
+  }, [reportStudentIds, selectedStudent, students]);
+  const selectedClassStudents = useMemo(
+    () => students.filter((student) => student.currentClassNo === selectedPrintClassNo),
+    [selectedPrintClassNo, students]
   );
 
   useEffect(() => {
@@ -86,12 +124,18 @@ export function StudentReportPage() {
       return undefined;
     }
 
+    const handleAfterPrint = () => {
+      setReportStudentIds(undefined);
+    };
     const timeoutId = window.setTimeout(() => {
       printStudentReport();
     }, 0);
 
+    window.addEventListener("afterprint", handleAfterPrint);
+
     return () => {
       window.clearTimeout(timeoutId);
+      window.removeEventListener("afterprint", handleAfterPrint);
     };
   }, [printRequestCount]);
 
@@ -124,12 +168,23 @@ export function StudentReportPage() {
         ? selectedStudent.currentClassNo
         : classOptions[0] ?? ""
     );
+    setAllPrintConfirmOpen(false);
     setClassPrintOpen(true);
   }
 
   function printSelectedClass() {
     printStudents(selectedClassStudents);
     setClassPrintOpen(false);
+  }
+
+  function printAllStudents() {
+    setClassPrintOpen(false);
+    setAllPrintConfirmOpen(true);
+  }
+
+  function confirmAllStudentPrint() {
+    printStudents(students);
+    setAllPrintConfirmOpen(false);
   }
 
   return (
@@ -165,7 +220,7 @@ export function StudentReportPage() {
         <Button
           disabled={students.length === 0}
           icon={<Users size={18} />}
-          onClick={() => printStudents(students)}
+          onClick={printAllStudents}
           variant="secondary"
         >
           전체 학생 출력
@@ -187,6 +242,31 @@ export function StudentReportPage() {
           오류 학생 출력
         </Button>
       </div>
+      {allPrintConfirmOpen ? (
+        <div
+          aria-labelledby="all-print-confirm-title"
+          className="all-print-confirm-panel"
+          role="dialog"
+        >
+          <div>
+            <h2 id="all-print-confirm-title">전체 학생 출력</h2>
+            <p>{allStudentPrintConfirmMessage}</p>
+            <strong>{students.length}명</strong>
+          </div>
+          <div className="all-print-confirm-panel__actions">
+            <Button
+              disabled={students.length === 0}
+              icon={<Printer size={18} />}
+              onClick={confirmAllStudentPrint}
+            >
+              전체 출력
+            </Button>
+            <Button onClick={() => setAllPrintConfirmOpen(false)} variant="secondary">
+              취소
+            </Button>
+          </div>
+        </div>
+      ) : null}
       {classPrintOpen ? (
         <div className="class-print-panel">
           <label>
@@ -224,9 +304,9 @@ export function StudentReportPage() {
         ) : (
           reportStudents.map((student) => (
             <StudentCourseReport
-              errors={validationErrors}
+              errors={errorsByStudentId.get(student.studentId) ?? emptyValidationErrors}
               key={student.studentId}
-              records={courseSelectionRecords}
+              records={recordsByStudentId.get(student.studentId) ?? emptyCourseSelectionRecords}
               student={student}
             />
           ))

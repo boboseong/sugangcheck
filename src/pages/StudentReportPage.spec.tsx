@@ -92,6 +92,7 @@ describe("StudentReportPage", () => {
 
   afterEach(() => {
     resetStores();
+    vi.restoreAllMocks();
   });
 
   it("reflects operating subject changes made after course selection records were built", async () => {
@@ -176,5 +177,91 @@ describe("StudentReportPage", () => {
     expect(screen.getByRole("combobox", { name: "학생" })).toHaveValue(
       nextErrorStudent.studentId
     );
+  });
+
+  it("clears bulk print reports after the print dialog closes", async () => {
+    const printSpy = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    const anotherStudent = {
+      ...student,
+      studentId: "student-3",
+      studentNo: "10103",
+      name: "박전체",
+      currentNumber: "3"
+    };
+
+    useStudentStore.setState({ students: [student, anotherStudent] });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <StudentReportPage />
+        </MemoryRouter>
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "전체 학생 출력" }));
+
+    const confirmDialog = screen.getByRole("dialog", { name: "전체 학생 출력" });
+
+    expect(
+      within(confirmDialog).getByText("오랜 시간이 소요됩니다. 반별 출력을 권장합니다.")
+    ).toBeInTheDocument();
+    fireEvent.click(within(confirmDialog).getByRole("button", { name: "전체 출력" }));
+    expect(
+      screen.getByRole("heading", { name: "김학생 - 수강신청 확인서" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "박전체 - 수강신청 확인서" })
+    ).toBeInTheDocument();
+    await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1));
+
+    window.dispatchEvent(new Event("afterprint"));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "박전체 - 수강신청 확인서" })
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("heading", { name: "김학생 - 수강신청 확인서" })
+    ).toBeInTheDocument();
+  });
+
+  it("does not start all-student printing when the confirmation is canceled", async () => {
+    const printSpy = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    const anotherStudent = {
+      ...student,
+      studentId: "student-3",
+      studentNo: "10103",
+      name: "박전체",
+      currentNumber: "3"
+    };
+
+    useStudentStore.setState({ students: [student, anotherStudent] });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <StudentReportPage />
+        </MemoryRouter>
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "전체 학생 출력" }));
+
+    const confirmDialog = screen.getByRole("dialog", { name: "전체 학생 출력" });
+
+    expect(
+      within(confirmDialog).getByText("오랜 시간이 소요됩니다. 반별 출력을 권장합니다.")
+    ).toBeInTheDocument();
+    fireEvent.click(within(confirmDialog).getByRole("button", { name: "취소" }));
+    expect(printSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "전체 학생 출력" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "김학생 - 수강신청 확인서" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "박전체 - 수강신청 확인서" })
+    ).not.toBeInTheDocument();
   });
 });

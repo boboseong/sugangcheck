@@ -178,8 +178,8 @@ export function StudentCourseReport({
     );
   }
 
-  const studentRecords = records.filter((record) => record.studentId === student.studentId);
-  const studentErrors = errors.filter((error) => error.studentId === student.studentId);
+  const studentRecords = records;
+  const studentErrors = errors;
   const semesterSummaries = buildSemesterRecordSummaries(studentRecords);
   const maxSemesterRecordCount = Math.max(
     1,

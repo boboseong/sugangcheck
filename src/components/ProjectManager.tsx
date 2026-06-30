@@ -1,12 +1,12 @@
 import {
   Copy,
+  Database,
   Download,
   FilePlus2,
   Pencil,
   RotateCcw,
   Trash2,
-  Upload,
-  X
+  Upload
 } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
@@ -28,19 +28,17 @@ import {
   saveCurrentProjectSnapshot
 } from "../state/projectWorkspace";
 import {
-  allProjectTransferSections,
-  createProjectTransferState,
-  hasAllProjectTransferSections,
-  projectTransferSections,
-  shouldIncludeValidationResultsInTransfer,
-  type ProjectTransferSection
-} from "../state/projectTransfer";
-import { createProjectFile } from "../storage/projectFileExport";
+  createProjectFile,
+  createProjectFileBlob,
+  projectFileName
+} from "../storage/projectFileExport";
 import {
-  createProjectTransferPackageBlob,
-  projectTransferPackageFileName,
   readProjectTransferFile
 } from "../storage/projectTransferPackage";
+import {
+  createProjectTemplatePackageBlob,
+  projectTemplatePackageFileName
+} from "../storage/projectTemplatePackage";
 import { downloadBlob } from "../utils/downloadBlob";
 
 function projectNameFromPrompt(message: string, defaultValue: string) {
@@ -54,15 +52,7 @@ export function ProjectManager() {
   const { activeProjectId, projectName, setProjectName } = useProjectMetaStore();
   const [projects, setProjects] = useState<StoredProjectSummary[]>([]);
   const [busy, setBusy] = useState(false);
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [selectedExportSections, setSelectedExportSections] = useState<
-    ProjectTransferSection[]
-  >([...allProjectTransferSections]);
-  const [includeValidationResults, setIncludeValidationResults] = useState(true);
   const importFileInputRef = useRef<HTMLInputElement>(null);
-  const allExportSectionsSelected = hasAllProjectTransferSections(
-    selectedExportSections
-  );
 
   async function refreshProjects() {
     setProjects(await listProjectRecords());
@@ -97,71 +87,41 @@ export function ProjectManager() {
     }
   }
 
-  function setExportSections(nextSections: ProjectTransferSection[]) {
-    setSelectedExportSections(nextSections);
-    setIncludeValidationResults(hasAllProjectTransferSections(nextSections));
-  }
-
-  function handleToggleExportSection(
-    section: ProjectTransferSection,
-    checked: boolean
-  ) {
-    const nextSections = checked
-      ? [...new Set([...selectedExportSections, section])]
-      : selectedExportSections.filter((selectedSection) => selectedSection !== section);
-
-    setExportSections(nextSections);
-  }
-
-  function handleToggleAllExportSections(checked: boolean) {
-    setExportSections(checked ? [...allProjectTransferSections] : []);
-  }
-
-  function handleOpenExportDialog() {
-    setExportSections([...allProjectTransferSections]);
-    setExportDialogOpen(true);
-  }
-
-  function handleExportProject() {
-    if (selectedExportSections.length === 0) {
-      window.alert("내보낼 항목을 하나 이상 선택해 주세요.");
-      return;
-    }
-
+  function handleDownloadTemplatePackage() {
     void runProjectAction(async () => {
       const savedAt = new Date();
       const savedAtText = savedAt.toISOString();
       const sourceState = collectProjectState(savedAtText);
-      const includesValidationResults = shouldIncludeValidationResultsInTransfer({
-        sections: selectedExportSections,
-        includeValidationResults,
-        savedAt: savedAtText
-      });
-      const transferState = createProjectTransferState(sourceState, {
-        sections: selectedExportSections,
-        includeValidationResults,
-        savedAt: savedAtText
-      });
       const projectFile = createProjectFile({
         appVersion,
         projectName: sourceState.projectName,
-        state: transferState,
+        state: sourceState,
         savedAt: savedAtText
       });
-      const blob = await createProjectTransferPackageBlob({
-        projectFile,
-        selectedSections: selectedExportSections,
-        includesValidationResults
+
+      await downloadBlob(
+        await createProjectTemplatePackageBlob({ projectFile }),
+        projectTemplatePackageFileName(sourceState.projectName, savedAt)
+      );
+    });
+  }
+
+  function handleDownloadRawData() {
+    void runProjectAction(async () => {
+      const savedAt = new Date();
+      const savedAtText = savedAt.toISOString();
+      const sourceState = collectProjectState(savedAtText);
+      const projectFile = createProjectFile({
+        appVersion,
+        projectName: sourceState.projectName,
+        state: sourceState,
+        savedAt: savedAtText
       });
 
-      const saved = await downloadBlob(
-        blob,
-        projectTransferPackageFileName(sourceState.projectName, savedAt)
+      await downloadBlob(
+        createProjectFileBlob(projectFile),
+        projectFileName(sourceState.projectName, savedAt)
       );
-
-      if (saved) {
-        setExportDialogOpen(false);
-      }
     });
   }
 
@@ -188,7 +148,8 @@ export function ProjectManager() {
 
     void runProjectAction(async () => {
       await saveCurrentProjectSnapshot();
-      const { projectFile } = await readProjectTransferFile(file);
+      const result = await readProjectTransferFile(file);
+      const { projectFile } = result;
       const record = await createProjectRecord({
         appVersion,
         projectName: projectFile.projectName,
@@ -200,6 +161,24 @@ export function ProjectManager() {
         activeProjectId: record.id,
         savedAt: record.savedAt
       });
+
+      if (result.importKind === "templatePackage") {
+        if (result.autoValidationRan) {
+          window.alert(
+            `템플릿 데이터를 가져오고 점검을 자동 실행했습니다. 오류 ${projectFile.data.validationErrors.length.toLocaleString()}건이 결과에 반영되었습니다.`
+          );
+        } else {
+          const issues =
+            result.dataPreparationStatus?.issues
+              .slice(0, 5)
+              .map((issue) => `- ${issue.message}`)
+              .join("\n") || "- 점검 실행 조건을 만족하지 못했습니다.";
+
+          window.alert(
+            `템플릿 데이터를 가져왔지만 자동 점검은 실행하지 못했습니다.\n${issues}`
+          );
+        }
+      }
     });
   }
 
@@ -355,22 +334,30 @@ export function ProjectManager() {
       </label>
       <input
         ref={importFileInputRef}
-        accept=".sugangcheck.zip,.zip,.sugangcheck.json,.json,application/json,application/zip"
+        accept=".zip,.sugangcheck.zip,.sugangcheck.json,.json,application/json,application/zip"
         className="visually-hidden"
         onChange={handleImportProjectFile}
         type="file"
       />
-      <IconButton
+      <Button
         disabled={busy || !activeProjectId}
-        icon={<Download size={18} />}
-        label="프로젝트 내보내기"
-        onClick={handleOpenExportDialog}
-      />
+        icon={<Download size={16} />}
+        onClick={handleDownloadTemplatePackage}
+        variant="secondary"
+      >
+        점검자료 다운로드
+      </Button>
       <IconButton
         disabled={busy}
         icon={<Upload size={18} />}
         label="프로젝트 불러오기"
         onClick={handleOpenImportFilePicker}
+      />
+      <IconButton
+        disabled={busy || !activeProjectId}
+        icon={<Database size={18} />}
+        label="RawData 다운로드"
+        onClick={handleDownloadRawData}
       />
       <IconButton
         disabled={busy}
@@ -402,96 +389,6 @@ export function ProjectManager() {
         label="모든 프로젝트 삭제"
         onClick={handleClearAllProjects}
       />
-      {exportDialogOpen ? (
-        <div className="project-transfer-modal" role="presentation">
-          <div
-            aria-labelledby="project-transfer-title"
-            aria-modal="true"
-            className="project-transfer-dialog"
-            role="dialog"
-          >
-            <div className="project-transfer-dialog__header">
-              <h2 id="project-transfer-title">프로젝트 내보내기</h2>
-              <IconButton
-                disabled={busy}
-                icon={<X size={18} />}
-                label="내보내기 창 닫기"
-                onClick={() => setExportDialogOpen(false)}
-              />
-            </div>
-            <p className="project-transfer-dialog__warning">
-              선택한 항목에는 학생 이름, 학번 등 개인정보가 포함될 수 있습니다.
-            </p>
-            <fieldset className="project-transfer-dialog__fieldset">
-              <legend>내보낼 항목</legend>
-              <label className="project-transfer-option project-transfer-option--all">
-                <input
-                  checked={allExportSectionsSelected}
-                  disabled={busy}
-                  onChange={(event) =>
-                    handleToggleAllExportSections(event.target.checked)
-                  }
-                  type="checkbox"
-                />
-                <span>전체 데이터</span>
-              </label>
-              <div className="project-transfer-dialog__options">
-                {projectTransferSections.map((section) => (
-                  <label className="project-transfer-option" key={section.id}>
-                    <input
-                      checked={selectedExportSections.includes(section.id)}
-                      disabled={busy}
-                      onChange={(event) =>
-                        handleToggleExportSection(section.id, event.target.checked)
-                      }
-                      type="checkbox"
-                    />
-                    <span>{section.label}</span>
-                  </label>
-                ))}
-              </div>
-              <label
-                className={[
-                  "project-transfer-option",
-                  !allExportSectionsSelected ? "project-transfer-option--disabled" : ""
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <input
-                  checked={allExportSectionsSelected && includeValidationResults}
-                  disabled={busy || !allExportSectionsSelected}
-                  onChange={(event) =>
-                    setIncludeValidationResults(event.target.checked)
-                  }
-                  type="checkbox"
-                />
-                <span>점검 결과</span>
-              </label>
-              <p className="project-transfer-dialog__note">
-                선택한 항목은 각각 xlsx 파일로 변환되어 zip 안에 저장됩니다.
-                점검 결과는 전체 데이터를 내보낼 때에만 포함됩니다.
-              </p>
-            </fieldset>
-            <div className="project-transfer-dialog__actions">
-              <Button
-                disabled={busy}
-                onClick={() => setExportDialogOpen(false)}
-                variant="secondary"
-              >
-                취소
-              </Button>
-              <Button
-                disabled={busy || selectedExportSections.length === 0}
-                icon={<Download size={16} />}
-                onClick={handleExportProject}
-              >
-                xlsx zip 내보내기
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -9,6 +9,11 @@ import type { ProjectFile, ProjectState } from "../types/project";
 import { parseProjectFileText, readProjectFile } from "./projectFileImport";
 import { migrateProjectFile } from "./projectMigration";
 import {
+  isProjectTemplatePackageManifest,
+  readProjectTemplatePackage,
+  type ProjectTemplatePackageManifest
+} from "./projectTemplatePackage";
+import {
   createProjectTransferWorkbookBuffer,
   parseProjectTransferWorkbook,
   projectTransferWorkbookFileName,
@@ -31,7 +36,10 @@ export type ProjectTransferPackageManifest = {
 
 export type ProjectTransferPackageReadResult = {
   projectFile: ProjectFile;
-  manifest?: ProjectTransferPackageManifest;
+  manifest?: ProjectTransferPackageManifest | ProjectTemplatePackageManifest;
+  importKind: "rawData" | "templatePackage" | "projectTransfer";
+  autoValidationRan?: boolean;
+  dataPreparationStatus?: ProjectState["dataPreparationStatus"];
 };
 
 const manifestEntryName = "manifest.json";
@@ -220,20 +228,39 @@ export async function readProjectTransferFile(
 
   if (lowerName.endsWith(".json")) {
     return {
-      projectFile: await readProjectFile(file)
+      projectFile: await readProjectFile(file),
+      importKind: "rawData"
     };
   }
 
   const zip = await JSZip.loadAsync(await file.arrayBuffer());
   const manifestEntry = zip.file(manifestEntryName);
-  const manifest = manifestEntry
-    ? parseManifest(await manifestEntry.async("text"))
+  const rawManifest = manifestEntry
+    ? (JSON.parse(await manifestEntry.async("text")) as unknown)
     : undefined;
+
+  if (isProjectTemplatePackageManifest(rawManifest)) {
+    const result = await readProjectTemplatePackage({
+      zip,
+      manifest: rawManifest
+    });
+
+    return {
+      projectFile: result.projectFile,
+      manifest: result.manifest,
+      importKind: "templatePackage",
+      autoValidationRan: result.autoValidationRan,
+      dataPreparationStatus: result.dataPreparationStatus
+    };
+  }
+
+  const manifest = rawManifest ? parseManifest(JSON.stringify(rawManifest)) : undefined;
 
   if (manifest?.sectionEntryNames) {
     return {
       projectFile: await readModernXlsxPackage({ zip, manifest }),
-      manifest
+      manifest,
+      importKind: "projectTransfer"
     };
   }
 
@@ -253,6 +280,7 @@ export async function readProjectTransferFile(
 
   return {
     projectFile: parseProjectFileText(await projectEntry.async("text")),
-    manifest
+    manifest,
+    importKind: "projectTransfer"
   };
 }

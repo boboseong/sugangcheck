@@ -18,5 +18,9 @@ describe("StudentSelectionAnalysisPage", () => {
       "href",
       "/non-overlapping-subjects"
     );
+    expect(screen.getByRole("link", { name: "세부 분석" })).toHaveAttribute(
+      "href",
+      "/detailed-selection-analysis"
+    );
   });
 });

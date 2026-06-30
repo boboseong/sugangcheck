@@ -23,7 +23,11 @@ const navItems = [
     to: "/student-selection-analysis",
     label: "학생 선택 분석",
     icon: Users,
-    activePaths: ["/subject-enrollment", "/non-overlapping-subjects"]
+    activePaths: [
+      "/subject-enrollment",
+      "/non-overlapping-subjects",
+      "/detailed-selection-analysis"
+    ]
   },
   { to: "/misc-tools", label: "기타 도구", icon: Wrench }
 ];

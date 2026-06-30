@@ -608,7 +608,7 @@ textarea {
 
 .analysis-action-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 }
 
@@ -1258,6 +1258,90 @@ label.button {
 .subject-enrollment-student-table td:first-child {
   width: 72px;
   text-align: right;
+}
+
+.detail-analysis-layout {
+  gap: 16px;
+}
+
+.detail-analysis-form {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.detail-analysis-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 220px)) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.detail-analysis-controls label,
+.detail-analysis-subject-row > label {
+  display: grid;
+  gap: 6px;
+  color: #526070;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.detail-analysis-controls input,
+.detail-analysis-controls select,
+.detail-analysis-subject-row > label select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #c9d4e5;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.detail-analysis-subject-list {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-analysis-subject-row {
+  display: grid;
+  grid-template-columns: 100px 100px minmax(240px, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.detail-analysis-subject-field {
+  min-width: 0;
+}
+
+.detail-analysis-actions {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-analysis-table-wrap {
+  overflow-x: auto;
+}
+
+.detail-analysis-table {
+  min-width: 820px;
+}
+
+.detail-analysis-table th:first-child,
+.detail-analysis-table td:first-child,
+.detail-analysis-table th:nth-child(4),
+.detail-analysis-table td:nth-child(4) {
+  text-align: right;
+}
+
+.detail-analysis-table__selected {
+  color: #175cd3;
+  font-weight: 800;
 }
 
 .muted-text {
@@ -2625,6 +2709,8 @@ label.button {
   .upload-slot-grid,
   .student-search-panel,
   .subject-enrollment-controls,
+  .detail-analysis-controls,
+  .detail-analysis-subject-row,
   .external-input-form {
     grid-template-columns: 1fr;
   }

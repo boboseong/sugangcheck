@@ -1,4 +1,4 @@
-import { GitCompare, Users } from "lucide-react";
+import { GitCompare, SearchCheck, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/ui/PageHeader";
 
@@ -12,6 +12,11 @@ const analysisItems = [
     to: "/non-overlapping-subjects",
     label: "미중복 선택 과목",
     icon: GitCompare
+  },
+  {
+    to: "/detailed-selection-analysis",
+    label: "세부 분석",
+    icon: SearchCheck
   }
 ];
 

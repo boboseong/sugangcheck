@@ -2,6 +2,7 @@ import { createHashRouter } from "react-router-dom";
 import { AppLayout } from "../components/layout/AppLayout";
 import { AboutPage } from "../pages/AboutPage";
 import { CourseSelectionsPage } from "../pages/CourseSelectionsPage";
+import { DetailedSelectionAnalysisPage } from "../pages/DetailedSelectionAnalysisPage";
 import { ExternalCoursesPage } from "../pages/ExternalCoursesPage";
 import { HomePage } from "../pages/HomePage";
 import { MiscToolsPage } from "../pages/MiscToolsPage";
@@ -25,6 +26,10 @@ export const router = createHashRouter([
       {
         path: "student-selection-analysis",
         element: <StudentSelectionAnalysisPage />
+      },
+      {
+        path: "detailed-selection-analysis",
+        element: <DetailedSelectionAnalysisPage />
       },
       { path: "non-overlapping-subjects", element: <NonOverlappingSubjectsPage /> },
       { path: "external-courses", element: <ExternalCoursesPage /> },

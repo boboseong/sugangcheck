@@ -1,7 +1,19 @@
 import { createValidationError } from "./validationEngine";
 import { groupByStudent } from "./validationUtils";
+import type { CourseSelectionRecord } from "../types/courseSelection";
 import type { ValidationError } from "../types/validation";
+import { semesterToKey, sortBySemester } from "../utils/semester";
 import type { ValidationRuleContext } from "./types";
+
+function duplicateSemesterLabel(records: readonly CourseSelectionRecord[]): string {
+  return [
+    ...new Set(
+      sortBySemester(records, (record) => record.target).map((record) =>
+        semesterToKey(record.target)
+      )
+    )
+  ].join(", ");
+}
 
 export function validateDuplicateSubjects({
   records
@@ -28,7 +40,9 @@ export function validateDuplicateSubjects({
           studentId: firstRecord.studentId,
           studentNo: firstRecord.studentNo,
           studentName: firstRecord.studentName,
-          message: `${firstRecord.subjectName} 과목이 중복 신청되었습니다.`,
+          message: `${firstRecord.subjectName} 과목이 ${duplicateSemesterLabel(
+            duplicateRecords
+          )}에 중복 신청되었습니다.`,
           relatedRecordIds: duplicateRecords.map((record) => record.id)
         })
       );

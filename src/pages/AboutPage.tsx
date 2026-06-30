@@ -1,9 +1,9 @@
 import { Code, ExternalLink, Play } from "lucide-react";
+import { repositoryUrl } from "../app/externalLinks";
 import { PageHeader } from "../components/ui/PageHeader";
 
 const youtubeUrl = "https://www.youtube.com/watch?v=-B0-1HWUqyA";
 const youtubeEmbedUrl = "https://www.youtube.com/embed/-B0-1HWUqyA";
-const repositoryUrl = "https://github.com/boboseong/sugangcheck";
 
 export function AboutPage() {
   return (

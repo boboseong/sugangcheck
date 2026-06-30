@@ -5,6 +5,7 @@ import { Navigation } from "./Navigation";
 import { useProjectMetaStore } from "../../state/projectMetaStore";
 import { ProjectManager } from "../ProjectManager";
 import { ProjectPersistenceProvider } from "../ProjectPersistenceProvider";
+import sugangcheckIcon from "../../assets/sugangcheck-icon.png";
 
 export function AppLayout() {
   const { projectName } = useProjectMetaStore();
@@ -14,8 +15,11 @@ export function AppLayout() {
       <ProjectPersistenceProvider />
       <aside className="sidebar" aria-label="주 메뉴">
         <div className="brand">
-          <p className="brand__title">수강신청 오류 점검</p>
-          <p className="brand__subtitle">브라우저 로컬 전용 점검 도구</p>
+          <img className="brand__icon" src={sugangcheckIcon} alt="" aria-hidden="true" />
+          <div className="brand__text">
+            <p className="brand__title">수강신청 오류 점검</p>
+            <p className="brand__subtitle">브라우저 로컬 전용 점검 도구</p>
+          </div>
         </div>
         <Navigation />
         <NavLink

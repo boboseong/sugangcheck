@@ -70,8 +70,22 @@ textarea {
 
 .brand {
   display: grid;
-  gap: 6px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
   padding: 0 6px;
+}
+
+.brand__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 8px 20px rgba(23, 92, 211, 0.18);
+}
+
+.brand__text {
+  min-width: 0;
 }
 
 .brand__title {
@@ -597,6 +611,48 @@ textarea {
   font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
+}
+
+.dashboard-release-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-release-panel h2,
+.dashboard-release-panel p {
+  margin: 0;
+}
+
+.dashboard-release-panel h2 {
+  color: #172033;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.dashboard-release-panel p {
+  margin-top: 6px;
+  max-width: 760px;
+  color: #526070;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dashboard-release-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-release-panel__actions .button {
+  white-space: nowrap;
 }
 
 .section {
@@ -2261,6 +2317,44 @@ label.button {
   gap: 8px;
 }
 
+.all-print-confirm-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #f3b05c;
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.all-print-confirm-panel h2 {
+  margin: 0 0 4px;
+  color: #182230;
+  font-size: 15px;
+}
+
+.all-print-confirm-panel p {
+  margin: 0;
+  color: #526070;
+  font-size: 13px;
+}
+
+.all-print-confirm-panel strong {
+  display: inline-block;
+  margin-top: 6px;
+  color: #9a4f00;
+  font-size: 13px;
+}
+
+.all-print-confirm-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .student-report-stack {
   gap: 18px;
 }
@@ -2321,6 +2415,14 @@ label.button {
   .change-compare-actions {
     grid-column: 1 / -1;
     justify-content: start;
+  }
+
+  .dashboard-release-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-release-panel__actions {
+    justify-content: flex-start;
   }
 }
 
@@ -2407,7 +2509,8 @@ label.button {
   .import-launcher-row,
   .import-launcher-row label,
   .import-launcher-row select,
-  .import-launcher-row .button {
+  .import-launcher-row .button,
+  .dashboard-release-panel__actions .button {
     width: 100%;
   }
 }

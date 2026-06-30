@@ -6,10 +6,11 @@ import {
   Lock,
   Settings,
   Upload,
+  Users,
   UserRoundPlus,
   Wrench
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 const navItems = [
   { to: "/", label: "대시보드", icon: Home, end: true },
@@ -19,11 +20,19 @@ const navItems = [
   { to: "/validation-rules", label: "점검 규칙", icon: Settings },
   { to: "/results", label: "점검 결과", icon: ListChecks },
   { to: "/student-report", label: "학생별 확인서", icon: ClipboardCheck },
+  {
+    to: "/student-selection-analysis",
+    label: "학생 선택 분석",
+    icon: Users,
+    activePaths: ["/subject-enrollment", "/non-overlapping-subjects"]
+  },
   { to: "/misc-tools", label: "기타 도구", icon: Wrench },
   { to: "/privacy", label: "개인정보", icon: Lock }
 ];
 
 export function Navigation() {
+  const location = useLocation();
+
   return (
     <nav className="nav">
       {navItems.map((item) => {
@@ -35,7 +44,9 @@ export function Navigation() {
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              isActive ? "nav__link nav__link--active" : "nav__link"
+              isActive || item.activePaths?.includes(location.pathname)
+                ? "nav__link nav__link--active"
+                : "nav__link"
             }
           >
             <Icon size={18} aria-hidden="true" />

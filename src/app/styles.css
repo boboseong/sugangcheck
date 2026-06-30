@@ -606,6 +606,32 @@ textarea {
   line-height: 1.35;
 }
 
+.analysis-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.analysis-action-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 18px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.analysis-action-card:hover {
+  border-color: #b7c8ea;
+  background: #f7faff;
+  color: #175cd3;
+}
+
 .dashboard-release-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1102,6 +1128,136 @@ label.button {
   padding: 6px 8px;
   background: #ffffff;
   color: #172033;
+}
+
+.subject-enrollment-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(148px, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.subject-enrollment-controls label {
+  display: grid;
+  gap: 6px;
+  color: #526070;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.subject-enrollment-controls input,
+.subject-enrollment-controls select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #c9d4e5;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.subject-enrollment-controls .button {
+  white-space: nowrap;
+}
+
+.subject-enrollment-table-wrap {
+  overflow-x: auto;
+}
+
+.subject-enrollment-table {
+  min-width: 880px;
+}
+
+.subject-enrollment-table th:nth-child(7),
+.subject-enrollment-table td:nth-child(7) {
+  text-align: right;
+}
+
+.subject-enrollment-table__subject-button {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #175cd3;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.subject-enrollment-table__subject-button:hover,
+.subject-enrollment-table__subject-button[aria-pressed="true"] {
+  color: #0b3b92;
+  text-decoration: underline;
+}
+
+.subject-enrollment-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 0.34);
+}
+
+.subject-enrollment-dialog {
+  width: min(680px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgb(15 23 42 / 0.18);
+}
+
+.subject-enrollment-dialog__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.subject-enrollment-dialog__header h2,
+.subject-enrollment-dialog__header p {
+  margin: 0;
+}
+
+.subject-enrollment-dialog__header h2 {
+  color: #172033;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.subject-enrollment-dialog__header p {
+  margin-top: 6px;
+  color: #526070;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.subject-enrollment-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subject-enrollment-dialog__table-wrap {
+  min-height: 0;
+  overflow: auto;
+}
+
+.subject-enrollment-student-table th:first-child,
+.subject-enrollment-student-table td:first-child {
+  width: 72px;
+  text-align: right;
 }
 
 .muted-text {
@@ -2445,7 +2601,8 @@ label.button {
   }
 
   .project-transfer-modal,
-  .import-launcher-modal {
+  .import-launcher-modal,
+  .subject-enrollment-modal {
     align-items: start;
     padding: 16px;
   }
@@ -2466,6 +2623,7 @@ label.button {
   .nav,
   .dashboard-grid,
   .workflow-card-grid,
+  .analysis-action-grid,
   .metric-row,
   .about-media-layout,
   .about-link-grid,
@@ -2473,6 +2631,7 @@ label.button {
   .rule-row__criteria--required-credits,
   .upload-slot-grid,
   .student-search-panel,
+  .subject-enrollment-controls,
   .external-input-form {
     grid-template-columns: 1fr;
   }

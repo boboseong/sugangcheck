@@ -5,9 +5,12 @@ import { CourseSelectionsPage } from "../pages/CourseSelectionsPage";
 import { ExternalCoursesPage } from "../pages/ExternalCoursesPage";
 import { HomePage } from "../pages/HomePage";
 import { MiscToolsPage } from "../pages/MiscToolsPage";
+import { NonOverlappingSubjectsPage } from "../pages/NonOverlappingSubjectsPage";
 import { OperatingSubjectsPage } from "../pages/OperatingSubjectsPage";
 import { PrivacyNoticePage } from "../pages/PrivacyNoticePage";
 import { StudentReportPage } from "../pages/StudentReportPage";
+import { StudentSelectionAnalysisPage } from "../pages/StudentSelectionAnalysisPage";
+import { SubjectEnrollmentPage } from "../pages/SubjectEnrollmentPage";
 import { ValidationResultsPage } from "../pages/ValidationResultsPage";
 import { ValidationRulesPage } from "../pages/ValidationRulesPage";
 
@@ -19,6 +22,12 @@ export const router = createHashRouter([
       { index: true, element: <HomePage /> },
       { path: "operating-subjects", element: <OperatingSubjectsPage /> },
       { path: "course-selections", element: <CourseSelectionsPage /> },
+      { path: "subject-enrollment", element: <SubjectEnrollmentPage /> },
+      {
+        path: "student-selection-analysis",
+        element: <StudentSelectionAnalysisPage />
+      },
+      { path: "non-overlapping-subjects", element: <NonOverlappingSubjectsPage /> },
       { path: "external-courses", element: <ExternalCoursesPage /> },
       { path: "validation-rules", element: <ValidationRulesPage /> },
       { path: "results", element: <ValidationResultsPage /> },

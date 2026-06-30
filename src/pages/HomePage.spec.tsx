@@ -11,9 +11,7 @@ describe("HomePage", () => {
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByText(/GitHub 최신 릴리스에서 Windows 실행 파일/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/GitHub에서 Windows 실행 파일/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "로컬 앱 다운로드" })).toHaveAttribute(
       "href",
       "https://github.com/boboseong/sugangcheck/releases/latest"

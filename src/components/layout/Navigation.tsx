@@ -3,7 +3,6 @@ import {
   FileSpreadsheet,
   Home,
   ListChecks,
-  Lock,
   Settings,
   Upload,
   Users,
@@ -26,8 +25,7 @@ const navItems = [
     icon: Users,
     activePaths: ["/subject-enrollment", "/non-overlapping-subjects"]
   },
-  { to: "/misc-tools", label: "기타 도구", icon: Wrench },
-  { to: "/privacy", label: "개인정보", icon: Lock }
+  { to: "/misc-tools", label: "기타 도구", icon: Wrench }
 ];
 
 export function Navigation() {

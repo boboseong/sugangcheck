@@ -7,7 +7,6 @@ import { HomePage } from "../pages/HomePage";
 import { MiscToolsPage } from "../pages/MiscToolsPage";
 import { NonOverlappingSubjectsPage } from "../pages/NonOverlappingSubjectsPage";
 import { OperatingSubjectsPage } from "../pages/OperatingSubjectsPage";
-import { PrivacyNoticePage } from "../pages/PrivacyNoticePage";
 import { StudentReportPage } from "../pages/StudentReportPage";
 import { StudentSelectionAnalysisPage } from "../pages/StudentSelectionAnalysisPage";
 import { SubjectEnrollmentPage } from "../pages/SubjectEnrollmentPage";
@@ -33,8 +32,7 @@ export const router = createHashRouter([
       { path: "results", element: <ValidationResultsPage /> },
       { path: "student-report", element: <StudentReportPage /> },
       { path: "misc-tools", element: <MiscToolsPage /> },
-      { path: "about", element: <AboutPage /> },
-      { path: "privacy", element: <PrivacyNoticePage /> }
+      { path: "about", element: <AboutPage /> }
     ]
   }
 ]);

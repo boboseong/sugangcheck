@@ -23,6 +23,10 @@ import { IconButton } from "./ui/IconButton";
 type UploadImportLauncherProps = {
   accept?: string;
   allowMultipleFiles?: boolean;
+  downloadGuide?: {
+    title: string;
+    items: string[];
+  };
   fileDescription?: string;
   fileUploadLabel?: string;
   onFilesSelected: (files: File[], target?: Semester) => void | Promise<void>;
@@ -61,6 +65,7 @@ function selectedSemester(value: SemesterKey) {
 export function UploadImportLauncher({
   accept = ".xls,.xlsx,.xlsm",
   allowMultipleFiles = true,
+  downloadGuide,
   fileDescription = "전체 학기 업로드에는 (신)수강신청, (구)수강신청, 템플릿 파일 업로드가 가능합니다.",
   fileUploadLabel,
   onFilesSelected,
@@ -246,6 +251,16 @@ export function UploadImportLauncher({
                 <p className="import-launcher-group__description">
                   {fileDescription}
                 </p>
+                {downloadGuide ? (
+                  <div className="import-launcher-guide">
+                    <p>{downloadGuide.title}</p>
+                    <ul>
+                      {downloadGuide.items.map((item) => (
+                        <li key={item}>▶ {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <div className="import-launcher-row">
                   <Button
                     icon={<Upload size={16} />}

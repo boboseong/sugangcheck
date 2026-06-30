@@ -393,6 +393,31 @@ textarea {
   line-height: 1.55;
 }
 
+.import-launcher-guide {
+  display: grid;
+  gap: 6px;
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.import-launcher-guide p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.import-launcher-guide ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.import-launcher-guide li {
+  overflow-wrap: anywhere;
+}
+
 .import-launcher-row {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;

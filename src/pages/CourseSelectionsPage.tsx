@@ -260,6 +260,13 @@ export function CourseSelectionsPage() {
       />
       <div className="template-action-bar">
         <UploadImportLauncher
+          downloadGuide={{
+            title: "업로드를 위한 자료 다운 받는 방법",
+            items: [
+              "(구) 수강신청 시스템 - [수강신청 관리] - [수강신청 결과] 메뉴에서 학년, 학기를 선택한 뒤 [엑셀] 버튼 클릭",
+              "(신) 수강신청 시스템 - [수강신청] - [신청결과] - [입학년도 선택] - [템플릿 다운로드]"
+            ]
+          }}
           onFilesSelected={handleFilesSelected}
           section="courseSelections"
         />

@@ -284,6 +284,13 @@ export function OperatingSubjectsPage() {
       />
       <div className="template-action-bar">
         <UploadImportLauncher
+          downloadGuide={{
+            title: "업로드를 위한 자료 다운 받는 방법",
+            items: [
+              "(구) 수강신청 시스템 - [수강신청 관리] - [운영과목 관리] 메뉴에서 학년, 학기를 선택한 뒤 [엑셀] 버튼 클릭",
+              "(신) 수강신청 시스템 - [수강신청] - [편성표] - [입학년도 선택] - [엑셀 다운로드]"
+            ]
+          }}
           onFilesSelected={handleFilesSelected}
           section="operatingSubjects"
         />

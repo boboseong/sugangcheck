@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import { useExternalCourseInputStore } from "../state/externalCourseInputStore";
@@ -8,6 +8,7 @@ import { useStudentStore } from "../state/studentStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { OperatingSubject } from "../types/subject";
+import type { ValidationError } from "../types/validation";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { StudentReportPage } from "./StudentReportPage";
 
@@ -18,6 +19,13 @@ const student = {
   name: "김학생",
   currentClassNo: "1",
   currentNumber: "1"
+};
+const nextErrorStudent = {
+  ...student,
+  studentId: "student-2",
+  studentNo: "10102",
+  name: "이오류",
+  currentNumber: "2"
 };
 const courseSelectionRow: ParsedCourseSelectionRow = {
   id: "row-1",
@@ -48,6 +56,19 @@ const changedOperatingSubject: OperatingSubject = {
   selectionType: "진로선택",
   credits: 3
 };
+
+function validationErrorFor(targetStudent: typeof student): ValidationError {
+  return {
+    id: `error-${targetStudent.studentId}`,
+    ruleId: "minimumCredits",
+    type: "minimumCredits",
+    studentId: targetStudent.studentId,
+    studentNo: targetStudent.studentNo,
+    studentName: targetStudent.name,
+    message: `${targetStudent.name} 오류`,
+    relatedRecordIds: []
+  };
+}
 
 function resetStores() {
   useCourseSelectionRawStore.setState({ courseSelectionRows: [] });
@@ -125,5 +146,35 @@ describe("StudentReportPage", () => {
     expect(changedSemesterTable).not.toBeNull();
     expect(within(changedSemesterTable!).getByText("3")).toBeInTheDocument();
     expect(screen.queryByText("국어 · 일반선택 · 일반")).not.toBeInTheDocument();
+  });
+
+  it("selects the next student with validation errors from the report action row", async () => {
+    useStudentStore.setState({ students: [student, nextErrorStudent] });
+    useValidationResultStore.setState({
+      validationErrors: [validationErrorFor(student), validationErrorFor(nextErrorStudent)]
+    });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <StudentReportPage />
+        </MemoryRouter>
+      );
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "김학생 - 수강신청 확인서" })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "다음 오류 학생" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "이오류 - 수강신청 확인서" })
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole("combobox", { name: "학생" })).toHaveValue(
+      nextErrorStudent.studentId
+    );
   });
 });

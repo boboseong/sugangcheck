@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Printer, School, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Printer, School, Users } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { StudentSelector } from "../components/StudentSelector";
 import { Button } from "../components/ui/Button";
@@ -41,6 +41,27 @@ export function StudentReportPage() {
     () => students.filter((student) => errorStudentIds.has(student.studentId)),
     [errorStudentIds, students]
   );
+  const nextErrorStudent = useMemo(() => {
+    if (errorStudents.length === 0) {
+      return undefined;
+    }
+
+    if (!selectedStudent) {
+      return errorStudents[0];
+    }
+
+    const selectedStudentIndex = students.findIndex(
+      (student) => student.studentId === selectedStudent.studentId
+    );
+
+    return (
+      errorStudents.find(
+        (student) =>
+          students.findIndex((candidate) => candidate.studentId === student.studentId) >
+          selectedStudentIndex
+      ) ?? errorStudents[0]
+    );
+  }, [errorStudents, selectedStudent, students]);
   const reportStudents = reportStudentIds
     ? students.filter((student) => reportStudentIds.includes(student.studentId))
     : selectedStudent
@@ -89,6 +110,14 @@ export function StudentReportPage() {
     setPrintRequestCount((count) => count + 1);
   }
 
+  function selectNextErrorStudent() {
+    if (!nextErrorStudent) {
+      return;
+    }
+
+    handleSelectStudent(nextErrorStudent.studentId);
+  }
+
   function openClassPrintPanel() {
     setSelectedPrintClassNo(
       selectedStudent?.currentClassNo && classOptions.includes(selectedStudent.currentClassNo)
@@ -117,6 +146,15 @@ export function StudentReportPage() {
         />
       </div>
       <div className="report-actions">
+        <Button
+          className="report-actions__next-error"
+          disabled={!nextErrorStudent}
+          icon={<ArrowRight size={18} />}
+          onClick={selectNextErrorStudent}
+          variant="secondary"
+        >
+          다음 오류 학생
+        </Button>
         <Button
           disabled={!selectedStudent}
           icon={<Printer size={18} />}

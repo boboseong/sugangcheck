@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export const appVersion = "0.1.5";
+export const appVersion = "0.1.6";
 export const defaultProjectName = "새 점검 프로젝트";
 
 type ProjectMetaPatch = {

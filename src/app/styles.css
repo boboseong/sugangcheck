@@ -2125,6 +2125,10 @@ label.button {
   gap: 8px;
 }
 
+.report-actions__next-error {
+  margin-right: auto;
+}
+
 .class-print-panel {
   display: flex;
   flex-wrap: wrap;

@@ -36,6 +36,7 @@ export type ValidationEngineResult = {
 
 export type CreateValidationErrorInput = {
   ruleId: ValidationRuleId;
+  instanceId?: string;
   type?: ValidationRuleId;
   studentId: string;
   studentNo: string;

@@ -5,6 +5,7 @@ import {
   koreanMathEnglishLimitCriteria,
   requiredSubjectGroupCredits
 } from "./defaultCreditCriteria";
+import { createDefaultSemesterCreditSubjectCriteria } from "../validation/semesterCreditSubjectCriteria";
 
 export const defaultValidationRuleSettings: ValidationRuleSetting[] = [
   {
@@ -17,7 +18,9 @@ export const defaultValidationRuleSettings: ValidationRuleSetting[] = [
     id: "creditDifference",
     enabled: true,
     includeExternalInputs: false,
-    criteria: { compareWithinSameGradeSemester: true }
+    criteria: {
+      semesterCreditSubjectCriteria: createDefaultSemesterCreditSubjectCriteria()
+    }
   },
   {
     id: "requiredSubjectGroupCredits",

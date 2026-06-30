@@ -216,6 +216,15 @@ export function clearDerivedValidationState() {
   useValidationResultStore.getState().clearValidationResult();
 }
 
+function seedCreditDifferenceCriteriaFromCurrentInputs() {
+  useValidationRuleSettingStore
+    .getState()
+    .seedCreditDifferenceCriteriaFromInputs({
+      courseSelectionRows: useCourseSelectionRawStore.getState().courseSelectionRows,
+      operatingSubjects: useOperatingSubjectStore.getState().operatingSubjects
+    });
+}
+
 export function applyProjectState(
   projectState: ProjectState,
   options: { activeProjectId?: string; savedAt?: string } = {}
@@ -263,6 +272,7 @@ export function applyProjectState(
         ? clone(projectState.lastValidationResult)
         : undefined
     });
+    seedCreditDifferenceCriteriaFromCurrentInputs();
   });
 }
 
@@ -289,6 +299,7 @@ export function importProjectSection(
           "operatingSubjects"
         )
       }));
+      seedCreditDifferenceCriteriaFromCurrentInputs();
     }
 
     if (section === "validationRules") {
@@ -301,6 +312,7 @@ export function importProjectSection(
       useDetailedConstraintRuleStore.setState({
         detailedConstraintRules: clone(sourceState.detailedConstraintRules)
       });
+      seedCreditDifferenceCriteriaFromCurrentInputs();
     }
 
     if (section === "courseSelections") {
@@ -318,6 +330,7 @@ export function importProjectSection(
           "courseSelections"
         )
       }));
+      seedCreditDifferenceCriteriaFromCurrentInputs();
     }
 
     if (section === "externalCourses") {
@@ -376,6 +389,7 @@ export function importProjectSectionSemester(
           target
         )
       }));
+      seedCreditDifferenceCriteriaFromCurrentInputs();
     }
 
     if (section === "courseSelections") {
@@ -408,6 +422,7 @@ export function importProjectSectionSemester(
       useImportStatusStore.setState({
         importStatuses: nextStatuses
       });
+      seedCreditDifferenceCriteriaFromCurrentInputs();
     }
 
     clearDerivedValidationState();

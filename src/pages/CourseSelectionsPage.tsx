@@ -29,6 +29,7 @@ import {
   mergeStudentsFromCourseSelectionRows,
   useStudentStore
 } from "../state/studentStore";
+import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import {
   createCourseSelectionTemplateWorkbook,
   createXlsxBlob,
@@ -122,6 +123,9 @@ export function CourseSelectionsPage() {
     studentSemesterPresence,
     updateFromCourseSelectionRows
   } = useStudentSemesterPresenceStore();
+  const seedCreditDifferenceCriteriaFromInputs = useValidationRuleSettingStore(
+    (state) => state.seedCreditDifferenceCriteriaFromInputs
+  );
   const [preview, setPreview] = useState<WorkbookPreviewTable>();
 
   async function importFileForSemester(
@@ -152,6 +156,10 @@ export function CourseSelectionsPage() {
       setPreview(nextPreview);
       setStudents(nextStudents);
       updateFromCourseSelectionRows(nextStudents, nextRows, target);
+      seedCreditDifferenceCriteriaFromInputs({
+        courseSelectionRows: nextRows,
+        operatingSubjects: useOperatingSubjectStore.getState().operatingSubjects
+      });
       setSemesterImportStatus({
         target,
         sourceType: "courseSelections",

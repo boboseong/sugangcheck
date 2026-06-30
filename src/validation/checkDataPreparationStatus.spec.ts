@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { ExternalCourseInput } from "../types/courseSelection";
 import type { SemesterImportStatus } from "../types/importStatus";
 import type { Semester } from "../types/semester";
 import { semesterKeys } from "../types/semester";
+import type { StudentSemesterPresence } from "../types/student";
 import type { OperatingSubject } from "../types/subject";
-import { parseSemesterKey } from "../utils/semester";
+import { parseSemesterKey, semesterToKey } from "../utils/semester";
 import { checkDataPreparationStatus } from "./checkDataPreparationStatus";
 import {
   hasUnregisteredOperatingSubjectIssue,
@@ -58,15 +60,55 @@ function createOperatingSubject(
   };
 }
 
+function createPresenceWithAbsentSemester(
+  studentId: string,
+  target: Semester
+): StudentSemesterPresence {
+  return {
+    studentId,
+    studentNo: "10101",
+    name: "김학생",
+    semesters: {
+      "1-1": "unknown",
+      "1-2": "unknown",
+      "2-1": "unknown",
+      "2-2": "unknown",
+      "3-1": "unknown",
+      "3-2": "unknown",
+      [semesterToKey(target)]: "absent"
+    }
+  };
+}
+
+function createExternalCourseInput(
+  studentId: string,
+  target: Semester
+): ExternalCourseInput {
+  return {
+    id: `external-${studentId}`,
+    studentId,
+    studentNo: "10101",
+    studentName: "김학생",
+    target,
+    subjectName: "생활과 과학",
+    normalizedSubjectName: "생활과과학",
+    credits: 2,
+    sourceType: "transfer",
+    updatedAt: "2026-01-01T00:00:00.000Z"
+  };
+}
+
 function createStatus(input: {
+  externalCourseInputs?: ExternalCourseInput[];
   operatingSubjects: OperatingSubject[];
+  studentSemesterPresence?: StudentSemesterPresence[];
 }) {
   return checkDataPreparationStatus({
     importStatuses: createImportStatuses(),
-    studentSemesterPresence: [],
+    studentSemesterPresence: input.studentSemesterPresence ?? [],
     operatingSubjects: input.operatingSubjects,
     courseSelectionRows: [],
-    externalCourseInputs: [],
+    externalCourseInputs: input.externalCourseInputs ?? [],
     prerequisiteRules: [],
     validationRuleSettings: [
       {
@@ -151,5 +193,28 @@ describe("checkDataPreparationStatus", () => {
         relatedSourceType: "courseSelections"
       })
     );
+  });
+
+  it("counts absent students without transfer or external course inputs", () => {
+    const target = firstSemester();
+
+    const status = createStatus({
+      operatingSubjects: [createOperatingSubject(target, "matched")],
+      studentSemesterPresence: [createPresenceWithAbsentSemester("student-1", target)]
+    });
+
+    expect(status.counts.missingExternalCourseStudentCount).toBe(1);
+  });
+
+  it("does not count absent students that already have transfer or external inputs", () => {
+    const target = firstSemester();
+
+    const status = createStatus({
+      externalCourseInputs: [createExternalCourseInput("student-1", target)],
+      operatingSubjects: [createOperatingSubject(target, "matched")],
+      studentSemesterPresence: [createPresenceWithAbsentSemester("student-1", target)]
+    });
+
+    expect(status.counts.missingExternalCourseStudentCount).toBe(0);
   });
 });

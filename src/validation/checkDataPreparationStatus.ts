@@ -13,7 +13,10 @@ import type { OperatingSubject } from "../types/subject";
 import type { PrerequisiteRule, ValidationRuleSetting } from "../types/validation";
 import { semesterKeys, type Semester } from "../types/semester";
 import { isSameSemester, parseSemesterKey, semesterLabel } from "../utils/semester";
-import { unregisteredOperatingSubjectIssueMessage } from "./dataPreparationIssues";
+import {
+  isMissingUploadIssue,
+  unregisteredOperatingSubjectIssueMessage
+} from "./dataPreparationIssues";
 
 function emptyStatusCounts(): Record<ImportStatus, number> {
   return {
@@ -108,11 +111,22 @@ const sourceTypeLabels: Record<ImportSourceType, string> = {
   courseSelections: "수강신청 결과"
 };
 
+const missingUploadSubjectLabels: Record<ImportSourceType, string> = {
+  operatingSubjects: "운영과목이",
+  courseSelections: "수강신청 결과가"
+};
+
 function reviewIssueMessage(status: SemesterImportStatus): string {
   const label = `${sourceTypeLabels[status.sourceType]} 탭 ${semesterLabel(status.target)}`;
   const detail = status.message ? `: ${status.message}` : "";
 
   return `${label} 업로드 확인이 필요합니다${detail}`;
+}
+
+function missingUploadIssueMessage(status: SemesterImportStatus): string {
+  return `${semesterLabel(status.target)} ${
+    missingUploadSubjectLabels[status.sourceType]
+  } 입력되지 않았습니다.`;
 }
 
 function countMissingExternalCourseStudents(input: {
@@ -187,9 +201,20 @@ export function checkDataPreparationStatus(input: {
   ).length;
   const issues: DataPreparationIssue[] = [];
 
-  if (operatingSubjectsByStatus.empty > 0) {
-    issues.push(issue("missingOperatingSubjects", "운영과목 6개 학기가 모두 업로드되지 않았습니다."));
-  }
+  importStatuses
+    .filter(
+      (status) =>
+        status.sourceType === "operatingSubjects" && status.status === "empty"
+    )
+    .forEach((status) => {
+      issues.push(
+        issue("missingOperatingSubjects", missingUploadIssueMessage(status), true, {
+          relatedIds: [status.id],
+          relatedSemester: status.target,
+          relatedSourceType: status.sourceType
+        })
+      );
+    });
 
   if (hasUnregisteredOperatingSubjectInfo) {
     issues.push(
@@ -200,9 +225,20 @@ export function checkDataPreparationStatus(input: {
     );
   }
 
-  if (courseSelectionsByStatus.empty > 0) {
-    issues.push(issue("missingCourseSelections", "수강신청 결과 6개 학기가 모두 업로드되지 않았습니다."));
-  }
+  importStatuses
+    .filter(
+      (status) =>
+        status.sourceType === "courseSelections" && status.status === "empty"
+    )
+    .forEach((status) => {
+      issues.push(
+        issue("missingCourseSelections", missingUploadIssueMessage(status), true, {
+          relatedIds: [status.id],
+          relatedSemester: status.target,
+          relatedSourceType: status.sourceType
+        })
+      );
+    });
 
   if (operatingSubjectsByStatus.error + courseSelectionsByStatus.error > 0) {
     issues.push(issue("importError", "업로드 오류 상태인 학기가 있습니다."));
@@ -256,9 +292,10 @@ export function checkDataPreparationStatus(input: {
         status.sourceType === "courseSelections" && status.status === "imported"
     )
     .map((status) => status.target);
-  const hasImportErrors =
-    operatingSubjectsByStatus.error + courseSelectionsByStatus.error > 0;
   const hasBlockingIssues = issues.some((item) => item.blocksFullValidation);
+  const hasBlockingIssuesExceptMissingUploads = issues.some(
+    (item) => item.blocksFullValidation && !isMissingUploadIssue(item)
+  );
   const canRunFullValidation =
     semesterKeys.every((key) => {
       const semester = parseSemesterKey(key);
@@ -281,7 +318,7 @@ export function checkDataPreparationStatus(input: {
       );
     }) && !hasBlockingIssues;
   const canRunPartialValidation =
-    availablePartialSemesters.length > 0 && !hasImportErrors;
+    availablePartialSemesters.length > 0 && !hasBlockingIssuesExceptMissingUploads;
 
   return {
     checkedAt: new Date().toISOString(),

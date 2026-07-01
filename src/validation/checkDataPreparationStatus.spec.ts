@@ -195,6 +195,52 @@ describe("checkDataPreparationStatus", () => {
     );
   });
 
+  it("allows partial validation when only upload semesters are missing", () => {
+    const target = { grade: 2, semester: 1 } as const;
+    const status = checkDataPreparationStatus({
+      importStatuses: createImportStatuses().map((item) =>
+        item.target.grade === target.grade && item.target.semester === target.semester
+          ? {
+              ...item,
+              status: "empty"
+            }
+          : item
+      ),
+      studentSemesterPresence: [],
+      operatingSubjects: [createOperatingSubject(firstSemester(), "matched")],
+      courseSelectionRows: [],
+      externalCourseInputs: [],
+      prerequisiteRules: [],
+      validationRuleSettings: [
+        {
+          id: "minimumCredits",
+          enabled: true,
+          includeExternalInputs: true,
+          criteria: {}
+        }
+      ]
+    });
+
+    expect(status.canRunFullValidation).toBe(false);
+    expect(status.canRunPartialValidation).toBe(true);
+    expect(status.issues).toContainEqual(
+      expect.objectContaining({
+        code: "missingOperatingSubjects",
+        message: "2학년 1학기 운영과목이 입력되지 않았습니다.",
+        relatedSemester: target,
+        relatedSourceType: "operatingSubjects"
+      })
+    );
+    expect(status.issues).toContainEqual(
+      expect.objectContaining({
+        code: "missingCourseSelections",
+        message: "2학년 1학기 수강신청 결과가 입력되지 않았습니다.",
+        relatedSemester: target,
+        relatedSourceType: "courseSelections"
+      })
+    );
+  });
+
   it("counts absent students without transfer or external course inputs", () => {
     const target = firstSemester();
 

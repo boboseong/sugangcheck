@@ -10,7 +10,10 @@ import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { checkDataPreparationStatus } from "../validation/checkDataPreparationStatus";
-import { hasUnregisteredOperatingSubjectIssue } from "../validation/dataPreparationIssues";
+import {
+  hasUnregisteredOperatingSubjectIssue,
+  missingUploadConfirmationMessage
+} from "../validation/dataPreparationIssues";
 import {
   createDefaultValidationRuleFunctionMap,
   runValidationEngine
@@ -37,17 +40,39 @@ export function useValidationRun() {
     prerequisiteRules,
     validationRuleSettings
   });
+  const canRunValidation =
+    dataPreparationStatus.canRunFullValidation ||
+    dataPreparationStatus.canRunPartialValidation;
+  const uploadConfirmationMessage =
+    missingUploadConfirmationMessage(dataPreparationStatus);
 
   function runValidation() {
+    if (!canRunValidation) {
+      return undefined;
+    }
+
+    if (
+      !dataPreparationStatus.canRunFullValidation &&
+      uploadConfirmationMessage &&
+      !window.confirm(uploadConfirmationMessage)
+    ) {
+      return undefined;
+    }
+
+    const mode = dataPreparationStatus.canRunFullValidation ? "full" : "partial";
     const buildResult = buildCourseSelectionRecords({
-      mode: "full",
+      mode,
+      availablePartialSemesters:
+        mode === "partial"
+          ? dataPreparationStatus.availablePartialSemesters
+          : undefined,
       courseSelectionRows,
       externalCourseInputs,
       operatingSubjects
     });
     const validationResult = runValidationEngine(
       {
-        mode: "full",
+        mode,
         records: buildResult.records,
         ruleSettings: validationRuleSettings
       },
@@ -66,7 +91,7 @@ export function useValidationRun() {
 
   return {
     buildIssues,
-    canRunValidation: dataPreparationStatus.canRunFullValidation,
+    canRunValidation,
     courseSelectionRecords,
     dataPreparationStatus,
     hasOperatingSubjectRegistrationIssue:

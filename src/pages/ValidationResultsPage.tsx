@@ -56,8 +56,11 @@ export function ValidationResultsPage() {
       return;
     }
 
-    runValidation();
-    setShowOperatingSubjectRegistrationNotice(false);
+    const result = runValidation();
+
+    if (result) {
+      setShowOperatingSubjectRegistrationNotice(false);
+    }
   }
 
   async function handleDownloadErrors() {

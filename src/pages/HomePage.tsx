@@ -21,8 +21,11 @@ export function HomePage() {
       return;
     }
 
-    runValidation();
-    navigate("/results");
+    const result = runValidation();
+
+    if (result) {
+      navigate("/results");
+    }
   }
 
   return (

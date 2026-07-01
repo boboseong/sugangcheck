@@ -129,10 +129,17 @@ export function DataPreparationDashboard({
           label: string;
           tone: StatusTone;
         })
-      : ({ label: "대기", tone: "empty" } satisfies {
-          label: string;
-          tone: StatusTone;
-        });
+      : status.canRunPartialValidation
+        ? ({ label: "확인 필요", tone: "warning" } satisfies {
+            label: string;
+            tone: StatusTone;
+          })
+        : ({ label: "대기", tone: "empty" } satisfies {
+            label: string;
+            tone: StatusTone;
+          });
+  const canRunValidation =
+    status.canRunFullValidation || status.canRunPartialValidation;
   const operatingSubjectDetail = hasIssue(status, "unregisteredOperatingSubject")
     ? `과목 정보 확인이 필요한 과목이 ${status.counts.unregisteredOperatingSubjectCount.toLocaleString()}개 있습니다.`
     : importDetail(
@@ -223,6 +230,8 @@ export function DataPreparationDashboard({
             ? "점검 완료"
             : status.canRunFullValidation
               ? "점검 가능"
+              : status.canRunPartialValidation
+                ? "확인 후 점검 가능"
               : "대기 중"}
         </p>
         <div className="workflow-card__validation-action">
@@ -231,7 +240,7 @@ export function DataPreparationDashboard({
               <ListChecks size={15} />
               <span>점검 결과 화면</span>
             </Link>
-          ) : status.canRunFullValidation ? (
+          ) : canRunValidation ? (
             <button
               className="button button--compact"
               onClick={onRunValidation}

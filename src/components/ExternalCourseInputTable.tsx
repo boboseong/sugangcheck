@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   groupTypes,
@@ -15,6 +16,7 @@ import type { Semester } from "../types/semester";
 import type { Student } from "../types/student";
 import { semesterKeys } from "../types/semester";
 import { parseSemesterKey, semesterLabel } from "../utils/semester";
+import { createEmptyExternalCourseDraft } from "./externalCourseInputDraft";
 import { Button } from "./ui/Button";
 import { IconButton } from "./ui/IconButton";
 import { StatusBadge } from "./ui/StatusBadge";
@@ -25,32 +27,16 @@ type ExternalCourseInputTableProps = {
   inputs: readonly ExternalCourseInput[];
   onAddInput: (input: ExternalCourseInput) => void;
   onRemoveInput: (inputId: string) => void;
+  formPrefix?: ReactNode;
 };
-
-function defaultTarget(missingSemesters: readonly Semester[]): Semester {
-  return missingSemesters[0] ?? { grade: 1, semester: 1 };
-}
-
-function emptyDraft(missingSemesters: readonly Semester[]): ExternalCourseInputDraft {
-  return {
-    target: defaultTarget(missingSemesters),
-    subjectName: "",
-    subjectGroup: "",
-    selectionType: "",
-    groupType: "",
-    credits: "",
-    sourceType: "transfer",
-    sourceName: "",
-    memo: ""
-  };
-}
 
 export function ExternalCourseInputTable({
   selectedStudent,
   missingSemesters,
   inputs,
   onAddInput,
-  onRemoveInput
+  onRemoveInput,
+  formPrefix
 }: ExternalCourseInputTableProps) {
   const missingSemesterKey = useMemo(
     () =>
@@ -60,12 +46,12 @@ export function ExternalCourseInputTable({
     [missingSemesters]
   );
   const [draft, setDraft] = useState<ExternalCourseInputDraft>(
-    emptyDraft(missingSemesters)
+    createEmptyExternalCourseDraft(missingSemesters)
   );
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    setDraft(emptyDraft(missingSemesters));
+    setDraft(createEmptyExternalCourseDraft(missingSemesters));
     setErrors([]);
   }, [missingSemesterKey, selectedStudent?.studentId]);
 
@@ -87,13 +73,15 @@ export function ExternalCourseInputTable({
     }
 
     onAddInput(createExternalCourseInput(selectedStudent, draft));
-    setDraft(emptyDraft(missingSemesters));
+    setDraft(createEmptyExternalCourseDraft(missingSemesters));
     setErrors([]);
   }
 
   return (
     <div className="external-input-layout">
       <div className="external-input-form">
+        {formPrefix}
+        {formPrefix ? <div className="external-input-form__divider" /> : null}
         <label>
           <span>학기</span>
           <select

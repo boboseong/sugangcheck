@@ -47,9 +47,10 @@ export function createExternalCourseInput(
   }
 
   const normalizedSubjectName = normalizeSubjectName(draft.subjectName);
+  const uniqueSuffix = `${Date.now()}-${externalCourseInputIdSequence++}`;
 
   return {
-    id: `external-${student.studentId}-${draft.target.grade}-${draft.target.semester}-${normalizedSubjectName}-${Date.now()}`,
+    id: `external-${student.studentId}-${draft.target.grade}-${draft.target.semester}-${normalizedSubjectName}-${uniqueSuffix}`,
     studentId: student.studentId,
     studentNo: student.studentNo,
     studentName: student.name,
@@ -67,10 +68,13 @@ export function createExternalCourseInput(
   };
 }
 
+let externalCourseInputIdSequence = 0;
+
 type ExternalCourseInputStore = {
   externalCourseInputs: ExternalCourseInput[];
   setExternalCourseInputs: (inputs: ExternalCourseInput[]) => void;
   addExternalCourseInput: (input: ExternalCourseInput) => void;
+  addExternalCourseInputs: (inputs: ExternalCourseInput[]) => void;
   removeExternalCourseInput: (inputId: string) => void;
   resetExternalCourseInputs: () => void;
 };
@@ -83,6 +87,10 @@ export const useExternalCourseInputStore = create<ExternalCourseInputStore>(
     addExternalCourseInput: (input) =>
       set((state) => ({
         externalCourseInputs: [...state.externalCourseInputs, input]
+      })),
+    addExternalCourseInputs: (inputs) =>
+      set((state) => ({
+        externalCourseInputs: [...state.externalCourseInputs, ...inputs]
       })),
     removeExternalCourseInput: (inputId) =>
       set((state) => ({

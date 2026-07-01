@@ -1,6 +1,6 @@
 import { Download, UserRoundPlus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { ExternalCourseInputTable } from "../components/ExternalCourseInputTable";
+import { ExternalCourseInputTabs } from "../components/ExternalCourseInputTabs";
 import { UploadImportLauncher } from "../components/UploadImportLauncher";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
@@ -45,6 +45,7 @@ export function ExternalCoursesPage() {
   const {
     externalCourseInputs,
     addExternalCourseInput,
+    addExternalCourseInputs,
     removeExternalCourseInput,
     setExternalCourseInputs
   } = useExternalCourseInputStore();
@@ -99,8 +100,11 @@ export function ExternalCoursesPage() {
         student.studentNo.includes(normalizedQuery)
     );
   }, [query, students]);
+  const explicitlySelectedStudent = students.find(
+    (student) => student.studentId === selectedStudentId
+  );
   const selectedStudent =
-    filteredStudents.find((student) => student.studentId === selectedStudentId) ??
+    explicitlySelectedStudent ??
     filteredStudents.find((student) => missingStudentIds.has(student.studentId)) ??
     filteredStudents[0];
   const selectedPresence = studentSemesterPresence.find(
@@ -257,56 +261,20 @@ export function ExternalCoursesPage() {
         )}
       </div>
       <div className="section">
-        <div className="student-search-panel">
-          <label>
-            <span>학생 검색</span>
-            <input
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="이름 또는 학번"
-              value={query}
-            />
-          </label>
-          <label>
-            <span>학생 선택</span>
-            <select
-              onChange={(event) => setSelectedStudentId(event.target.value)}
-              value={selectedStudent?.studentId ?? ""}
-            >
-              {filteredStudents.length === 0 ? (
-                <option value="">학생 없음</option>
-              ) : (
-                filteredStudents.map((student) => (
-                  <option key={student.studentId} value={student.studentId}>
-                    {student.name} ({student.studentNo})
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
-        </div>
-      </div>
-      <div className="section">
-        <h2>누락 학기 후보</h2>
-        <div className="semester-chip-row">
-          {missingSemesters.length === 0 ? (
-            <span className="muted-text">누락 또는 미확인 학기가 없습니다.</span>
-          ) : (
-            missingSemesters.map((semester) => (
-              <span className="semester-chip" key={semesterLabel(semester)}>
-                {semesterLabel(semester)}
-              </span>
-            ))
-          )}
-        </div>
-      </div>
-      <div className="section">
-        <h2>직접 입력</h2>
-        <ExternalCourseInputTable
+        <h2>입력 방식</h2>
+        <ExternalCourseInputTabs
+          filteredStudents={filteredStudents}
           inputs={selectedInputs}
           missingSemesters={missingSemesters}
           onAddInput={addExternalCourseInput}
+          onAddInputs={addExternalCourseInputs}
           onRemoveInput={removeExternalCourseInput}
+          onSelectedStudentIdChange={setSelectedStudentId}
+          onStudentQueryChange={setQuery}
           selectedStudent={selectedStudent}
+          studentSemesterPresence={studentSemesterPresence}
+          studentQuery={query}
+          students={students}
         />
       </div>
     </section>

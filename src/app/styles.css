@@ -901,6 +901,10 @@ label.button {
   background: #f2f6fb;
 }
 
+.placeholder-table tr.is-attention td {
+  background: #fff4d6;
+}
+
 .upload-slots {
   display: grid;
   gap: 12px;

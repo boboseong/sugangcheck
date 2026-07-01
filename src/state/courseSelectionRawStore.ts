@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
-import type { Semester } from "../types/semester";
+import type { Semester, SemesterKey } from "../types/semester";
+import { semesterToKey } from "../utils/semester";
 
 function sameSemester(row: ParsedCourseSelectionRow, target: Semester): boolean {
   return (
@@ -24,9 +25,7 @@ export type StudentCourseSummary = {
   studentId: string;
   studentNo: string;
   studentName: string;
-  recordCount: number;
-  resolvedCredits: number;
-  missingCreditCount: number;
+  semesterCounts: Partial<Record<SemesterKey, number>>;
 };
 
 export function buildStudentCourseSummaries(
@@ -41,18 +40,12 @@ export function buildStudentCourseSummaries(
         studentId: row.studentId,
         studentNo: row.studentNo,
         studentName: row.studentName,
-        recordCount: 0,
-        resolvedCredits: 0,
-        missingCreditCount: 0
+        semesterCounts: {}
       };
+    const semesterKey = semesterToKey(row.target);
 
-    summary.recordCount += 1;
-
-    if (row.credits === undefined) {
-      summary.missingCreditCount += 1;
-    } else {
-      summary.resolvedCredits += row.credits;
-    }
+    summary.semesterCounts[semesterKey] =
+      (summary.semesterCounts[semesterKey] ?? 0) + 1;
 
     summaries.set(row.studentId, summary);
   }

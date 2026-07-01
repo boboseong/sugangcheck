@@ -293,7 +293,7 @@ export function CourseSelectionsPage() {
         <StudentPresenceTable rows={studentSemesterPresence} />
       </div>
       <div className="section">
-        <h2>학생별 이수 목록 요약</h2>
+        <h2>학기별 이수 과목 수</h2>
         <StudentCourseSummaryTable rows={courseSelectionRows} />
       </div>
       <div className="section">

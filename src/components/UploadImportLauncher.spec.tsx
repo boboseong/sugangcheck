@@ -1,4 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router-dom";
 import type { Mock } from "vitest";
 import { UploadImportLauncher } from "./UploadImportLauncher";
 import { CourseSelectionsPage } from "../pages/CourseSelectionsPage";
@@ -69,6 +71,10 @@ function autoUploadInput(container: HTMLElement): HTMLInputElement {
 
   expect(input).not.toBeNull();
   return input!;
+}
+
+function renderInRouter(element: ReactElement) {
+  return render(<MemoryRouter>{element}</MemoryRouter>);
 }
 
 describe("UploadImportLauncher", () => {
@@ -177,19 +183,34 @@ describe("UploadImportLauncher", () => {
     expect(clearResults).not.toHaveBeenCalled();
   });
 
+  it("opens itself from a custom trigger", () => {
+    render(
+      <UploadImportLauncher
+        onFilesSelected={vi.fn()}
+        section="courseSelections"
+        triggerLabel="수강신청 업로드"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "수강신청 업로드" }));
+    expect(
+      screen.getByRole("dialog", { name: "업로드/불러오기" })
+    ).toBeInTheDocument();
+  });
+
   it("connects the confirmation to operating-subject and course-selection pages", () => {
     useValidationResultStore.setState({
       lastValidationResult: validationResult,
       validationErrors: []
     });
 
-    const operatingSubjectsView = render(<OperatingSubjectsPage />);
+    const operatingSubjectsView = renderInRouter(<OperatingSubjectsPage />);
     fireEvent.click(screen.getByRole("button", { name: "업로드/불러오기" }));
     fireEvent.click(screen.getByRole("button", { name: "전체 학기 업로드" }));
     expect(screen.getByText(confirmationMessage)).toBeInTheDocument();
     operatingSubjectsView.unmount();
 
-    render(<CourseSelectionsPage />);
+    renderInRouter(<CourseSelectionsPage />);
     fireEvent.click(screen.getByRole("button", { name: "업로드/불러오기" }));
     fireEvent.click(screen.getByRole("button", { name: "전체 학기 업로드" }));
     expect(screen.getByText(confirmationMessage)).toBeInTheDocument();
@@ -201,7 +222,7 @@ describe("UploadImportLauncher", () => {
       validationErrors: []
     });
 
-    const operatingSubjectsView = render(<OperatingSubjectsPage />);
+    const operatingSubjectsView = renderInRouter(<OperatingSubjectsPage />);
     fireEvent.click(
       screen.getByRole("button", { name: "1학년 1학기 파일 비우기" })
     );
@@ -223,7 +244,7 @@ describe("UploadImportLauncher", () => {
       validationErrors: []
     });
 
-    render(<CourseSelectionsPage />);
+    renderInRouter(<CourseSelectionsPage />);
     fireEvent.click(
       screen.getByRole("button", { name: "1학년 1학기 파일 비우기" })
     );

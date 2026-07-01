@@ -1,285 +1,29 @@
 import { Download } from "lucide-react";
-import { useState } from "react";
 import { FilePreviewTable } from "../components/FilePreviewTable";
 import { OperatingSubjectReviewTable } from "../components/OperatingSubjectReviewTable";
 import { SemesterUploadSlots } from "../components/SemesterUploadSlots";
 import { UploadImportLauncher } from "../components/UploadImportLauncher";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
-import {
-  detectOperatingSubjectSemesterFromWorkbook,
-  detectOperatingSubjectSemestersFromWorkbook,
-  parseOperatingSubjectWorkbook,
-  type OperatingSubjectSemesterColumnDetection,
-  type OperatingSubjectSemesterDetectionResult
-} from "../parsers/parseOperatingSubjectFile";
-import {
-  readWorkbookFromFile,
-  workbookToPreviewTable,
-  type WorkbookPreviewTable
-} from "../parsers/readWorkbook";
-import {
-  createSemesterImportStatusId,
-  useImportStatusStore
-} from "../state/importStatusStore";
-import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
-import {
-  hasCompletedOperatingSubjectReviewForSemester,
-  useOperatingSubjectStore
-} from "../state/operatingSubjectStore";
-import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
+import { operatingSubjectDownloadGuide } from "../constants/uploadGuides";
+import { useOperatingSubjectImport } from "../hooks/useOperatingSubjectImport";
 import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useValidationResultStore } from "../state/validationResultStore";
-import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
-import {
-  createOperatingSubjectTemplateWorkbook,
-  createXlsxBlob,
-  templateFileNames
-} from "../templates/xlsxTemplates";
-import type { Semester } from "../types/semester";
-import { assignFilesToSemesters } from "../utils/detectSemesterFromFileName";
-import { downloadBlob } from "../utils/downloadBlob";
-import { isSameSemester, semesterLabel } from "../utils/semester";
-
-type PreparedOperatingSubjectFile = {
-  file: File;
-  workbook?: Awaited<ReturnType<typeof readWorkbookFromFile>>;
-  preview?: WorkbookPreviewTable;
-  semesterDetection?: OperatingSubjectSemesterDetectionResult;
-  semesterColumnDetections?: OperatingSubjectSemesterColumnDetection[];
-};
-
-function semesterKey(semester: Semester): string {
-  return `${semester.grade}-${semester.semester}`;
-}
-
-async function prepareOperatingSubjectFile(
-  file: File
-): Promise<PreparedOperatingSubjectFile> {
-  try {
-    const workbook = await readWorkbookFromFile(file);
-
-    return {
-      file,
-      workbook,
-      preview: workbookToPreviewTable(workbook),
-      semesterDetection: detectOperatingSubjectSemesterFromWorkbook(workbook),
-      semesterColumnDetections: detectOperatingSubjectSemestersFromWorkbook(workbook)
-    };
-  } catch {
-    return { file };
-  }
-}
-
-function assignmentsFromWorkbookSemesters(
-  preparedFiles: readonly PreparedOperatingSubjectFile[]
-):
-  | {
-      file: File;
-      semester: Semester;
-      preparedFile: PreparedOperatingSubjectFile;
-    }[]
-  | undefined {
-  if (preparedFiles.length === 0) {
-    return undefined;
-  }
-
-  const assignments = preparedFiles.flatMap((preparedFile) => {
-    if (preparedFile.semesterColumnDetections?.length) {
-      return preparedFile.semesterColumnDetections.map((detection) => ({
-        file: preparedFile.file,
-        semester: detection.semester,
-        preparedFile
-      }));
-    }
-
-    const detection = preparedFile.semesterDetection;
-
-    return detection?.status === "detected"
-      ? [
-          {
-            file: preparedFile.file,
-            semester: detection.semester,
-            preparedFile
-          }
-        ]
-      : [undefined];
-  });
-
-  if (assignments.some((assignment) => !assignment)) {
-    return undefined;
-  }
-
-  const semesters = assignments.map((assignment) =>
-    assignment ? semesterKey(assignment.semester) : ""
-  );
-
-  if (new Set(semesters).size !== assignments.length) {
-    return undefined;
-  }
-
-  return assignments.flatMap((assignment) => (assignment ? [assignment] : []));
-}
 
 export function OperatingSubjectsPage() {
-  const { clearSemesterImportStatus, importStatuses, setSemesterImportStatus } =
-    useImportStatusStore();
   const {
-    clearOperatingSubjectsForSemester,
+    handleClearSemester,
+    handleDownloadTemplate,
+    handleFilesSelected,
+    importStatuses,
     operatingSubjects,
-    replaceOperatingSubjectsForSemester,
+    preview,
+    reviewCompletedSemesters,
     updateOperatingSubject
-  } = useOperatingSubjectStore();
-  const generateCandidatesFromOperatingSubjects = usePrerequisiteRuleStore(
-    (state) => state.generateCandidatesFromOperatingSubjects
-  );
-  const seedCreditDifferenceCriteriaFromInputs = useValidationRuleSettingStore(
-    (state) => state.seedCreditDifferenceCriteriaFromInputs
-  );
+  } = useOperatingSubjectImport();
   const hasValidationResult = useValidationResultStore(
     (state) => state.lastValidationResult !== undefined
   );
-  const [preview, setPreview] = useState<WorkbookPreviewTable>();
-
-  async function importFileForSemester(
-    file: File,
-    target: Semester,
-    needsReview = false,
-    preparedFile?: PreparedOperatingSubjectFile
-  ) {
-    try {
-      const workbook = preparedFile?.workbook ?? (await readWorkbookFromFile(file));
-      const nextPreview = preparedFile?.preview ?? workbookToPreviewTable(workbook);
-      const detectedSemester =
-        preparedFile?.semesterDetection?.status === "detected"
-          ? preparedFile.semesterDetection.semester
-          : undefined;
-      const hasTargetMismatch =
-        detectedSemester !== undefined && !isSameSemester(detectedSemester, target);
-      const parseResult = parseOperatingSubjectWorkbook(workbook, {
-        semesterImportId: createSemesterImportStatusId("operatingSubjects", target),
-        target,
-        fileName: file.name
-      });
-      const unmatchedCount = parseResult.subjects.filter(
-        (subject) => subject.masterMatchStatus === "unmatched"
-      ).length;
-      const hasReviewItems =
-        needsReview ||
-        hasTargetMismatch ||
-        parseResult.failedRows.length > 0 ||
-        unmatchedCount > 0;
-
-      setPreview(nextPreview);
-      replaceOperatingSubjectsForSemester(target, parseResult.subjects);
-      const nextOperatingSubjects =
-        useOperatingSubjectStore.getState().operatingSubjects;
-      generateCandidatesFromOperatingSubjects(nextOperatingSubjects);
-      seedCreditDifferenceCriteriaFromInputs({
-        courseSelectionRows: useCourseSelectionRawStore.getState().courseSelectionRows,
-        operatingSubjects: nextOperatingSubjects
-      });
-      setSemesterImportStatus({
-        target,
-        sourceType: "operatingSubjects",
-        status: hasReviewItems ? "needsReview" : "imported",
-        fileName: file.name,
-        rowCount: parseResult.subjects.length,
-        message: hasReviewItems
-          ? [
-              needsReview
-                ? `${semesterLabel(target)}로 임시 배치했습니다. 학기 매핑을 확인하세요.`
-                : undefined,
-              hasTargetMismatch && detectedSemester
-                ? `파일 내부 학기는 ${semesterLabel(detectedSemester)}입니다. ${semesterLabel(target)} 슬롯으로 가져왔으니 확인하세요.`
-                : undefined,
-              parseResult.failedRows.length > 0
-                ? `파싱 실패 ${parseResult.failedRows.length}행`
-                : undefined,
-              unmatchedCount > 0 ? `미등록 과목 ${unmatchedCount}개` : undefined
-            ]
-              .filter(Boolean)
-              .join(" · ")
-          : undefined
-      });
-    } catch (error) {
-      setSemesterImportStatus({
-        target,
-        sourceType: "operatingSubjects",
-        status: "error",
-        fileName: file.name,
-        message: error instanceof Error ? error.message : "파일을 읽지 못했습니다."
-      });
-    }
-  }
-
-  async function handleFilesSelected(files: File[], target?: Semester) {
-    if (target) {
-      const file = files[0];
-
-      if (file) {
-        await importFileForSemester(file, target);
-      }
-
-      return;
-    }
-
-    const assignments = assignFilesToSemesters(files);
-    const preparedFiles = await Promise.all(
-      files.map((file) => prepareOperatingSubjectFile(file))
-    );
-    const workbookAssignments = assignmentsFromWorkbookSemesters(preparedFiles);
-
-    if (workbookAssignments) {
-      for (const assignment of workbookAssignments) {
-        await importFileForSemester(
-          assignment.file,
-          assignment.semester,
-          false,
-          assignment.preparedFile
-        );
-      }
-
-      return;
-    }
-    const preparedFileByFile = new Map(
-      preparedFiles.map((preparedFile) => [preparedFile.file, preparedFile])
-    );
-
-    for (const assignment of assignments) {
-      if (assignment.semester) {
-        await importFileForSemester(
-          assignment.file,
-          assignment.semester,
-          assignment.status === "needsReview",
-          preparedFileByFile.get(assignment.file)
-        );
-      }
-    }
-  }
-
-  function handleClearSemester(target: Semester) {
-    clearSemesterImportStatus("operatingSubjects", target);
-    clearOperatingSubjectsForSemester(target);
-  }
-
-  async function handleDownloadTemplate() {
-    await downloadBlob(
-      createXlsxBlob(createOperatingSubjectTemplateWorkbook(operatingSubjects)),
-      templateFileNames.operatingSubject
-    );
-  }
-
-  const reviewCompletedSemesters = importStatuses
-    .filter(
-      (status) =>
-        status.sourceType === "operatingSubjects" &&
-        hasCompletedOperatingSubjectReviewForSemester(
-          operatingSubjects,
-          status.target
-        )
-    )
-    .map((status) => status.target);
 
   return (
     <section className="page">
@@ -289,13 +33,7 @@ export function OperatingSubjectsPage() {
       />
       <div className="template-action-bar">
         <UploadImportLauncher
-          downloadGuide={{
-            title: "업로드를 위한 자료 다운 받는 방법",
-            items: [
-              "(구) 수강신청 시스템 - [수강신청 관리] - [운영과목 관리] 메뉴에서 학년, 학기를 선택한 뒤 [엑셀] 버튼 클릭",
-              "(신) 수강신청 시스템 - [수강신청] - [편성표] - [입학년도 선택] - [엑셀 다운로드]"
-            ]
-          }}
+          downloadGuide={operatingSubjectDownloadGuide}
           fileUploadConfirmation={{
             message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
             onConfirmedFileSelection: clearDerivedValidationState,

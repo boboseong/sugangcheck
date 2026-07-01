@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Play } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ErrorFilters,
   filterValidationErrors,
@@ -25,6 +25,7 @@ const defaultFilters: ValidationErrorFilters = {
 
 export function ValidationResultsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     buildIssues,
     canRunValidation,
@@ -39,6 +40,21 @@ export function ValidationResultsPage() {
     () => filterValidationErrors(validationErrors, filters),
     [filters, validationErrors]
   );
+
+  useEffect(() => {
+    if (searchParams.get("confirmValidation") !== "1") {
+      return;
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    nextSearchParams.delete("confirmValidation");
+    setSearchParams(nextSearchParams, { replace: true });
+
+    if (canRunValidation && confirmationMessage) {
+      setShowValidationConfirmation(true);
+    }
+  }, [canRunValidation, confirmationMessage, searchParams, setSearchParams]);
 
   function runFromResults() {
     runValidation();

@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Download, Upload, X } from "lucide-react";
 import {
@@ -38,6 +38,10 @@ type UploadImportLauncherProps = {
   section: ProjectImportSection;
   showProjectSemesterImport?: boolean;
   showUploadSemesterPicker?: boolean;
+  triggerClassName?: string;
+  triggerIcon?: ReactNode;
+  triggerLabel?: string;
+  triggerVariant?: "primary" | "secondary";
 };
 
 type FileUploadMode = "auto" | "semester";
@@ -79,7 +83,11 @@ export function UploadImportLauncher({
   onFilesSelected,
   section,
   showProjectSemesterImport = isSemesterProjectImportSection(section),
-  showUploadSemesterPicker = isSemesterProjectImportSection(section)
+  showUploadSemesterPicker = isSemesterProjectImportSection(section),
+  triggerClassName,
+  triggerIcon,
+  triggerLabel = "업로드/불러오기",
+  triggerVariant = "secondary"
 }: UploadImportLauncherProps) {
   const id = useId();
   const autoFileInputRef = useRef<HTMLInputElement>(null);
@@ -291,11 +299,12 @@ export function UploadImportLauncher({
   return (
     <>
       <Button
-        icon={<Upload size={16} />}
+        className={triggerClassName}
+        icon={triggerIcon ?? <Upload size={16} />}
         onClick={() => setOpen(true)}
-        variant="secondary"
+        variant={triggerVariant}
       >
-        업로드/불러오기
+        {triggerLabel}
       </Button>
       {open ? (
         <div className="import-launcher-modal" role="presentation">

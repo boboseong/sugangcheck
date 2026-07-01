@@ -4,12 +4,17 @@ import { useNavigate } from "react-router-dom";
 import { latestReleaseUrl, repositoryUrl } from "../app/externalLinks";
 import { DataPreparationDashboard } from "../components/DataPreparationDashboard";
 import { PageHeader } from "../components/ui/PageHeader";
+import { useCourseSelectionImport } from "../hooks/useCourseSelectionImport";
+import { useOperatingSubjectImport } from "../hooks/useOperatingSubjectImport";
 import { useValidationRun } from "../hooks/useValidationRun";
 import { appVersion } from "../state/projectMetaStore";
+import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useValidationResultStore } from "../state/validationResultStore";
 
 export function HomePage() {
   const navigate = useNavigate();
+  const courseSelectionImport = useCourseSelectionImport();
+  const operatingSubjectImport = useOperatingSubjectImport();
   const {
     canRunValidation,
     confirmationMessage,
@@ -35,7 +40,7 @@ export function HomePage() {
     }
 
     if (confirmationMessage) {
-      setShowValidationConfirmation(true);
+      navigate("/results?confirmValidation=1");
       return;
     }
 
@@ -55,10 +60,17 @@ export function HomePage() {
         confirmationMessage={confirmationMessage}
         hasValidationResult={Boolean(lastValidationResult)}
         onCancelValidationConfirmation={() => setShowValidationConfirmation(false)}
+        onCourseSelectionFilesSelected={courseSelectionImport.handleFilesSelected}
         onConfirmValidation={runAndNavigate}
+        onOperatingSubjectFilesSelected={operatingSubjectImport.handleFilesSelected}
         onRunValidation={handleRunValidation}
         showValidationConfirmation={showValidationConfirmation}
         status={dataPreparationStatus}
+        uploadConfirmation={{
+          message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
+          onConfirmedFileSelection: clearDerivedValidationState,
+          shouldConfirm: Boolean(lastValidationResult)
+        }}
       />
 
       <section

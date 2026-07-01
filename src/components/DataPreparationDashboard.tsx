@@ -6,22 +6,40 @@ import {
   UserRoundPlus
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  courseSelectionDownloadGuide,
+  operatingSubjectDownloadGuide
+} from "../constants/uploadGuides";
 import type {
   DataPreparationIssueCode,
   DataPreparationStatus,
   ImportStatus
 } from "../types/importStatus";
+import type { Semester } from "../types/semester";
+import { UploadImportLauncher } from "./UploadImportLauncher";
 import { StatusBadge, type StatusTone } from "./ui/StatusBadge";
 import { ValidationRunConfirmationDropdown } from "./ValidationRunConfirmationDropdown";
+
+type DashboardFileUploadHandler = (
+  files: File[],
+  target?: Semester
+) => void | Promise<void>;
 
 type DataPreparationDashboardProps = {
   confirmationMessage?: string;
   hasValidationResult: boolean;
   onCancelValidationConfirmation: () => void;
+  onCourseSelectionFilesSelected?: DashboardFileUploadHandler;
   onConfirmValidation: () => void;
+  onOperatingSubjectFilesSelected?: DashboardFileUploadHandler;
   onRunValidation: () => void;
   showValidationConfirmation: boolean;
   status: DataPreparationStatus;
+  uploadConfirmation?: {
+    message: string;
+    onConfirmedFileSelection: () => void;
+    shouldConfirm: boolean;
+  };
 };
 
 const semesterCount = 6;
@@ -74,19 +92,51 @@ function importDetail(
   return pendingText;
 }
 
+function hasAnyUploadedOrProblemStatus(counts: ImportStatusCounts): boolean {
+  return counts.imported + counts.needsReview + counts.error > 0;
+}
+
+function needsTabAttention(counts: ImportStatusCounts): boolean {
+  return counts.error > 0 || counts.needsReview > 0;
+}
+
 export function DataPreparationDashboard({
   confirmationMessage,
   hasValidationResult,
   onCancelValidationConfirmation,
+  onCourseSelectionFilesSelected,
   onConfirmValidation,
+  onOperatingSubjectFilesSelected,
   onRunValidation,
   showValidationConfirmation,
-  status
+  status,
+  uploadConfirmation
 }: DataPreparationDashboardProps) {
   const operatingSubjectBadge = importBadge(
     status.counts.operatingSubjectsByStatus
   );
+  const operatingSubjectNeedsAttention =
+    needsTabAttention(status.counts.operatingSubjectsByStatus) ||
+    hasIssue(status, "unregisteredOperatingSubject");
+  const operatingSubjectHasAnyInputOrProblem = hasAnyUploadedOrProblemStatus(
+    status.counts.operatingSubjectsByStatus
+  );
+  const operatingSubjectActionLabel = operatingSubjectNeedsAttention
+    ? "해당 탭으로 이동"
+    : "운영과목 업로드";
+  const shouldOpenOperatingSubjectUpload =
+    !operatingSubjectHasAnyInputOrProblem && onOperatingSubjectFilesSelected;
   const courseSelectionBadge = importBadge(status.counts.courseSelectionsByStatus);
+  const courseSelectionNeedsAttention =
+    needsTabAttention(status.counts.courseSelectionsByStatus);
+  const courseSelectionHasAnyInputOrProblem = hasAnyUploadedOrProblemStatus(
+    status.counts.courseSelectionsByStatus
+  );
+  const courseSelectionActionLabel = courseSelectionNeedsAttention
+    ? "해당 탭으로 이동"
+    : "수강신청 업로드";
+  const shouldOpenCourseSelectionUpload =
+    !courseSelectionHasAnyInputOrProblem && onCourseSelectionFilesSelected;
   const hasAnyCourseSelectionUpload =
     status.counts.courseSelectionsByStatus.imported +
       status.counts.courseSelectionsByStatus.needsReview >
@@ -171,13 +221,25 @@ export function DataPreparationDashboard({
           {`${status.counts.operatingSubjectsByStatus.imported}/${semesterCount} 학기`}
         </p>
         <p className="workflow-card__detail">{operatingSubjectDetail}</p>
-        <Link
-          className="button button--secondary button--compact workflow-card__action"
-          to="/operating-subjects"
-        >
-          <FileSpreadsheet size={15} />
-          <span>운영과목 업로드</span>
-        </Link>
+        {shouldOpenOperatingSubjectUpload ? (
+          <UploadImportLauncher
+            downloadGuide={operatingSubjectDownloadGuide}
+            fileUploadConfirmation={uploadConfirmation}
+            onFilesSelected={onOperatingSubjectFilesSelected}
+            section="operatingSubjects"
+            triggerClassName="button--compact workflow-card__action"
+            triggerIcon={<FileSpreadsheet size={15} />}
+            triggerLabel={operatingSubjectActionLabel}
+          />
+        ) : (
+          <Link
+            className="button button--secondary button--compact workflow-card__action"
+            to="/operating-subjects"
+          >
+            <FileSpreadsheet size={15} />
+            <span>{operatingSubjectActionLabel}</span>
+          </Link>
+        )}
       </article>
 
       <article className="workflow-card">
@@ -198,13 +260,25 @@ export function DataPreparationDashboard({
             "6개 학기 업로드 필요"
           )}
         </p>
-        <Link
-          className="button button--secondary button--compact workflow-card__action"
-          to="/course-selections"
-        >
-          <Upload size={15} />
-          <span>수강신청 업로드</span>
-        </Link>
+        {shouldOpenCourseSelectionUpload ? (
+          <UploadImportLauncher
+            downloadGuide={courseSelectionDownloadGuide}
+            fileUploadConfirmation={uploadConfirmation}
+            onFilesSelected={onCourseSelectionFilesSelected}
+            section="courseSelections"
+            triggerClassName="button--compact workflow-card__action"
+            triggerIcon={<Upload size={15} />}
+            triggerLabel={courseSelectionActionLabel}
+          />
+        ) : (
+          <Link
+            className="button button--secondary button--compact workflow-card__action"
+            to="/course-selections"
+          >
+            <Upload size={15} />
+            <span>{courseSelectionActionLabel}</span>
+          </Link>
+        )}
       </article>
 
       <article className="workflow-card">

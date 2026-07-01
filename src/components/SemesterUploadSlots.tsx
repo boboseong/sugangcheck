@@ -17,6 +17,11 @@ type SemesterUploadSlotsProps = {
   sourceType: ImportSourceType;
   statuses: readonly SemesterImportStatus[];
   accept?: string;
+  clearConfirmation?: {
+    message: string;
+    onConfirmedClear: () => void;
+    shouldConfirm: boolean;
+  };
   compact?: boolean;
   onFilesSelected: (files: File[], target?: Semester) => void | Promise<void>;
   onClearSemester?: (target: Semester) => void;
@@ -85,6 +90,7 @@ export function SemesterUploadSlots({
   sourceType,
   statuses,
   accept = ".xls,.xlsx,.xlsm",
+  clearConfirmation,
   compact = false,
   onFilesSelected,
   onClearSemester,
@@ -94,6 +100,10 @@ export function SemesterUploadSlots({
   const id = useId();
   const batchInputRef = useRef<HTMLInputElement>(null);
   const [draggingKey, setDraggingKey] = useState<string>();
+  const [pendingClearTarget, setPendingClearTarget] = useState<
+    Semester | undefined
+  >(undefined);
+  const shouldConfirmClear = clearConfirmation?.shouldConfirm ?? false;
 
   const handleInputChange =
     (target?: Semester) => async (event: ChangeEvent<HTMLInputElement>) => {
@@ -120,6 +130,33 @@ export function SemesterUploadSlots({
         await onFilesSelected(files, target);
       }
     };
+
+  function requestClearSemester(target: Semester) {
+    if (!onClearSemester) {
+      return;
+    }
+
+    if (shouldConfirmClear) {
+      setPendingClearTarget(target);
+      return;
+    }
+
+    onClearSemester(target);
+  }
+
+  function continueConfirmedClear() {
+    if (!pendingClearTarget || !onClearSemester) {
+      return;
+    }
+
+    clearConfirmation?.onConfirmedClear();
+    onClearSemester(pendingClearTarget);
+    setPendingClearTarget(undefined);
+  }
+
+  function cancelConfirmedClear() {
+    setPendingClearTarget(undefined);
+  }
 
   return (
     <div className={compact ? "upload-slots upload-slots--compact" : "upload-slots"}>
@@ -170,6 +207,9 @@ export function SemesterUploadSlots({
             : statusTones[status.status];
           const inputId = `${id}-${sourceType}-${key}`;
           const isDragging = draggingKey === key;
+          const isClearConfirmationOpen =
+            pendingClearTarget !== undefined &&
+            isSameSemester(pendingClearTarget, target);
 
           return (
             <div
@@ -220,12 +260,27 @@ export function SemesterUploadSlots({
                     </>
                   ) : null}
                   {onClearSemester ? (
-                  <IconButton
-                    icon={<Trash2 size={16} />}
-                    label={`${semesterLabel(target)} 파일 비우기`}
-                    onClick={() => onClearSemester(target)}
-                  />
+                    <IconButton
+                      icon={<Trash2 size={16} />}
+                      label={`${semesterLabel(target)} 파일 비우기`}
+                      onClick={() => requestClearSemester(target)}
+                    />
                   ) : null}
+                </div>
+              ) : null}
+              {isClearConfirmationOpen ? (
+                <div
+                  aria-label="삭제 확인"
+                  className="upload-slot__confirm"
+                  role="alertdialog"
+                >
+                  <p>{clearConfirmation?.message}</p>
+                  <div className="upload-slot__confirm-actions">
+                    <Button onClick={continueConfirmedClear}>계속</Button>
+                    <Button onClick={cancelConfirmedClear} variant="secondary">
+                      취소
+                    </Button>
+                  </div>
                 </div>
               ) : null}
             </div>

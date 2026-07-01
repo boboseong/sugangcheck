@@ -24,11 +24,13 @@ import {
 } from "../state/importStatusStore";
 import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
+import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
 import {
   mergeStudentsFromCourseSelectionRows,
   useStudentStore
 } from "../state/studentStore";
+import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import {
   createCourseSelectionTemplateWorkbook,
@@ -125,6 +127,9 @@ export function CourseSelectionsPage() {
   } = useStudentSemesterPresenceStore();
   const seedCreditDifferenceCriteriaFromInputs = useValidationRuleSettingStore(
     (state) => state.seedCreditDifferenceCriteriaFromInputs
+  );
+  const hasValidationResult = useValidationResultStore(
+    (state) => state.lastValidationResult !== undefined
   );
   const [preview, setPreview] = useState<WorkbookPreviewTable>();
 
@@ -267,6 +272,11 @@ export function CourseSelectionsPage() {
               "(신) 수강신청 시스템 - [수강신청] - [신청결과] - [입학년도 선택] - [템플릿 다운로드]"
             ]
           }}
+          fileUploadConfirmation={{
+            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
+            onConfirmedFileSelection: clearDerivedValidationState,
+            shouldConfirm: hasValidationResult
+          }}
           onFilesSelected={handleFilesSelected}
           section="courseSelections"
         />
@@ -280,6 +290,11 @@ export function CourseSelectionsPage() {
       </div>
       <div className="section">
         <SemesterUploadSlots
+          clearConfirmation={{
+            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
+            onConfirmedClear: clearDerivedValidationState,
+            shouldConfirm: hasValidationResult
+          }}
           compact
           onClearSemester={handleClearSemester}
           onFilesSelected={handleFilesSelected}

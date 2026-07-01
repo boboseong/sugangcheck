@@ -418,6 +418,29 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.import-launcher-confirm {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #f3b05c;
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.import-launcher-confirm p {
+  margin: 0;
+  color: #3b2f1b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.import-launcher-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .import-launcher-row {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;
@@ -1026,6 +1049,30 @@ label.button {
   grid-column: 4;
   justify-content: flex-end;
   white-space: nowrap;
+}
+
+.upload-slot__confirm {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f3b05c;
+}
+
+.upload-slot__confirm p {
+  margin: 0;
+  color: #3b2f1b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.upload-slot__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .empty-panel {

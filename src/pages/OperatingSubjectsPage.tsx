@@ -28,6 +28,8 @@ import {
   useOperatingSubjectStore
 } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
+import { clearDerivedValidationState } from "../state/projectWorkspace";
+import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import {
   createOperatingSubjectTemplateWorkbook,
@@ -133,6 +135,9 @@ export function OperatingSubjectsPage() {
   );
   const seedCreditDifferenceCriteriaFromInputs = useValidationRuleSettingStore(
     (state) => state.seedCreditDifferenceCriteriaFromInputs
+  );
+  const hasValidationResult = useValidationResultStore(
+    (state) => state.lastValidationResult !== undefined
   );
   const [preview, setPreview] = useState<WorkbookPreviewTable>();
 
@@ -291,6 +296,11 @@ export function OperatingSubjectsPage() {
               "(신) 수강신청 시스템 - [수강신청] - [편성표] - [입학년도 선택] - [엑셀 다운로드]"
             ]
           }}
+          fileUploadConfirmation={{
+            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
+            onConfirmedFileSelection: clearDerivedValidationState,
+            shouldConfirm: hasValidationResult
+          }}
           onFilesSelected={handleFilesSelected}
           section="operatingSubjects"
         />
@@ -304,6 +314,11 @@ export function OperatingSubjectsPage() {
       </div>
       <div className="section">
         <SemesterUploadSlots
+          clearConfirmation={{
+            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
+            onConfirmedClear: clearDerivedValidationState,
+            shouldConfirm: hasValidationResult
+          }}
           compact
           onClearSemester={handleClearSemester}
           onFilesSelected={handleFilesSelected}

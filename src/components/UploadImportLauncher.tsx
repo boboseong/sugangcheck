@@ -27,6 +27,11 @@ type UploadImportLauncherProps = {
     title: string;
     items: string[];
   };
+  fileUploadConfirmation?: {
+    message: string;
+    onConfirmedFileSelection: () => void;
+    shouldConfirm: boolean;
+  };
   fileDescription?: string;
   fileUploadLabel?: string;
   onFilesSelected: (files: File[], target?: Semester) => void | Promise<void>;
@@ -34,6 +39,8 @@ type UploadImportLauncherProps = {
   showProjectSemesterImport?: boolean;
   showUploadSemesterPicker?: boolean;
 };
+
+type FileUploadMode = "auto" | "semester";
 
 const sectionLabels: Record<ProjectImportSection, string> = {
   operatingSubjects: "운영과목",
@@ -66,6 +73,7 @@ export function UploadImportLauncher({
   accept = ".xls,.xlsx,.xlsm",
   allowMultipleFiles = true,
   downloadGuide,
+  fileUploadConfirmation,
   fileDescription = "전체 학기 업로드에는 (신)수강신청, (구)수강신청, 템플릿 파일 업로드가 가능합니다.",
   fileUploadLabel,
   onFilesSelected,
@@ -75,10 +83,15 @@ export function UploadImportLauncher({
 }: UploadImportLauncherProps) {
   const id = useId();
   const autoFileInputRef = useRef<HTMLInputElement>(null);
+  const confirmedFileUploadModeRef = useRef<FileUploadMode | undefined>(
+    undefined
+  );
   const semesterFileInputRef = useRef<HTMLInputElement>(null);
   const { activeProjectId } = useProjectMetaStore();
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
+  const [pendingFileUploadMode, setPendingFileUploadMode] =
+    useState<FileUploadMode | undefined>(undefined);
   const [projects, setProjects] = useState<StoredProjectSummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedProjectSemesterKey, setSelectedProjectSemesterKey] =
@@ -94,9 +107,13 @@ export function UploadImportLauncher({
   const allProjectImportLabel = showProjectSemesterImport
     ? "전체 학기 불러오기"
     : "전체 불러오기";
+  const shouldConfirmFileUpload =
+    fileUploadConfirmation?.shouldConfirm ?? false;
 
   useEffect(() => {
     if (!open) {
+      setPendingFileUploadMode(undefined);
+      confirmedFileUploadModeRef.current = undefined;
       return;
     }
 
@@ -131,14 +148,63 @@ export function UploadImportLauncher({
     };
   }, [activeProjectId, open]);
 
+  function openFilePicker(mode: FileUploadMode) {
+    if (mode === "auto") {
+      autoFileInputRef.current?.click();
+      return;
+    }
+
+    semesterFileInputRef.current?.click();
+  }
+
+  function requestFileUpload(mode: FileUploadMode) {
+    if (shouldConfirmFileUpload) {
+      setPendingFileUploadMode(mode);
+      return;
+    }
+
+    setPendingFileUploadMode(undefined);
+    openFilePicker(mode);
+  }
+
+  function continueConfirmedFileUpload() {
+    if (!pendingFileUploadMode) {
+      return;
+    }
+
+    confirmedFileUploadModeRef.current = pendingFileUploadMode;
+    setPendingFileUploadMode(undefined);
+    openFilePicker(pendingFileUploadMode);
+  }
+
+  function cancelConfirmedFileUpload() {
+    confirmedFileUploadModeRef.current = undefined;
+    setPendingFileUploadMode(undefined);
+  }
+
+  function clearAfterConfirmedFileSelection(mode: FileUploadMode) {
+    const shouldClear =
+      confirmedFileUploadModeRef.current === mode && shouldConfirmFileUpload;
+
+    confirmedFileUploadModeRef.current = undefined;
+
+    if (shouldClear) {
+      fileUploadConfirmation?.onConfirmedFileSelection();
+    }
+  }
+
   async function handleAutoFileChange(event: ChangeEvent<HTMLInputElement>) {
     const files = filesFromInput(event);
     event.target.value = "";
 
     if (files.length === 0) {
+      if (confirmedFileUploadModeRef.current === "auto") {
+        confirmedFileUploadModeRef.current = undefined;
+      }
       return;
     }
 
+    clearAfterConfirmedFileSelection("auto");
     await onFilesSelected(files);
     setOpen(false);
   }
@@ -148,6 +214,9 @@ export function UploadImportLauncher({
     event.target.value = "";
 
     if (files.length === 0) {
+      if (confirmedFileUploadModeRef.current === "semester") {
+        confirmedFileUploadModeRef.current = undefined;
+      }
       return;
     }
 
@@ -157,6 +226,7 @@ export function UploadImportLauncher({
       return;
     }
 
+    clearAfterConfirmedFileSelection("semester");
     await onFilesSelected([file], selectedSemester(selectedUploadSemesterKey));
     setOpen(false);
   }
@@ -264,7 +334,7 @@ export function UploadImportLauncher({
                 <div className="import-launcher-row">
                   <Button
                     icon={<Upload size={16} />}
-                    onClick={() => autoFileInputRef.current?.click()}
+                    onClick={() => requestFileUpload("auto")}
                     variant="secondary"
                   >
                     {autoUploadLabel}
@@ -300,7 +370,7 @@ export function UploadImportLauncher({
                     </select>
                     <Button
                       icon={<Upload size={16} />}
-                      onClick={() => semesterFileInputRef.current?.click()}
+                      onClick={() => requestFileUpload("semester")}
                       variant="secondary"
                     >
                       선택 학기 업로드
@@ -312,6 +382,24 @@ export function UploadImportLauncher({
                       onChange={handleSemesterFileChange}
                       type="file"
                     />
+                  </div>
+                ) : null}
+                {pendingFileUploadMode ? (
+                  <div
+                    aria-label="업로드 확인"
+                    className="import-launcher-confirm"
+                    role="alertdialog"
+                  >
+                    <p>{fileUploadConfirmation?.message}</p>
+                    <div className="import-launcher-confirm__actions">
+                      <Button onClick={continueConfirmedFileUpload}>계속</Button>
+                      <Button
+                        onClick={cancelConfirmedFileUpload}
+                        variant="secondary"
+                      >
+                        취소
+                      </Button>
+                    </div>
                   </div>
                 ) : null}
               </section>

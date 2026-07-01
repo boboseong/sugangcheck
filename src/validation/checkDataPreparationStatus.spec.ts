@@ -139,6 +139,49 @@ describe("checkDataPreparationStatus", () => {
     );
   });
 
+  it("does not exclude a semester when operating-subject review is only unmatched subjects", () => {
+    const target = firstSemester();
+
+    const status = checkDataPreparationStatus({
+      importStatuses: createImportStatuses().map((item) =>
+        item.sourceType === "operatingSubjects" &&
+        item.target.grade === target.grade &&
+        item.target.semester === target.semester
+          ? {
+              ...item,
+              status: "needsReview",
+              message: "미등록 과목 1개"
+            }
+          : item
+      ),
+      studentSemesterPresence: [],
+      operatingSubjects: [createOperatingSubject(target, "unmatched")],
+      courseSelectionRows: [],
+      externalCourseInputs: [],
+      prerequisiteRules: [],
+      validationRuleSettings: [
+        {
+          id: "minimumCredits",
+          enabled: true,
+          includeExternalInputs: true,
+          criteria: {}
+        }
+      ]
+    });
+
+    expect(status.canRunFullValidation).toBe(true);
+    expect(status.counts.operatingSubjectsByStatus.needsReview).toBe(0);
+    expect(status.counts.operatingSubjectsByStatus.imported).toBe(semesters.length);
+    expect(status.issues).not.toContainEqual(
+      expect.objectContaining({
+        code: "needsReview",
+        relatedSemester: target,
+        relatedSourceType: "operatingSubjects"
+      })
+    );
+    expect(hasUnregisteredOperatingSubjectIssue(status)).toBe(true);
+  });
+
   it("does not add the issue after operating-subject corrections are complete", () => {
     const target = firstSemester();
 

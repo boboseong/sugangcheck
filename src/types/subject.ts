@@ -13,6 +13,8 @@ export type SubjectMasterItem = {
 
 export type OperatingSubjectMatchStatus = "matched" | "unmatched" | "manual";
 
+export const missingOperatingSubjectInfoLabel = "미입력";
+
 export type OperatingSubject = {
   id: string;
   target: {

@@ -7,7 +7,10 @@ import {
 } from "../data/subjectMaster";
 import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";
 import type { Grade, SemesterTerm } from "../types/semester";
-import type { OperatingSubject } from "../types/subject";
+import {
+  missingOperatingSubjectInfoLabel,
+  type OperatingSubject
+} from "../types/subject";
 import { toCreditNumber } from "../utils/number";
 import { semesterLabel } from "../utils/semester";
 import { Button } from "./ui/Button";
@@ -164,9 +167,9 @@ export function OperatingSubjectReviewTable({
       },
       subjectName,
       normalizedSubjectName: normalizeSubjectName(subjectName),
-      subjectGroup: draft.subjectGroup.trim() || "미확인",
-      selectionType: draft.selectionType.trim() || "미확인",
-      groupType: draft.groupType.trim() || undefined,
+      subjectGroup: draft.subjectGroup.trim() || missingOperatingSubjectInfoLabel,
+      selectionType: draft.selectionType.trim() || missingOperatingSubjectInfoLabel,
+      groupType: draft.groupType.trim() || missingOperatingSubjectInfoLabel,
       credits,
       masterMatchStatus: "manual"
     });
@@ -340,7 +343,7 @@ export function OperatingSubjectReviewTable({
                       }
                       value={draft.groupType}
                     >
-                      <option value="">미확인</option>
+                      <option value="">미입력</option>
                       {optionList(groupTypes, draft.groupType).map((value) => (
                         <option key={value} value={value}>
                           {value}
@@ -360,7 +363,7 @@ export function OperatingSubjectReviewTable({
                       }
                       value={draft.subjectGroup}
                     >
-                      <option value="">미확인</option>
+                      <option value="">미입력</option>
                       {optionList(subjectGroups, draft.subjectGroup).map((value) => (
                         <option key={value} value={value}>
                           {value}
@@ -380,7 +383,7 @@ export function OperatingSubjectReviewTable({
                       }
                       value={draft.selectionType}
                     >
-                      <option value="">미확인</option>
+                      <option value="">미입력</option>
                       {optionList(selectionTypes, draft.selectionType).map((value) => (
                         <option key={value} value={value}>
                           {value}

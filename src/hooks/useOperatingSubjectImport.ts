@@ -155,8 +155,21 @@ export function useOperatingSubjectImport() {
       const hasReviewItems =
         needsReview ||
         hasTargetMismatch ||
-        parseResult.failedRows.length > 0 ||
-        unmatchedCount > 0;
+        parseResult.failedRows.length > 0;
+      const statusMessage = [
+        needsReview
+          ? `${semesterLabel(target)}로 임시 배치했습니다. 학기 매핑을 확인하세요.`
+          : undefined,
+        hasTargetMismatch && detectedSemester
+          ? `파일 내부 학기는 ${semesterLabel(detectedSemester)}입니다. ${semesterLabel(target)} 슬롯으로 가져왔으니 확인하세요.`
+          : undefined,
+        parseResult.failedRows.length > 0
+          ? `파싱 실패 ${parseResult.failedRows.length}행`
+          : undefined,
+        unmatchedCount > 0 ? `미등록 과목 ${unmatchedCount}개` : undefined
+      ]
+        .filter(Boolean)
+        .join(" · ");
 
       setPreview(nextPreview);
       replaceOperatingSubjectsForSemester(target, parseResult.subjects);
@@ -173,22 +186,7 @@ export function useOperatingSubjectImport() {
         status: hasReviewItems ? "needsReview" : "imported",
         fileName: file.name,
         rowCount: parseResult.subjects.length,
-        message: hasReviewItems
-          ? [
-              needsReview
-                ? `${semesterLabel(target)}로 임시 배치했습니다. 학기 매핑을 확인하세요.`
-                : undefined,
-              hasTargetMismatch && detectedSemester
-                ? `파일 내부 학기는 ${semesterLabel(detectedSemester)}입니다. ${semesterLabel(target)} 슬롯으로 가져왔으니 확인하세요.`
-                : undefined,
-              parseResult.failedRows.length > 0
-                ? `파싱 실패 ${parseResult.failedRows.length}행`
-                : undefined,
-              unmatchedCount > 0 ? `미등록 과목 ${unmatchedCount}개` : undefined
-            ]
-              .filter(Boolean)
-              .join(" · ")
-          : undefined
+        message: statusMessage || undefined
       });
     } catch (error) {
       setSemesterImportStatus({

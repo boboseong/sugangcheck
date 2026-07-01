@@ -39,29 +39,12 @@ function countByImportStatus(
   return counts;
 }
 
-function hasCompletedOperatingSubjectCorrections(
-  subjects: readonly OperatingSubject[],
-  target: Semester
-): boolean {
-  const semesterSubjects = subjects.filter((subject) =>
-    isSameSemester(subject.target, target)
-  );
-
-  return (
-    semesterSubjects.length > 0 &&
-    semesterSubjects.some((subject) => subject.masterMatchStatus === "manual") &&
-    semesterSubjects.every((subject) => subject.masterMatchStatus !== "unmatched")
-  );
-}
-
-function isOnlyCorrectedUnmatchedSubjectReview(
-  status: SemesterImportStatus,
-  operatingSubjects: readonly OperatingSubject[]
+function isOnlyUnregisteredOperatingSubjectReview(
+  status: SemesterImportStatus
 ): boolean {
   if (
     status.sourceType !== "operatingSubjects" ||
-    status.status !== "needsReview" ||
-    !hasCompletedOperatingSubjectCorrections(operatingSubjects, status.target)
+    status.status !== "needsReview"
   ) {
     return false;
   }
@@ -74,12 +57,11 @@ function isOnlyCorrectedUnmatchedSubjectReview(
   );
 }
 
-function effectiveImportStatuses(input: {
-  importStatuses: readonly SemesterImportStatus[];
-  operatingSubjects: readonly OperatingSubject[];
-}): SemesterImportStatus[] {
-  return input.importStatuses.map((status) =>
-    isOnlyCorrectedUnmatchedSubjectReview(status, input.operatingSubjects)
+function effectiveImportStatuses(
+  importStatuses: readonly SemesterImportStatus[]
+): SemesterImportStatus[] {
+  return importStatuses.map((status) =>
+    isOnlyUnregisteredOperatingSubjectReview(status)
       ? { ...status, status: "imported" }
       : status
   );
@@ -170,10 +152,7 @@ export function checkDataPreparationStatus(input: {
   prerequisiteRules: readonly PrerequisiteRule[];
   validationRuleSettings: readonly ValidationRuleSetting[];
 }): DataPreparationStatus {
-  const importStatuses = effectiveImportStatuses({
-    importStatuses: input.importStatuses,
-    operatingSubjects: input.operatingSubjects
-  });
+  const importStatuses = effectiveImportStatuses(input.importStatuses);
   const operatingSubjectsByStatus = countByImportStatus(
     importStatuses,
     "operatingSubjects"

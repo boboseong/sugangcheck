@@ -9,7 +9,11 @@ import type {
   OperatingSubjectPreviewRow
 } from "../types/OperatingSubjectParseResult";
 import type { Semester, SemesterKey } from "../types/semester";
-import type { OperatingSubject, SubjectMasterItem } from "../types/subject";
+import {
+  missingOperatingSubjectInfoLabel,
+  type OperatingSubject,
+  type SubjectMasterItem
+} from "../types/subject";
 import { toCreditNumber } from "../utils/number";
 import { parseSemesterKey, semesterToKey } from "../utils/semester";
 
@@ -484,10 +488,17 @@ export function parseOperatingSubjectWorkbook(
       (usesSemesterCreditColumn
         ? ""
         : compactString(valueAt(row, detectedColumnMap.groupType)));
-    const subjectGroup = masterItem?.subjectGroup ?? rawSubjectGroup;
+    const rawSelectionType = compactString(
+      valueAt(row, detectedColumnMap.selectionType)
+    );
+    const subjectGroup =
+      masterItem?.subjectGroup ||
+      rawSubjectGroup ||
+      missingOperatingSubjectInfoLabel;
     const selectionType =
-      masterItem?.selectionType ??
-      compactString(valueAt(row, detectedColumnMap.selectionType));
+      masterItem?.selectionType ||
+      rawSelectionType ||
+      missingOperatingSubjectInfoLabel;
     const issueMessages: string[] = [];
 
     if (credits === undefined) {
@@ -496,10 +507,6 @@ export function parseOperatingSubjectWorkbook(
 
     if (!grade || !semester) {
       issueMessages.push("학년 또는 학기 값을 찾지 못했습니다.");
-    }
-
-    if (!subjectGroup) {
-      issueMessages.push("교과군 값을 찾지 못했습니다.");
     }
 
     if (issueMessages.length > 0 || credits === undefined || !grade || !semester) {
@@ -528,8 +535,8 @@ export function parseOperatingSubjectWorkbook(
       subjectName,
       normalizedSubjectName,
       subjectGroup,
-      selectionType: selectionType || "미확인",
-      groupType: groupType || undefined,
+      selectionType,
+      groupType: groupType || missingOperatingSubjectInfoLabel,
       credits,
       masterMatchStatus: masterItem ? "matched" : "unmatched",
       semesterImportId: options.semesterImportId,

@@ -26,7 +26,10 @@ import type { ExternalCourseInput, ParsedCourseSelectionRow } from "../types/cou
 import type { DataPreparationStatus, SemesterImportStatus } from "../types/importStatus";
 import { semesterKeys, type Semester } from "../types/semester";
 import type { Student, StudentSemesterPresence } from "../types/student";
-import type { OperatingSubject } from "../types/subject";
+import {
+  missingOperatingSubjectInfoLabel,
+  type OperatingSubject
+} from "../types/subject";
 import type { ProjectFile, ProjectState } from "../types/project";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { checkDataPreparationStatus } from "../validation/checkDataPreparationStatus";
@@ -275,7 +278,10 @@ function normalizeTemplateOperatingSubject(subject: OperatingSubject): Operating
     return subject;
   }
 
-  return subject.subjectGroup && subject.selectionType
+  return subject.subjectGroup &&
+    subject.subjectGroup !== missingOperatingSubjectInfoLabel &&
+    subject.selectionType &&
+    subject.selectionType !== missingOperatingSubjectInfoLabel
     ? {
         ...subject,
         masterMatchStatus: "manual"

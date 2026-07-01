@@ -1,6 +1,5 @@
 import { Download } from "lucide-react";
 import { useState } from "react";
-import { CourseSelectionReviewTable } from "../components/CourseSelectionReviewTable";
 import { FilePreviewTable } from "../components/FilePreviewTable";
 import { SemesterUploadSlots } from "../components/SemesterUploadSlots";
 import { StudentCourseSummaryTable } from "../components/StudentCourseSummaryTable";
@@ -118,7 +117,6 @@ export function CourseSelectionsPage() {
     courseSelectionRows,
     replaceCourseSelectionRowsForSemester
   } = useCourseSelectionRawStore();
-  const { operatingSubjects } = useOperatingSubjectStore();
   const { setStudents } = useStudentStore();
   const {
     markSemesterUnknown,
@@ -310,13 +308,6 @@ export function CourseSelectionsPage() {
       <div className="section">
         <h2>학기별 이수 과목 수</h2>
         <StudentCourseSummaryTable rows={courseSelectionRows} />
-      </div>
-      <div className="section">
-        <h2>수강신청 원천 행 검토</h2>
-        <CourseSelectionReviewTable
-          operatingSubjects={operatingSubjects}
-          rows={courseSelectionRows}
-        />
       </div>
       <div className="section">
         <h2>파일 미리보기</h2>

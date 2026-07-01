@@ -13,10 +13,7 @@ import type { OperatingSubject } from "../types/subject";
 import type { PrerequisiteRule, ValidationRuleSetting } from "../types/validation";
 import { semesterKeys, type Semester } from "../types/semester";
 import { isSameSemester, parseSemesterKey, semesterLabel } from "../utils/semester";
-import {
-  isMissingUploadIssue,
-  unregisteredOperatingSubjectIssueMessage
-} from "./dataPreparationIssues";
+import { unregisteredOperatingSubjectIssueMessage } from "./dataPreparationIssues";
 
 function emptyStatusCounts(): Record<ImportStatus, number> {
   return {
@@ -129,6 +126,26 @@ function missingUploadIssueMessage(status: SemesterImportStatus): string {
   } 입력되지 않았습니다.`;
 }
 
+function importErrorIssueMessage(status: SemesterImportStatus): string {
+  const label = `${sourceTypeLabels[status.sourceType]} 탭 ${semesterLabel(status.target)}`;
+  const detail = status.message ? `: ${status.message}` : "";
+
+  return `${label} 업로드 오류가 있습니다${detail}`;
+}
+
+function hasImportedStatus(
+  statuses: readonly SemesterImportStatus[],
+  sourceType: ImportSourceType,
+  target: Semester
+): boolean {
+  return statuses.some(
+    (status) =>
+      status.sourceType === sourceType &&
+      status.status === "imported" &&
+      isSameSemester(status.target, target)
+  );
+}
+
 function countMissingExternalCourseStudents(input: {
   externalCourseInputs: readonly ExternalCourseInput[];
   studentSemesterPresence: readonly StudentSemesterPresence[];
@@ -220,7 +237,8 @@ export function checkDataPreparationStatus(input: {
     issues.push(
       issue(
         "unregisteredOperatingSubject",
-        unregisteredOperatingSubjectIssueMessage
+        `${unregisteredOperatingSubjectIssueMessage} ${unregisteredOperatingSubjectCount.toLocaleString()}개 과목을 확인하세요.`,
+        false
       )
     );
   }
@@ -240,9 +258,17 @@ export function checkDataPreparationStatus(input: {
       );
     });
 
-  if (operatingSubjectsByStatus.error + courseSelectionsByStatus.error > 0) {
-    issues.push(issue("importError", "업로드 오류 상태인 학기가 있습니다."));
-  }
+  importStatuses
+    .filter((status) => status.status === "error")
+    .forEach((status) => {
+      issues.push(
+        issue("importError", importErrorIssueMessage(status), true, {
+          relatedIds: [status.id],
+          relatedSemester: status.target,
+          relatedSourceType: status.sourceType
+        })
+      );
+    });
 
   importStatuses
     .filter((status) => status.status === "needsReview")
@@ -258,17 +284,31 @@ export function checkDataPreparationStatus(input: {
 
   if (unknownStudentSemesterCount > 0) {
     issues.push(
-      issue("unknownStudentSemester", "학생 학기별 존재 여부에 미확인 값이 남아 있습니다.")
+      issue(
+        "unknownStudentSemester",
+        `학생 학기별 존재 여부에 미확인 값 ${unknownStudentSemesterCount.toLocaleString()}건이 남아 있습니다.`,
+        false
+      )
     );
   }
 
   if (resolutionStatus.missingCreditCount > 0) {
-    issues.push(issue("missingCredits", "학점이 해석되지 않은 과목이 있습니다."));
+    issues.push(
+      issue(
+        "missingCredits",
+        `학점이 해석되지 않은 과목 ${resolutionStatus.missingCreditCount.toLocaleString()}건이 있습니다.`,
+        false
+      )
+    );
   }
 
   if (incompleteExternalCourseInputCount > 0) {
     issues.push(
-      issue("incompleteExternalCourseInput", "필수값이 비어 있는 전입/외부 이수 입력 행이 있습니다.")
+      issue(
+        "incompleteExternalCourseInput",
+        `필수값이 비어 있는 전입/외부 이수 입력 행 ${incompleteExternalCourseInputCount.toLocaleString()}건이 있습니다.`,
+        false
+      )
     );
   }
 
@@ -276,7 +316,7 @@ export function checkDataPreparationStatus(input: {
     issues.push(
       issue(
         "pendingPrerequisiteCandidate",
-        "점검 여부가 정해지지 않은 위계 규칙이 남아 있습니다.",
+        `점검 여부가 정해지지 않은 위계 규칙 ${pendingPrerequisiteCandidateCount.toLocaleString()}건이 남아 있습니다.`,
         false
       )
     );
@@ -286,39 +326,28 @@ export function checkDataPreparationStatus(input: {
     issues.push(issue("missingValidationRuleSettings", "점검 규칙 설정을 읽을 수 없습니다."));
   }
 
-  const availablePartialSemesters = importStatuses
+  const availablePartialSemesters = semesterKeys
+    .map((key) => parseSemesterKey(key))
+    .filter((semester): semester is Semester => Boolean(semester))
     .filter(
-      (status) =>
-        status.sourceType === "courseSelections" && status.status === "imported"
-    )
-    .map((status) => status.target);
-  const hasBlockingIssues = issues.some((item) => item.blocksFullValidation);
-  const hasBlockingIssuesExceptMissingUploads = issues.some(
-    (item) => item.blocksFullValidation && !isMissingUploadIssue(item)
+      (semester) =>
+        hasImportedStatus(importStatuses, "operatingSubjects", semester) &&
+        hasImportedStatus(importStatuses, "courseSelections", semester)
+    );
+  const hasFatalIssues = issues.some(
+    (item) => item.code === "missingValidationRuleSettings"
   );
   const canRunFullValidation =
     semesterKeys.every((key) => {
       const semester = parseSemesterKey(key);
       return (
         semester &&
-        importStatuses.some(
-          (status) =>
-            status.sourceType === "operatingSubjects" &&
-            status.status === "imported" &&
-            status.target.grade === semester.grade &&
-            status.target.semester === semester.semester
-        ) &&
-        importStatuses.some(
-          (status) =>
-            status.sourceType === "courseSelections" &&
-            status.status === "imported" &&
-            status.target.grade === semester.grade &&
-            status.target.semester === semester.semester
-        )
+        hasImportedStatus(importStatuses, "operatingSubjects", semester) &&
+        hasImportedStatus(importStatuses, "courseSelections", semester)
       );
-    }) && !hasBlockingIssues;
+    }) && !hasFatalIssues;
   const canRunPartialValidation =
-    availablePartialSemesters.length > 0 && !hasBlockingIssuesExceptMissingUploads;
+    availablePartialSemesters.length > 0 && !hasFatalIssues;
 
   return {
     checkedAt: new Date().toISOString(),

@@ -130,11 +130,11 @@ describe("checkDataPreparationStatus", () => {
     });
 
     expect(hasUnregisteredOperatingSubjectIssue(status)).toBe(true);
-    expect(status.canRunFullValidation).toBe(false);
+    expect(status.canRunFullValidation).toBe(true);
     expect(status.issues).toContainEqual(
       expect.objectContaining({
         code: "unregisteredOperatingSubject",
-        message: unregisteredOperatingSubjectIssueMessage
+        message: expect.stringContaining(unregisteredOperatingSubjectIssueMessage)
       })
     );
   });
@@ -223,6 +223,7 @@ describe("checkDataPreparationStatus", () => {
 
     expect(status.canRunFullValidation).toBe(false);
     expect(status.canRunPartialValidation).toBe(true);
+    expect(status.availablePartialSemesters).not.toContainEqual(target);
     expect(status.issues).toContainEqual(
       expect.objectContaining({
         code: "missingOperatingSubjects",
@@ -237,6 +238,67 @@ describe("checkDataPreparationStatus", () => {
         message: "2학년 1학기 수강신청 결과가 입력되지 않았습니다.",
         relatedSemester: target,
         relatedSourceType: "courseSelections"
+      })
+    );
+  });
+
+  it("allows partial validation when another semester has an import error", () => {
+    const target = { grade: 2, semester: 1 } as const;
+    const status = checkDataPreparationStatus({
+      importStatuses: createImportStatuses().map((item) =>
+        item.target.grade === target.grade &&
+        item.target.semester === target.semester &&
+        item.sourceType === "courseSelections"
+          ? {
+              ...item,
+              status: "error",
+              message: "파일 형식 오류"
+            }
+          : item
+      ),
+      studentSemesterPresence: [],
+      operatingSubjects: [createOperatingSubject(firstSemester(), "matched")],
+      courseSelectionRows: [],
+      externalCourseInputs: [],
+      prerequisiteRules: [],
+      validationRuleSettings: [
+        {
+          id: "minimumCredits",
+          enabled: true,
+          includeExternalInputs: true,
+          criteria: {}
+        }
+      ]
+    });
+
+    expect(status.canRunFullValidation).toBe(false);
+    expect(status.canRunPartialValidation).toBe(true);
+    expect(status.issues).toContainEqual(
+      expect.objectContaining({
+        code: "importError",
+        message: "수강신청 결과 탭 2학년 1학기 업로드 오류가 있습니다: 파일 형식 오류",
+        relatedSemester: target,
+        relatedSourceType: "courseSelections"
+      })
+    );
+  });
+
+  it("does not run validation without validation rule settings", () => {
+    const status = checkDataPreparationStatus({
+      importStatuses: createImportStatuses(),
+      studentSemesterPresence: [],
+      operatingSubjects: [createOperatingSubject(firstSemester(), "matched")],
+      courseSelectionRows: [],
+      externalCourseInputs: [],
+      prerequisiteRules: [],
+      validationRuleSettings: []
+    });
+
+    expect(status.canRunFullValidation).toBe(false);
+    expect(status.canRunPartialValidation).toBe(false);
+    expect(status.issues).toContainEqual(
+      expect.objectContaining({
+        code: "missingValidationRuleSettings"
       })
     );
   });

@@ -12,10 +12,15 @@ import type {
   ImportStatus
 } from "../types/importStatus";
 import { StatusBadge, type StatusTone } from "./ui/StatusBadge";
+import { ValidationRunConfirmationDropdown } from "./ValidationRunConfirmationDropdown";
 
 type DataPreparationDashboardProps = {
+  confirmationMessage?: string;
   hasValidationResult: boolean;
+  onCancelValidationConfirmation: () => void;
+  onConfirmValidation: () => void;
   onRunValidation: () => void;
+  showValidationConfirmation: boolean;
   status: DataPreparationStatus;
 };
 
@@ -70,8 +75,12 @@ function importDetail(
 }
 
 export function DataPreparationDashboard({
+  confirmationMessage,
   hasValidationResult,
+  onCancelValidationConfirmation,
+  onConfirmValidation,
   onRunValidation,
+  showValidationConfirmation,
   status
 }: DataPreparationDashboardProps) {
   const operatingSubjectBadge = importBadge(
@@ -254,6 +263,13 @@ export function DataPreparationDashboard({
               사전 작업이 완료되지 않았습니다.
             </div>
           )}
+          {showValidationConfirmation && confirmationMessage ? (
+            <ValidationRunConfirmationDropdown
+              message={confirmationMessage}
+              onCancel={onCancelValidationConfirmation}
+              onConfirm={onConfirmValidation}
+            />
+          ) : null}
         </div>
       </article>
     </div>

@@ -12,7 +12,11 @@ export type ValidationMode = "full" | "partial";
 
 export type CourseSelectionRecordBuildIssue = {
   sourceId: string;
+  sourceLabel: string;
+  studentNo: string;
+  studentName: string;
   subjectName: string;
+  target: Semester;
   message: string;
 };
 
@@ -38,6 +42,16 @@ function semesterAllowed(
 
 function buildRecordId(sourceId: string): string {
   return `record-${sourceId}`;
+}
+
+function resolveSourceLabel(
+  source: ParsedCourseSelectionRow | ExternalCourseInput
+): string {
+  if (!("sourceType" in source)) {
+    return "수강신청 결과";
+  }
+
+  return source.sourceType === "transfer" ? "전입" : "외부 이수";
 }
 
 export function buildCourseSelectionRecords(input: {
@@ -74,8 +88,6 @@ export function buildCourseSelectionRecords(input: {
       credits.credits === undefined
     ) {
       issues.push({
-        sourceId: source.id,
-        subjectName: source.subjectName,
         message: [
           !metadata.subjectGroup || !metadata.selectionType
             ? "과목 정보가 해석되지 않았습니다."
@@ -83,7 +95,13 @@ export function buildCourseSelectionRecords(input: {
           credits.credits === undefined ? "학점이 해석되지 않았습니다." : undefined
         ]
           .filter(Boolean)
-          .join(" ")
+          .join(" "),
+        sourceLabel: resolveSourceLabel(source),
+        sourceId: source.id,
+        studentName: source.studentName,
+        studentNo: source.studentNo,
+        subjectName: source.subjectName,
+        target: source.target
       });
       continue;
     }

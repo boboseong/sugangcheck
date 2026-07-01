@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Code, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { latestReleaseUrl, repositoryUrl } from "../app/externalLinks";
@@ -11,21 +12,34 @@ export function HomePage() {
   const navigate = useNavigate();
   const {
     canRunValidation,
+    confirmationMessage,
     dataPreparationStatus,
     runValidation
   } = useValidationRun();
   const { lastValidationResult } = useValidationResultStore();
+  const [showValidationConfirmation, setShowValidationConfirmation] =
+    useState(false);
+
+  function runAndNavigate() {
+    const result = runValidation();
+
+    if (result) {
+      setShowValidationConfirmation(false);
+      navigate("/results");
+    }
+  }
 
   function handleRunValidation() {
     if (!canRunValidation) {
       return;
     }
 
-    const result = runValidation();
-
-    if (result) {
-      navigate("/results");
+    if (confirmationMessage) {
+      setShowValidationConfirmation(true);
+      return;
     }
+
+    runAndNavigate();
   }
 
   return (
@@ -38,8 +52,12 @@ export function HomePage() {
       />
 
       <DataPreparationDashboard
+        confirmationMessage={confirmationMessage}
         hasValidationResult={Boolean(lastValidationResult)}
+        onCancelValidationConfirmation={() => setShowValidationConfirmation(false)}
+        onConfirmValidation={runAndNavigate}
         onRunValidation={handleRunValidation}
+        showValidationConfirmation={showValidationConfirmation}
         status={dataPreparationStatus}
       />
 

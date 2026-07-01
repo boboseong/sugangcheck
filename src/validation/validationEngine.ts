@@ -24,14 +24,6 @@ import { validatePrerequisites } from "./validatePrerequisites";
 import { validateRequiredSubjectGroupCredits } from "./validateRequiredSubjectGroupCredits";
 import { validateSubjectMetadataMismatch } from "./validateSubjectMetadataMismatch";
 
-const partialModeSkippedRules = new Set<ValidationRuleId>([
-  "minimumCredits",
-  "requiredSubjectGroupCredits",
-  "koreanHistoryCredits",
-  "koreanMathEnglishLimit",
-  "detailedConstraints"
-]);
-
 function recordsForSetting(
   records: readonly CourseSelectionRecord[],
   setting: ValidationRuleSetting
@@ -87,11 +79,7 @@ export function runValidationEngine(
   for (const setting of input.ruleSettings) {
     const validator = validators[setting.id];
 
-    if (
-      !setting.enabled ||
-      !validator ||
-      (input.mode === "partial" && partialModeSkippedRules.has(setting.id))
-    ) {
+    if (!setting.enabled || !validator) {
       skippedRuleIds.push(setting.id);
       continue;
     }

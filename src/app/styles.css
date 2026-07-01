@@ -636,6 +636,13 @@ textarea {
   justify-self: start;
 }
 
+.workflow-card__validation-action {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  width: 100%;
+}
+
 .workflow-card__blocked {
   display: inline-flex;
   align-items: center;
@@ -2044,10 +2051,18 @@ label.button {
   background: #fff8e8;
 }
 
+.validation-run-notice--dropdown {
+  width: min(100%, 720px);
+}
+
 .validation-run-notice p {
   margin: 0;
   color: #7a4a05;
   font-weight: 800;
+}
+
+.validation-run-notice__message {
+  white-space: pre-wrap;
 }
 
 .validation-run-notice__actions {

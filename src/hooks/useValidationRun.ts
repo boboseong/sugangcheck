@@ -10,10 +10,7 @@ import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { checkDataPreparationStatus } from "../validation/checkDataPreparationStatus";
-import {
-  hasUnregisteredOperatingSubjectIssue,
-  missingUploadConfirmationMessage
-} from "../validation/dataPreparationIssues";
+import { validationRunConfirmationMessage } from "../validation/dataPreparationIssues";
 import {
   createDefaultValidationRuleFunctionMap,
   runValidationEngine
@@ -43,19 +40,10 @@ export function useValidationRun() {
   const canRunValidation =
     dataPreparationStatus.canRunFullValidation ||
     dataPreparationStatus.canRunPartialValidation;
-  const uploadConfirmationMessage =
-    missingUploadConfirmationMessage(dataPreparationStatus);
+  const confirmationMessage = validationRunConfirmationMessage(dataPreparationStatus);
 
   function runValidation() {
     if (!canRunValidation) {
-      return undefined;
-    }
-
-    if (
-      !dataPreparationStatus.canRunFullValidation &&
-      uploadConfirmationMessage &&
-      !window.confirm(uploadConfirmationMessage)
-    ) {
       return undefined;
     }
 
@@ -92,10 +80,9 @@ export function useValidationRun() {
   return {
     buildIssues,
     canRunValidation,
+    confirmationMessage,
     courseSelectionRecords,
     dataPreparationStatus,
-    hasOperatingSubjectRegistrationIssue:
-      hasUnregisteredOperatingSubjectIssue(dataPreparationStatus),
     runValidation
   };
 }

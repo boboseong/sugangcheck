@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Download, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -6,9 +6,9 @@ import {
   filterValidationErrors,
   type ValidationErrorFilters
 } from "../components/ErrorFilters";
-import { OperatingSubjectRegistrationNotice } from "../components/OperatingSubjectRegistrationNotice";
 import { PageHeader } from "../components/ui/PageHeader";
 import { ValidationErrorTable } from "../components/ValidationErrorTable";
+import { ValidationRunConfirmationDropdown } from "../components/ValidationRunConfirmationDropdown";
 import {
   exportValidationErrorsXlsx,
   validationErrorListFileName
@@ -16,6 +16,7 @@ import {
 import { useValidationRun } from "../hooks/useValidationRun";
 import { useValidationResultStore } from "../state/validationResultStore";
 import { downloadBlob } from "../utils/downloadBlob";
+import { semesterLabel } from "../utils/semester";
 
 const defaultFilters: ValidationErrorFilters = {
   ruleId: "all",
@@ -25,42 +26,36 @@ const defaultFilters: ValidationErrorFilters = {
 export function ValidationResultsPage() {
   const navigate = useNavigate();
   const {
+    buildIssues,
     canRunValidation,
-    hasOperatingSubjectRegistrationIssue,
+    confirmationMessage,
     runValidation
   } = useValidationRun();
   const { lastValidationResult, validationErrors } = useValidationResultStore();
   const [filters, setFilters] = useState(defaultFilters);
-  const [
-    showOperatingSubjectRegistrationNotice,
-    setShowOperatingSubjectRegistrationNotice
-  ] = useState(false);
+  const [showValidationConfirmation, setShowValidationConfirmation] =
+    useState(false);
   const filteredErrors = useMemo(
     () => filterValidationErrors(validationErrors, filters),
     [filters, validationErrors]
   );
 
-  useEffect(() => {
-    if (!hasOperatingSubjectRegistrationIssue) {
-      setShowOperatingSubjectRegistrationNotice(false);
-    }
-  }, [hasOperatingSubjectRegistrationIssue]);
+  function runFromResults() {
+    runValidation();
+    setShowValidationConfirmation(false);
+  }
 
   function handleRunValidation() {
-    if (hasOperatingSubjectRegistrationIssue) {
-      setShowOperatingSubjectRegistrationNotice(true);
-      return;
-    }
-
     if (!canRunValidation) {
       return;
     }
 
-    const result = runValidation();
-
-    if (result) {
-      setShowOperatingSubjectRegistrationNotice(false);
+    if (confirmationMessage) {
+      setShowValidationConfirmation(true);
+      return;
     }
+
+    runFromResults();
   }
 
   async function handleDownloadErrors() {
@@ -83,9 +78,14 @@ export function ValidationResultsPage() {
         <span className="status-badge status-badge--empty">
           표시 {filteredErrors.length.toLocaleString()}건
         </span>
+        {buildIssues.length > 0 ? (
+          <span className="status-badge status-badge--warning">
+            점검 제외 자료 {buildIssues.length.toLocaleString()}건
+          </span>
+        ) : null}
         <button
           className="button button--compact"
-          disabled={!canRunValidation && !hasOperatingSubjectRegistrationIssue}
+          disabled={!canRunValidation}
           onClick={handleRunValidation}
           type="button"
         >
@@ -108,8 +108,46 @@ export function ValidationResultsPage() {
           </span>
         ) : null}
       </div>
-      {showOperatingSubjectRegistrationNotice ? (
-        <OperatingSubjectRegistrationNotice />
+      {showValidationConfirmation && confirmationMessage ? (
+        <ValidationRunConfirmationDropdown
+          message={confirmationMessage}
+          onCancel={() => setShowValidationConfirmation(false)}
+          onConfirm={runFromResults}
+        />
+      ) : null}
+      {buildIssues.length > 0 ? (
+        <div className="section">
+          <div className="section-heading-row">
+            <h2>점검 제외 자료</h2>
+            <span className="muted-text">
+              입력자료 문제로 점검 레코드에 포함되지 않은 행입니다.
+            </span>
+          </div>
+          <table className="placeholder-table">
+            <thead>
+              <tr>
+                <th>학기</th>
+                <th>학생</th>
+                <th>과목</th>
+                <th>출처</th>
+                <th>제외 사유</th>
+              </tr>
+            </thead>
+            <tbody>
+              {buildIssues.map((issue) => (
+                <tr key={issue.sourceId}>
+                  <td>{semesterLabel(issue.target)}</td>
+                  <td>
+                    {issue.studentNo} {issue.studentName}
+                  </td>
+                  <td>{issue.subjectName}</td>
+                  <td>{issue.sourceLabel}</td>
+                  <td>{issue.message}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : null}
       <div className="section">
         <ErrorFilters

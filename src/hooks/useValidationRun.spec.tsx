@@ -12,6 +12,7 @@ import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
+import { defaultValidationRuleSettings } from "../data/defaultValidationRules";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { Semester } from "../types/semester";
 import type { OperatingSubject } from "../types/subject";
@@ -64,14 +65,7 @@ function resetStores() {
     validationErrors: []
   });
   useValidationRuleSettingStore.setState({
-    validationRuleSettings: [
-      {
-        id: "duplicateSubjects",
-        enabled: true,
-        includeExternalInputs: true,
-        criteria: {}
-      }
-    ]
+    validationRuleSettings: structuredClone(defaultValidationRuleSettings)
   });
 }
 
@@ -105,26 +99,25 @@ describe("useValidationRun", () => {
     vi.restoreAllMocks();
   });
 
-  it("asks before running validation with missing upload semesters", () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+  it("exposes an in-app confirmation message for partial validation", () => {
     const { result } = renderHook(() => useValidationRun());
-    let runResult: ReturnType<typeof result.current.runValidation>;
 
     expect(result.current.canRunValidation).toBe(true);
-
-    act(() => {
-      runResult = result.current.runValidation();
-    });
-
-    expect(confirmSpy).toHaveBeenCalledWith(
-      "2학년 1학기 운영과목이 입력되지 않았습니다. 점검을 진행하시겠습니까?"
+    expect(result.current.confirmationMessage).toEqual(
+      expect.stringContaining(
+        "2학년 1학기 운영과목이 입력되지 않았습니다. 해당 학기는 제외됩니다."
+      )
     );
-    expect(runResult).toBeUndefined();
+    expect(result.current.confirmationMessage).toEqual(
+      expect.stringContaining(
+        "전체 학생에게 오류가 표시될 수 있습니다."
+      )
+    );
     expect(useValidationResultStore.getState().lastValidationResult).toBeUndefined();
   });
 
-  it("runs partial validation after the missing upload warning is confirmed", () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("runs partial validation after the in-app confirmation is accepted", () => {
+    const confirmSpy = vi.spyOn(window, "confirm");
     const { result } = renderHook(() => useValidationRun());
     let runResult: ReturnType<typeof result.current.runValidation>;
 
@@ -133,8 +126,18 @@ describe("useValidationRun", () => {
     });
 
     expect(runResult?.validationResult).toBeDefined();
+    expect(confirmSpy).not.toHaveBeenCalled();
     expect(runResult?.validationResult.executedRuleIds).toEqual([
-      "duplicateSubjects"
+      "minimumCredits",
+      "creditDifference",
+      "requiredSubjectGroupCredits",
+      "koreanHistoryCredits",
+      "koreanMathEnglishLimit",
+      "duplicateSubjects",
+      "prerequisites",
+      "detailedConstraints",
+      "courseExistsInOperatingSubjects",
+      "subjectMetadataMismatch"
     ]);
     expect(useValidationResultStore.getState().lastValidationResult).toBeDefined();
   });

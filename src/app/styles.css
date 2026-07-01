@@ -490,13 +490,9 @@ textarea {
 
 .page-header p {
   margin: 0;
-  max-width: 780px;
+  max-width: none;
   color: #526070;
   line-height: 1.7;
-}
-
-.page-header--single-line-description p {
-  max-width: none;
 }
 
 @media (min-width: 1120px) {

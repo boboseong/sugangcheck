@@ -31,12 +31,55 @@ class SugangcheckDatabase extends Dexie {
 
 export const db = new SugangcheckDatabase(databaseName);
 
+export class DuplicateProjectNameError extends Error {
+  constructor(projectName: string) {
+    super(
+      `"${projectName}" 프로젝트가 이미 있습니다. 다른 프로젝트 이름을 사용해 주세요.`
+    );
+    this.name = "DuplicateProjectNameError";
+  }
+}
+
 function createProjectId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
 
   return `project-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function normalizeProjectNameForComparison(projectName: string): string {
+  return projectName.trim().replace(/\s+/g, " ").toLocaleLowerCase("ko-KR");
+}
+
+export async function findConflictingProjectName(
+  projectName: string,
+  options: { excludingProjectId?: string } = {}
+): Promise<StoredProjectSummary | undefined> {
+  const normalizedName = normalizeProjectNameForComparison(projectName);
+
+  if (!normalizedName) {
+    return undefined;
+  }
+
+  const summaries = await listProjectRecords();
+
+  return summaries.find(
+    (summary) =>
+      summary.id !== options.excludingProjectId &&
+      normalizeProjectNameForComparison(summary.projectName) === normalizedName
+  );
+}
+
+export async function assertProjectNameAvailable(
+  projectName: string,
+  options: { excludingProjectId?: string } = {}
+) {
+  const conflict = await findConflictingProjectName(projectName, options);
+
+  if (conflict) {
+    throw new DuplicateProjectNameError(projectName);
+  }
 }
 
 export function getActiveProjectId(): string | undefined {
@@ -123,6 +166,10 @@ export async function createProjectRecord(input: {
   id?: string;
   savedAt?: string;
 }): Promise<StoredProjectRecord> {
+  await assertProjectNameAvailable(input.projectName, {
+    excludingProjectId: input.id
+  });
+
   const record = createStoredProjectRecord(input);
 
   await saveProjectRecord(record);
@@ -181,6 +228,7 @@ export async function cloneProjectRecord(
 
   const record = cloneStoredProjectRecord({ source, nextName });
 
+  await assertProjectNameAvailable(record.projectName);
   await saveProjectRecord(record);
 
   return record;

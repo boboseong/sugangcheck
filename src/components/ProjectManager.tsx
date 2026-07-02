@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
+  assertProjectNameAvailable,
   clearAllProjectRecords,
   cloneProjectRecord,
   createProjectRecord,
@@ -250,6 +251,10 @@ export function ProjectManager() {
   }
 
   function handleRenameProject() {
+    if (!activeProjectId) {
+      return;
+    }
+
     const nextName = projectNameFromPrompt("프로젝트 이름 변경", projectName);
 
     if (!nextName || nextName === projectName) {
@@ -257,8 +262,19 @@ export function ProjectManager() {
     }
 
     void runProjectAction(async () => {
+      await assertProjectNameAvailable(nextName, {
+        excludingProjectId: activeProjectId
+      });
+
+      const previousName = projectName;
       setProjectName(nextName);
-      await saveCurrentProjectSnapshot();
+
+      try {
+        await saveCurrentProjectSnapshot();
+      } catch (error) {
+        setProjectName(previousName);
+        throw error;
+      }
     });
   }
 

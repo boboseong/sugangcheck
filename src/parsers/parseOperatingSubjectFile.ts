@@ -10,6 +10,7 @@ import type {
 } from "../types/OperatingSubjectParseResult";
 import type { Semester, SemesterKey } from "../types/semester";
 import {
+  defaultOperatingSubjectChoiceGroup,
   missingOperatingSubjectInfoLabel,
   type OperatingSubject,
   type SubjectMasterItem
@@ -60,6 +61,7 @@ const headerAliases: Record<HeaderField, string[]> = {
   selectionType: ["선택구분", "과목유형"],
   groupType: ["과목구분"],
   groupLabel: ["그룹구분"],
+  choiceGroup: ["선택군", "그룹명"],
   enrollmentCount: ["수강인원"]
 };
 
@@ -446,15 +448,28 @@ export function parseOperatingSubjectWorkbook(
   const failedRows: OperatingSubjectParseIssue[] = [];
   const previewRows: OperatingSubjectPreviewRow[] = [];
   let carriedSubjectGroup = "";
+  let carriedChoiceGroup = defaultOperatingSubjectChoiceGroup;
 
   matrix.slice(headerRowIndex + 1).forEach((row, offset) => {
     const rowNumber = headerRowIndex + offset + 2;
     const explicitSubjectGroup = parseSubjectGroup(
       valueAt(row, detectedColumnMap.subjectGroup)
     );
+    const explicitChoiceGroup = compactString(
+      valueAt(
+        row,
+        usesSemesterCreditColumn
+          ? (detectedColumnMap.choiceGroup ?? detectedColumnMap.groupType)
+          : detectedColumnMap.choiceGroup
+      )
+    );
 
     if (explicitSubjectGroup) {
       carriedSubjectGroup = explicitSubjectGroup;
+    }
+
+    if (explicitChoiceGroup) {
+      carriedChoiceGroup = explicitChoiceGroup;
     }
 
     const subjectName = compactString(valueAt(row, columnMap.subjectName));
@@ -499,6 +514,11 @@ export function parseOperatingSubjectWorkbook(
       masterItem?.selectionType ||
       rawSelectionType ||
       missingOperatingSubjectInfoLabel;
+    const choiceGroup =
+      (usesSemesterCreditColumn
+        ? carriedChoiceGroup
+        : compactString(valueAt(row, detectedColumnMap.choiceGroup))) ||
+      defaultOperatingSubjectChoiceGroup;
     const issueMessages: string[] = [];
 
     if (credits === undefined) {
@@ -516,6 +536,7 @@ export function parseOperatingSubjectWorkbook(
         rowNumber,
         subjectName,
         normalizedSubjectName,
+        choiceGroup,
         subjectGroup,
         selectionType,
         groupType,
@@ -534,6 +555,7 @@ export function parseOperatingSubjectWorkbook(
       target: { grade, semester },
       subjectName,
       normalizedSubjectName,
+      choiceGroup,
       subjectGroup,
       selectionType,
       groupType: groupType || missingOperatingSubjectInfoLabel,
@@ -548,6 +570,7 @@ export function parseOperatingSubjectWorkbook(
       rowNumber,
       subjectName,
       normalizedSubjectName,
+      choiceGroup: operatingSubject.choiceGroup,
       subjectGroup,
       selectionType: operatingSubject.selectionType,
       groupType: operatingSubject.groupType,

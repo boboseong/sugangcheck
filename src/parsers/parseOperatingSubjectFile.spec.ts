@@ -27,8 +27,41 @@ describe("parseOperatingSubjectWorkbook", () => {
         subjectGroup: missingOperatingSubjectInfoLabel,
         selectionType: missingOperatingSubjectInfoLabel,
         groupType: missingOperatingSubjectInfoLabel,
+        choiceGroup: "학생필수",
         masterMatchStatus: "unmatched"
       })
     );
+  });
+
+  it("keeps app-template choice group separate from group type", () => {
+    const workbook = utils.book_new();
+    const sheet = utils.aoa_to_sheet([
+      [
+        "학년",
+        "학기",
+        "교과목",
+        "선택군",
+        "운영학점",
+        "교과(군)",
+        "선택구분",
+        "과목구분"
+      ],
+      [2, 1, "물리학", "학생선택B", 3, "과학", "진로", "보통교과"]
+    ]);
+
+    utils.book_append_sheet(workbook, sheet, "운영과목");
+
+    const result = parseOperatingSubjectWorkbook(workbook, {
+      semesterImportId: "operatingSubjects-2-1",
+      target: { grade: 2, semester: 1 },
+      masterItems: []
+    });
+
+    expect(result.failedRows).toHaveLength(0);
+    expect(result.subjects[0]).toMatchObject({
+      subjectName: "물리학",
+      choiceGroup: "학생선택B",
+      groupType: "보통교과"
+    });
   });
 });

@@ -340,6 +340,7 @@ export function SubjectEnrollmentPage() {
               <thead>
                 <tr>
                   <th>학기</th>
+                  <th>선택군</th>
                   <th>교과군</th>
                   <th>과목명</th>
                   <th>선택구분</th>
@@ -358,6 +359,7 @@ export function SubjectEnrollmentPage() {
                     key={summary.id}
                   >
                     <td>{semesterLabel(summary.target)}</td>
+                    <td>{summary.choiceGroup}</td>
                     <td>{summary.subjectGroup}</td>
                     <td>
                       <button
@@ -421,8 +423,8 @@ function SubjectEnrollmentStudentDialog({
               {semesterLabel(summary.target)} · {summary.subjectName}
             </h2>
             <p>
-              {summary.subjectGroup} · {summary.selectionType} ·{" "}
-              {summary.studentCount.toLocaleString()}명
+              {summary.choiceGroup} · {summary.subjectGroup} ·{" "}
+              {summary.selectionType} · {summary.studentCount.toLocaleString()}명
             </p>
           </div>
           <IconButton icon={<X size={16} />} label="닫기" onClick={onClose} />

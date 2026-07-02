@@ -14,7 +14,7 @@ import type {
 } from "./validation";
 import type { ValidationEngineResult } from "../validation/types";
 
-export type AppSchemaVersion = 4;
+export type AppSchemaVersion = 5;
 
 export type ProjectEnvelope = {
   schemaVersion: AppSchemaVersion;

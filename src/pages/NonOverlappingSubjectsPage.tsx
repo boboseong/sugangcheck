@@ -199,6 +199,7 @@ export function NonOverlappingSubjectsPage() {
                   <th>학기</th>
                   <th>과목 수</th>
                   <th>과목명렬</th>
+                  <th>선택군</th>
                   <th>교과군</th>
                   <th>과목별 신청 학생 수</th>
                   <th>총 신청 학생 수</th>
@@ -224,6 +225,7 @@ export function NonOverlappingSubjectsPage() {
                         {subjectListLabel(combination)}
                       </span>
                     </td>
+                    <td>{combination.choiceGroups.join(", ")}</td>
                     <td>{combination.subjectGroups.join(", ")}</td>
                     <td>{subjectCountLabel(combination)}</td>
                     <td>

@@ -12,6 +12,7 @@ const sheetHeader = [
   "과목 수",
   "총 신청 학생 수",
   "과목명렬",
+  "선택군명렬",
   "교과군명렬",
   "과목 1",
   "과목 1 신청 학생 수",
@@ -48,6 +49,7 @@ function combinationRows(
     combination.subjectCount,
     combination.totalStudentCount,
     combination.subjectNames.join(", "),
+    combination.choiceGroups.join(", "),
     combination.subjectGroups.join(", "),
     subjectNameAt(combination, 0),
     studentCountAt(combination, 0),
@@ -70,7 +72,7 @@ export function createNonOverlappingSubjectsWorkbook(
   ]);
 
   sheet["!cols"] = [
-    8, 8, 8, 14, 10, 16, 48, 24, 24, 16, 24, 16, 24, 16, 24, 16
+    8, 8, 8, 14, 10, 16, 48, 24, 24, 24, 16, 24, 16, 24, 16, 24, 16
   ].map((wch) => ({ wch }));
   utils.book_append_sheet(workbook, sheet, "미중복과목명렬");
 

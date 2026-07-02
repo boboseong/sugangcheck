@@ -18,6 +18,7 @@ export type NonOverlappingSubject = {
   semesterKey: SemesterKey;
   subjectName: string;
   normalizedSubjectName: string;
+  choiceGroup: string;
   subjectGroup: string;
   selectionType: string;
   groupType?: string;
@@ -34,6 +35,7 @@ export type NonOverlappingSubjectCombination = {
   totalStudentCount: number;
   subjects: NonOverlappingSubject[];
   subjectNames: string[];
+  choiceGroups: string[];
   subjectGroups: string[];
 };
 
@@ -110,12 +112,11 @@ function combinationCompare(
   );
 }
 
-function uniqueSortedSubjectGroups(
-  subjects: readonly NonOverlappingSubject[]
+function uniqueSortedSubjectValues(
+  subjects: readonly NonOverlappingSubject[],
+  getValue: (subject: NonOverlappingSubject) => string
 ): string[] {
-  return [...new Set(subjects.map((subject) => subject.subjectGroup))].sort(
-    compareText
-  );
+  return [...new Set(subjects.map(getValue))].sort(compareText);
 }
 
 function createCombination(
@@ -135,7 +136,14 @@ function createCombination(
     totalStudentCount: usedStudentKeys.size,
     subjects: publicSubjects,
     subjectNames,
-    subjectGroups: uniqueSortedSubjectGroups(publicSubjects)
+    choiceGroups: uniqueSortedSubjectValues(
+      publicSubjects,
+      (subject) => subject.choiceGroup
+    ),
+    subjectGroups: uniqueSortedSubjectValues(
+      publicSubjects,
+      (subject) => subject.subjectGroup
+    )
   };
 }
 
@@ -224,6 +232,7 @@ export function buildNonOverlappingSubjectCombinations(
       semesterKey: summary.semesterKey,
       subjectName: summary.subjectName,
       normalizedSubjectName: summary.normalizedSubjectName,
+      choiceGroup: summary.choiceGroup,
       subjectGroup: summary.subjectGroup,
       selectionType: summary.selectionType,
       groupType: summary.groupType,
@@ -281,6 +290,7 @@ export function filterNonOverlappingSubjectCombinations(
     return combination.subjects
       .flatMap((subject) => [
         subject.subjectName,
+        subject.choiceGroup,
         subject.subjectGroup,
         subject.selectionType,
         subject.groupType ?? ""

@@ -30,6 +30,7 @@ describe("buildCourseSelectionRecords", () => {
         selectionType: missingOperatingSubjectInfoLabel,
         groupType: missingOperatingSubjectInfoLabel,
         credits: 2,
+        choiceGroup: "학생필수",
         masterMatchStatus: "unmatched"
       }
     ];

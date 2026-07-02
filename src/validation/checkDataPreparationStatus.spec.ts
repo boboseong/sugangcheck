@@ -56,7 +56,8 @@ function createOperatingSubject(
     selectionType: "일반선택",
     groupType: "선택",
     credits: 2,
-    masterMatchStatus
+        choiceGroup: "학생필수",
+        masterMatchStatus
   };
 }
 
@@ -93,7 +94,8 @@ function createExternalCourseInput(
     subjectName: "생활과 과학",
     normalizedSubjectName: "생활과과학",
     credits: 2,
-    sourceType: "transfer",
+        choiceGroup: "기타",
+        sourceType: "transfer",
     updatedAt: "2026-01-01T00:00:00.000Z"
   };
 }

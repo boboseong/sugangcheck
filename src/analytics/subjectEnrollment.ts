@@ -22,6 +22,7 @@ export type SubjectEnrollmentSummary = {
   semesterKey: SemesterKey;
   subjectName: string;
   normalizedSubjectName: string;
+  choiceGroup: string;
   subjectGroup: string;
   selectionType: string;
   groupType?: string;
@@ -205,6 +206,7 @@ export function buildSubjectEnrollmentSummaries(
         semesterKey: semesterToKey(bucket.target),
         subjectName,
         normalizedSubjectName: bucket.normalizedSubjectName,
+        choiceGroup: operatingSubject?.choiceGroup ?? "미확인",
         subjectGroup:
           operatingSubject?.subjectGroup ??
           masterItem?.subjectGroup ??
@@ -270,6 +272,7 @@ export function filterSubjectEnrollmentSummaries(
 
     return [
       summary.subjectName,
+      summary.choiceGroup,
       summary.subjectGroup,
       summary.selectionType,
       summary.groupType ?? ""

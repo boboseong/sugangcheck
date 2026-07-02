@@ -32,6 +32,7 @@ function operatingSubject(subjectName: string): OperatingSubject {
     selectionType: "진로",
     groupType: "보통교과",
     credits: 2,
+    choiceGroup: "학생필수",
     masterMatchStatus: "matched"
   };
 }
@@ -58,6 +59,7 @@ describe("non-overlapping subject export", () => {
       "과목 수",
       "총 신청 학생 수",
       "과목명렬",
+      "선택군명렬",
       "교과군명렬",
       "과목 1",
       "과목 1 신청 학생 수",
@@ -70,6 +72,7 @@ describe("non-overlapping subject export", () => {
     ]);
     expect(rows[1]).toContain(2);
     expect(rows[1]).toContain("물리학, 화학");
+    expect(rows[1]).toContain("학생필수");
     expect(rows[1]).toContain("과학");
   });
 });

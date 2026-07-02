@@ -5,9 +5,13 @@ import type {
   ExternalCourseInputSourceType,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
+import { defaultExternalCourseChoiceGroup } from "../types/courseSelection";
 import { semesterKeys, type Semester, type SemesterKey, type SemesterTerm } from "../types/semester";
 import type { Student } from "../types/student";
-import type { OperatingSubject } from "../types/subject";
+import {
+  defaultOperatingSubjectChoiceGroup,
+  type OperatingSubject
+} from "../types/subject";
 import type {
   DetailedConstraintRule,
   DetailedConstraintSubject,
@@ -84,6 +88,7 @@ const externalCourseHeaderAliases: HeaderAliases = {
   number: ["번호", "번"],
   studentName: ["이름", "성명", "학생명"],
   subjectName: ["과목명", "교과목", "교과목명", "과목"],
+  choiceGroup: ["선택군"],
   subjectGroup: ["교과군", "교과(군)", "영역분류", "영역/분류"],
   selectionType: ["선택구분", "과목유형"],
   groupType: ["과목구분"],
@@ -600,13 +605,14 @@ function operatingSubjectRows(
   if (!subjects || subjects.length === 0) {
     return options.includeExamples === false
       ? []
-      : [[1, 1, "공통국어1", 4, "국어", "공통", "보통교과", 120]];
+      : [[1, 1, "공통국어1", defaultOperatingSubjectChoiceGroup, 4, "국어", "공통", "보통교과", 120]];
   }
 
   return subjects.map((subject) => [
     subject.target.grade,
     subject.target.semester,
     subject.subjectName,
+    subject.choiceGroup,
     subject.credits,
     subject.subjectGroup,
     subject.selectionType,
@@ -759,6 +765,7 @@ function externalCourseRows(input?: {
             1,
             "김하나",
             "공통국어1",
+            defaultExternalCourseChoiceGroup,
             "국어",
             "공통",
             "보통교과",
@@ -775,6 +782,7 @@ function externalCourseRows(input?: {
             3,
             "박세린",
             "온라인 공동교육과정",
+            defaultExternalCourseChoiceGroup,
             "교양",
             "진로",
             "보통교과",
@@ -801,6 +809,7 @@ function externalCourseRows(input?: {
       student?.currentNumber ?? "",
       externalInput.studentName,
       externalInput.subjectName,
+      externalInput.choiceGroup,
       externalInput.subjectGroup ?? "",
       externalInput.selectionType ?? "",
       externalInput.groupType ?? "",
@@ -956,6 +965,7 @@ export function createOperatingSubjectTemplateWorkbook(
         "학년",
         "학기",
         "교과목",
+        "선택군",
         "운영학점",
         "교과(군)",
         "선택구분",
@@ -964,13 +974,14 @@ export function createOperatingSubjectTemplateWorkbook(
       ],
       ...operatingSubjectRows(subjects, options)
     ],
-    [10, 10, 24, 12, 16, 14, 14, 12]
+    [10, 10, 24, 16, 12, 16, 14, 14, 12]
   );
 
   addInstructionSheet(workbook, [
     ["항목", "작성 방법"],
     ["학년/학기", "1~3학년, 1~2학기 값을 입력합니다."],
     ["교과목", "앱에서 운영과목명으로 읽는 과목명입니다."],
+    ["선택군", "운영과목 선택군입니다. 비워 두면 학생필수로 처리합니다."],
     ["운영학점", "숫자로 입력합니다."]
   ]);
 
@@ -1021,6 +1032,7 @@ export function createExternalCourseTemplateWorkbook(input?: {
         "번호",
         "이름",
         "과목명",
+        "선택군",
         "교과군",
         "선택구분",
         "과목구분",
@@ -1031,13 +1043,14 @@ export function createExternalCourseTemplateWorkbook(input?: {
       ],
       ...externalCourseRows(input, options)
     ],
-    [14, 10, 10, 10, 10, 16, 26, 16, 14, 14, 10, 14, 20, 28]
+    [14, 10, 10, 10, 10, 16, 26, 16, 16, 14, 14, 10, 14, 20, 28]
   );
 
   addInstructionSheet(workbook, [
     ["항목", "작성 방법"],
     ["학생", "기존 학생은 학번 또는 반/번호/이름으로 매칭합니다."],
     ["새 학생", "현재 프로젝트에 없는 학생이면 새 학생으로 추가합니다."],
+    ["선택군", "전입/외부 이수 선택군입니다. 비워 두면 기타로 처리합니다."],
     ["출처", "전입, 전학, transfer, 외부이수, externalCourse 중 하나를 입력합니다."]
   ]);
 
@@ -1325,6 +1338,9 @@ export function parseExternalCourseTemplateWorkbook(
       target,
       subjectName,
       normalizedSubjectName,
+      choiceGroup:
+        compactString(valueAt(row, columnMap.choiceGroup)) ||
+        defaultExternalCourseChoiceGroup,
       subjectGroup: compactString(valueAt(row, columnMap.subjectGroup)) || undefined,
       selectionType:
         compactString(valueAt(row, columnMap.selectionType)) || undefined,

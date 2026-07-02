@@ -18,6 +18,7 @@ const studentListHeader = [
   "학년",
   "학기",
   "학기명",
+  "선택군",
   "교과군",
   "과목명",
   "학번",
@@ -28,6 +29,7 @@ const sheetHeader = [
   "학년",
   "학기",
   "학기명",
+  "선택군",
   "교과군",
   "선택구분",
   "과목구분",
@@ -89,6 +91,7 @@ function studentListRows(summary: SubjectEnrollmentSummary): unknown[][] {
     summary.target.grade,
     summary.target.semester,
     semesterLabel(summary.target),
+    summary.choiceGroup,
     summary.subjectGroup,
     summary.subjectName,
     student.studentNo,
@@ -101,6 +104,7 @@ function summaryRows(summaries: readonly SubjectEnrollmentSummary[]): unknown[][
     summary.target.grade,
     summary.target.semester,
     semesterLabel(summary.target),
+    summary.choiceGroup,
     summary.subjectGroup,
     summary.selectionType,
     summary.groupType ?? "",
@@ -121,7 +125,7 @@ export function createSubjectEnrollmentStudentListWorkbook(
     ...studentListRows(summary)
   ]);
 
-  sheet["!cols"] = [8, 8, 8, 14, 18, 28, 14, 16].map((wch) => ({ wch }));
+  sheet["!cols"] = [8, 8, 8, 14, 16, 18, 28, 14, 16].map((wch) => ({ wch }));
   utils.book_append_sheet(workbook, sheet, "학생명렬");
 
   return workbook;
@@ -151,7 +155,7 @@ function appendSummarySheet(
 ) {
   const sheet = utils.aoa_to_sheet([sheetHeader, ...summaryRows(summaries)]);
 
-  sheet["!cols"] = [8, 8, 14, 18, 14, 16, 28, 8, 12, 14, 48].map(
+  sheet["!cols"] = [8, 8, 14, 16, 18, 14, 16, 28, 8, 12, 14, 48].map(
     (wch) => ({ wch })
   );
   utils.book_append_sheet(workbook, sheet, safeSheetName(sheetName, usedSheetNames));

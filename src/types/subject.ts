@@ -14,6 +14,7 @@ export type SubjectMasterItem = {
 export type OperatingSubjectMatchStatus = "matched" | "unmatched" | "manual";
 
 export const missingOperatingSubjectInfoLabel = "미입력";
+export const defaultOperatingSubjectChoiceGroup = "학생필수";
 
 export type OperatingSubject = {
   id: string;
@@ -23,6 +24,7 @@ export type OperatingSubject = {
   };
   subjectName: string;
   normalizedSubjectName: string;
+  choiceGroup: string;
   subjectGroup: string;
   selectionType: string;
   groupType?: string;

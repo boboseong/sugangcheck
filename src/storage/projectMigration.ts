@@ -3,9 +3,13 @@ import type {
   ExternalCourseInput,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
+import { defaultExternalCourseChoiceGroup } from "../types/courseSelection";
 import type { ProjectFile, ProjectState } from "../types/project";
 import type { Student, StudentSemesterPresence } from "../types/student";
-import type { OperatingSubject } from "../types/subject";
+import {
+  defaultOperatingSubjectChoiceGroup,
+  type OperatingSubject
+} from "../types/subject";
 import type { ValidationError } from "../types/validation";
 import type { ValidationEngineResult } from "../validation/types";
 import {
@@ -13,19 +17,24 @@ import {
   createStudentAuxiliaryKey
 } from "../utils/studentKey";
 
-export const currentProjectSchemaVersion = 4;
+export const currentProjectSchemaVersion = 5;
 
-type LegacyOperatingSubject = OperatingSubject & {
+type LegacyOperatingSubject = Omit<OperatingSubject, "choiceGroup"> &
+  Partial<Pick<OperatingSubject, "choiceGroup">> & {
   overrideId?: unknown;
 };
 
+type LegacyExternalCourseInput = Omit<ExternalCourseInput, "choiceGroup"> &
+  Partial<Pick<ExternalCourseInput, "choiceGroup">>;
+
 type MigratableProjectState = Omit<
   ProjectState,
-  "schemaVersion" | "detailedConstraintRules" | "operatingSubjects"
+  "schemaVersion" | "detailedConstraintRules" | "operatingSubjects" | "externalCourseInputs"
 > & {
   schemaVersion: number;
   detailedConstraintRules?: ProjectState["detailedConstraintRules"];
   operatingSubjects: LegacyOperatingSubject[];
+  externalCourseInputs: LegacyExternalCourseInput[];
   subjectOverrides?: unknown;
 };
 
@@ -52,7 +61,7 @@ type IdentitySource = {
   currentNumber?: unknown;
 };
 
-const supportedProjectSchemaVersions = [1, 2, 3, currentProjectSchemaVersion] as const;
+const supportedProjectSchemaVersions = [1, 2, 3, 4, currentProjectSchemaVersion] as const;
 
 function normalizeIdentifier(value: unknown): string {
   return String(value ?? "").normalize("NFKC").trim().replace(/\s+/g, "");
@@ -209,14 +218,15 @@ function migrateParsedRow(
 
 function migrateExternalInput(
   identityByOldId: Map<string, Identity>,
-  input: ExternalCourseInput
+  input: LegacyExternalCourseInput
 ): ExternalCourseInput {
   const identity = resolveIdentity(identityByOldId, input);
 
   return {
     ...input,
     studentId: identity.studentId,
-    studentNo: identity.studentNo
+    studentNo: identity.studentNo,
+    choiceGroup: input.choiceGroup || defaultExternalCourseChoiceGroup
   };
 }
 
@@ -265,7 +275,10 @@ function migrateValidationResult(
 function migrateOperatingSubject(subject: LegacyOperatingSubject): OperatingSubject {
   const { overrideId: _overrideId, ...nextSubject } = subject;
 
-  return nextSubject;
+  return {
+    ...nextSubject,
+    choiceGroup: nextSubject.choiceGroup || defaultOperatingSubjectChoiceGroup
+  };
 }
 
 export function migrateProjectState(
@@ -273,7 +286,7 @@ export function migrateProjectState(
 ): ProjectState {
   if (
     !supportedProjectSchemaVersions.includes(
-      projectState.schemaVersion as 1 | 2 | 3 | 4
+      projectState.schemaVersion as 1 | 2 | 3 | 4 | 5
     )
   ) {
     throw new Error(

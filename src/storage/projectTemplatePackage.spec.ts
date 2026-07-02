@@ -43,7 +43,8 @@ function createOperatingSubject(target: Semester): OperatingSubject {
     selectionType: "일반선택",
     groupType: "보통교과",
     credits: 2,
-    masterMatchStatus: "manual"
+        choiceGroup: "학생필수",
+        masterMatchStatus: "manual"
   };
 }
 

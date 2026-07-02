@@ -19,6 +19,7 @@ function createSubject(input: {
     selectionType: "일반선택",
     groupType: "선택",
     credits: 2,
+    choiceGroup: "학생필수",
     masterMatchStatus: input.masterMatchStatus
   };
 }

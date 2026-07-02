@@ -43,7 +43,8 @@ function operatingSubject(subjectName: string): OperatingSubject {
     selectionType: "진로",
     groupType: "보통교과",
     credits: 2,
-    masterMatchStatus: "matched"
+        choiceGroup: "학생필수",
+        masterMatchStatus: "matched"
   };
 }
 

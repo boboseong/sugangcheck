@@ -111,6 +111,13 @@ export function ExternalCourseInputTable({
           />
         </label>
         <label>
+          <span>선택군</span>
+          <input
+            onChange={(event) => updateDraft({ choiceGroup: event.target.value })}
+            value={draft.choiceGroup}
+          />
+        </label>
+        <label>
           <span>과목구분</span>
           <select
             onChange={(event) => updateDraft({ groupType: event.target.value })}
@@ -207,6 +214,7 @@ export function ExternalCourseInputTable({
           <tr>
             <th>학기</th>
             <th>과목명</th>
+            <th>선택군</th>
             <th>교과군</th>
             <th>선택구분</th>
             <th>학점</th>
@@ -217,13 +225,14 @@ export function ExternalCourseInputTable({
         <tbody>
           {inputs.length === 0 ? (
             <tr>
-              <td colSpan={7}>저장된 직접 입력 행이 없습니다.</td>
+              <td colSpan={8}>저장된 직접 입력 행이 없습니다.</td>
             </tr>
           ) : (
             inputs.map((input) => (
               <tr key={input.id}>
                 <td>{semesterLabel(input.target)}</td>
                 <td>{input.subjectName}</td>
+                <td>{input.choiceGroup}</td>
                 <td>{input.subjectGroup ?? "-"}</td>
                 <td>{input.selectionType ?? "-"}</td>
                 <td>{input.credits ?? "-"}</td>

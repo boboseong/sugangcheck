@@ -48,7 +48,8 @@ const initialOperatingSubject: OperatingSubject = {
   selectionType: "일반선택",
   groupType: "일반교과",
   credits: 2,
-  masterMatchStatus: "matched"
+    choiceGroup: "학생필수",
+    masterMatchStatus: "matched"
 };
 const changedOperatingSubject: OperatingSubject = {
   ...initialOperatingSubject,

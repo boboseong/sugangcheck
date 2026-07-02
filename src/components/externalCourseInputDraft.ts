@@ -1,4 +1,5 @@
 import type { ExternalCourseInputDraft } from "../state/externalCourseInputStore";
+import { defaultExternalCourseChoiceGroup } from "../types/courseSelection";
 import type { Semester } from "../types/semester";
 
 export function defaultExternalCourseTarget(
@@ -13,6 +14,7 @@ export function createEmptyExternalCourseDraft(
   return {
     target: defaultExternalCourseTarget(missingSemesters),
     subjectName: "",
+    choiceGroup: defaultExternalCourseChoiceGroup,
     subjectGroup: "",
     selectionType: "",
     groupType: "",
@@ -28,6 +30,7 @@ export function hasExternalCourseDraftValue(
 ): boolean {
   return Boolean(
     draft.subjectName.trim() ||
+      (draft.choiceGroup && draft.choiceGroup !== defaultExternalCourseChoiceGroup) ||
       String(draft.credits ?? "").trim() ||
       draft.subjectGroup ||
       draft.selectionType ||

@@ -32,6 +32,7 @@ const operatingSubject: OperatingSubject = {
   selectionType: "일반",
   groupType: "보통교과",
   credits: 2,
+  choiceGroup: "학생필수",
   masterMatchStatus: "matched"
 };
 
@@ -86,11 +87,13 @@ describe("subject enrollment export", () => {
       "학년",
       "학기",
       "학기명",
+      "선택군",
       "교과군",
       "과목명",
       "학번",
       "이름"
     ]);
+    expect(rows[1]).toContain("학생필수");
     expect(rows[1]).toContain("20101");
     expect(rows[2]).toContain("20102");
   });

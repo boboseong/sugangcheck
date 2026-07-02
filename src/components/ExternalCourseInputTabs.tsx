@@ -135,6 +135,13 @@ function CourseDraftFields({
         />
       </label>
       <label>
+        <span>선택군</span>
+        <input
+          onChange={(event) => onChange({ choiceGroup: event.target.value })}
+          value={draft.choiceGroup}
+        />
+      </label>
+      <label>
         <span>과목구분</span>
         <select
           onChange={(event) => onChange({ groupType: event.target.value })}
@@ -675,6 +682,7 @@ function ManySubjectsOneStudentPanel({
             <tr>
               <th>학기</th>
               <th>과목명</th>
+              <th>선택군</th>
               <th>과목구분</th>
               <th>교과군</th>
               <th>선택구분</th>
@@ -713,6 +721,14 @@ function ManySubjectsOneStudentPanel({
                       updateRow(row.id, { subjectName: event.target.value })
                     }
                     value={row.draft.subjectName}
+                  />
+                </td>
+                <td>
+                  <input
+                    onChange={(event) =>
+                      updateRow(row.id, { choiceGroup: event.target.value })
+                    }
+                    value={row.draft.choiceGroup}
                   />
                 </td>
                 <td>

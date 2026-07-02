@@ -34,7 +34,8 @@ const operatingSubjects: OperatingSubject[] = [
     selectionType: "공통",
     groupType: "보통교과",
     credits: 4,
-    masterMatchStatus: "manual"
+        choiceGroup: "학생필수",
+        masterMatchStatus: "manual"
   },
   {
     id: "operating-b",
@@ -45,7 +46,8 @@ const operatingSubjects: OperatingSubject[] = [
     selectionType: "공통",
     groupType: "보통교과",
     credits: 4,
-    masterMatchStatus: "manual"
+        choiceGroup: "학생필수",
+        masterMatchStatus: "manual"
   }
 ];
 

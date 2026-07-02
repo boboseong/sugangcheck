@@ -10,6 +10,7 @@ export type OperatingSubjectColumnMap = {
   selectionType?: number;
   groupType?: number;
   groupLabel?: number;
+  choiceGroup?: number;
   enrollmentCount?: number;
 };
 
@@ -23,6 +24,7 @@ export type OperatingSubjectPreviewRow = {
   rowNumber: number;
   subjectName?: string;
   normalizedSubjectName?: string;
+  choiceGroup?: string;
   subjectGroup?: string;
   selectionType?: string;
   groupType?: string;

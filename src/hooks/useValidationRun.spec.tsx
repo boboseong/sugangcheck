@@ -41,7 +41,8 @@ const operatingSubject: OperatingSubject = {
   selectionType: "일반선택",
   groupType: "일반교과",
   credits: 2,
-  masterMatchStatus: "matched"
+    choiceGroup: "학생필수",
+    masterMatchStatus: "matched"
 };
 
 function sameSemester(left: Semester, right: Semester): boolean {

@@ -46,6 +46,7 @@ export function buildOperatingSubjectPickerOptions(
       subjectName: string;
       normalizedSubjectName: string;
       semesters: Set<string>;
+      choiceGroups: Set<string>;
       subjectGroups: Set<string>;
       credits: Set<string>;
       selectionTypes: Set<string>;
@@ -63,6 +64,7 @@ export function buildOperatingSubjectPickerOptions(
       const key = [
         subject.normalizedSubjectName,
         subject.subjectName,
+        subject.choiceGroup,
         subject.subjectGroup,
         subject.credits,
         subject.selectionType
@@ -73,12 +75,14 @@ export function buildOperatingSubjectPickerOptions(
           subjectName: subject.subjectName,
           normalizedSubjectName: subject.normalizedSubjectName,
           semesters: new Set<string>(),
+          choiceGroups: new Set<string>(),
           subjectGroups: new Set<string>(),
           credits: new Set<string>(),
           selectionTypes: new Set<string>()
         };
 
       bucket.semesters.add(semesterLabel(subject.target));
+      bucket.choiceGroups.add(subject.choiceGroup);
       bucket.subjectGroups.add(subject.subjectGroup);
       bucket.credits.add(`${subject.credits}학점`);
       bucket.selectionTypes.add(subject.selectionType);
@@ -90,6 +94,7 @@ export function buildOperatingSubjectPickerOptions(
       const metadataParts: string[] = [];
 
       addSortedPart(metadataParts, bucket.semesters);
+      addSortedPart(metadataParts, bucket.choiceGroups);
       addSortedPart(metadataParts, bucket.subjectGroups);
       addSortedPart(metadataParts, bucket.credits);
       addSortedPart(metadataParts, bucket.selectionTypes);

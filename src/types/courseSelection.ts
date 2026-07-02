@@ -58,6 +58,8 @@ export type CourseSelectionRecord = {
 
 export type ExternalCourseInputSourceType = "transfer" | "externalCourse";
 
+export const defaultExternalCourseChoiceGroup = "기타";
+
 export type ExternalCourseInput = {
   id: string;
   studentId: string;
@@ -66,6 +68,7 @@ export type ExternalCourseInput = {
   target: Semester;
   subjectName: string;
   normalizedSubjectName: string;
+  choiceGroup: string;
   subjectGroup?: string;
   selectionType?: string;
   groupType?: string;

@@ -8,6 +8,7 @@ import {
 import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";
 import type { Grade, SemesterTerm } from "../types/semester";
 import {
+  defaultOperatingSubjectChoiceGroup,
   missingOperatingSubjectInfoLabel,
   type OperatingSubject
 } from "../types/subject";
@@ -42,6 +43,7 @@ type Draft = {
   grade: string;
   semester: string;
   subjectName: string;
+  choiceGroup: string;
   credits: string;
   groupType: string;
   subjectGroup: string;
@@ -53,6 +55,7 @@ function createDraft(subject: OperatingSubject): Draft {
     grade: String(subject.target.grade),
     semester: String(subject.target.semester),
     subjectName: subject.subjectName,
+    choiceGroup: subject.choiceGroup,
     credits: String(subject.credits),
     groupType: subject.groupType ?? "",
     subjectGroup: subject.subjectGroup,
@@ -167,6 +170,7 @@ export function OperatingSubjectReviewTable({
       },
       subjectName,
       normalizedSubjectName: normalizeSubjectName(subjectName),
+      choiceGroup: draft.choiceGroup.trim() || defaultOperatingSubjectChoiceGroup,
       subjectGroup: draft.subjectGroup.trim() || missingOperatingSubjectInfoLabel,
       selectionType: draft.selectionType.trim() || missingOperatingSubjectInfoLabel,
       groupType: draft.groupType.trim() || missingOperatingSubjectInfoLabel,
@@ -219,6 +223,7 @@ export function OperatingSubjectReviewTable({
             <th className="operating-subject-review__actions-column">수정</th>
             <th>학기</th>
             <th>과목명</th>
+            <th>선택군</th>
             <th>학점</th>
             <th>과목구분</th>
             <th>교과군</th>
@@ -229,7 +234,7 @@ export function OperatingSubjectReviewTable({
         <tbody>
           {visibleSubjects.length === 0 ? (
             <tr>
-              <td colSpan={8}>필터에 맞는 운영과목이 없습니다.</td>
+              <td colSpan={9}>필터에 맞는 운영과목이 없습니다.</td>
             </tr>
           ) : null}
           {visibleSubjects.map((subject) => {
@@ -302,6 +307,19 @@ export function OperatingSubjectReviewTable({
                     </div>
                   ) : (
                     semesterLabel(subject.target)
+                  )}
+                </td>
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`${subject.subjectName} 선택군`}
+                      onChange={(event) =>
+                        updateDraft(subject, "choiceGroup", event.target.value)
+                      }
+                      value={draft.choiceGroup}
+                    />
+                  ) : (
+                    subject.choiceGroup
                   )}
                 </td>
                 <td>

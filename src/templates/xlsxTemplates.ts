@@ -2,10 +2,13 @@ import { utils, write, type WorkBook } from "xlsx";
 import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";
 import type {
   ExternalCourseInput,
-  ExternalCourseInputSourceType,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
-import { defaultExternalCourseChoiceGroup } from "../types/courseSelection";
+import {
+  defaultExternalCourseChoiceGroup,
+  defaultExternalCourseSourceType,
+  externalCourseSourceTypeLabel
+} from "../types/courseSelection";
 import { semesterKeys, type Semester, type SemesterKey, type SemesterTerm } from "../types/semester";
 import type { Student } from "../types/student";
 import {
@@ -338,22 +341,8 @@ function parseRequiredBoolean(
   return undefined;
 }
 
-function parseExternalCourseSourceType(
-  value: unknown
-): ExternalCourseInputSourceType | undefined {
-  const normalized = compactString(value).toLowerCase().replace(/\s+/g, "");
-
-  if (["전입", "전입보완", "전학", "transfer"].includes(normalized)) {
-    return "transfer";
-  }
-
-  if (
-    ["외부", "외부이수", "external", "externalcourse"].includes(normalized)
-  ) {
-    return "externalCourse";
-  }
-
-  return undefined;
+function parseExternalCourseSourceType(value: unknown): string {
+  return compactString(value) || defaultExternalCourseSourceType;
 }
 
 function parseDetailedConstraintType(
@@ -538,10 +527,6 @@ function addInstructionSheet(
 
 function booleanLabel(value: boolean): string {
   return value ? "예" : "아니오";
-}
-
-function sourceTypeLabel(value: ExternalCourseInputSourceType): string {
-  return value === "transfer" ? "전입" : "외부이수";
 }
 
 const validationRuleIds = Object.keys(validationRuleLabels) as ValidationRuleId[];
@@ -787,7 +772,7 @@ function externalCourseRows(input?: {
             "진로",
             "보통교과",
             2,
-            "외부이수",
+            defaultExternalCourseSourceType,
             "공동교육과정",
             ""
           ]
@@ -814,7 +799,7 @@ function externalCourseRows(input?: {
       externalInput.selectionType ?? "",
       externalInput.groupType ?? "",
       externalInput.credits ?? "",
-      sourceTypeLabel(externalInput.sourceType),
+      externalCourseSourceTypeLabel(externalInput.sourceType),
       externalInput.sourceName ?? "",
       externalInput.memo ?? ""
     ];
@@ -1051,7 +1036,7 @@ export function createExternalCourseTemplateWorkbook(input?: {
     ["학생", "기존 학생은 학번 또는 반/번호/이름으로 매칭합니다."],
     ["새 학생", "현재 프로젝트에 없는 학생이면 새 학생으로 추가합니다."],
     ["선택군", "전입/외부 이수 선택군입니다. 비워 두면 기타로 처리합니다."],
-    ["출처", "전입, 전학, transfer, 외부이수, externalCourse 중 하나를 입력합니다."]
+    ["출처", "자유 입력입니다. 비워 두면 전입/외부 이수로 처리합니다."]
   ]);
 
   return workbook;
@@ -1240,7 +1225,7 @@ export function parseExternalCourseTemplateWorkbook(
   const { headerRowIndex, columnMap } = findHeaderRow(
     matrix,
     externalCourseHeaderAliases,
-    ["grade", "semester", "studentName", "subjectName", "credits", "sourceType"],
+    ["grade", "semester", "studentName", "subjectName", "credits"],
     "전입/외부 이수"
   );
   const issues: ParseIssue[] = [];
@@ -1262,9 +1247,7 @@ export function parseExternalCourseTemplateWorkbook(
     const studentName = compactString(valueAt(row, columnMap.studentName));
     const subjectName = compactString(valueAt(row, columnMap.subjectName));
     const credits = toCreditNumber(valueAt(row, columnMap.credits));
-    const sourceType = parseExternalCourseSourceType(
-      valueAt(row, columnMap.sourceType)
-    );
+    const sourceType = parseExternalCourseSourceType(valueAt(row, columnMap.sourceType));
     const rowIssues: string[] = [];
 
     if (!grade || !semester) {
@@ -1283,11 +1266,7 @@ export function parseExternalCourseTemplateWorkbook(
       rowIssues.push("학점을 숫자로 입력하세요.");
     }
 
-    if (!sourceType) {
-      rowIssues.push("출처는 전입 또는 외부이수로 입력하세요.");
-    }
-
-    if (rowIssues.length > 0 || !grade || !semester || credits === undefined || !sourceType) {
+    if (rowIssues.length > 0 || !grade || !semester || credits === undefined) {
       issues.push({ rowNumber, message: rowIssues.join(" ") });
       return;
     }

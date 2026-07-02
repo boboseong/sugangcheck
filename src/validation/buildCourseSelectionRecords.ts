@@ -5,6 +5,7 @@ import type {
   ExternalCourseInput,
   ParsedCourseSelectionRow
 } from "../types/courseSelection";
+import { externalCourseSourceTypeLabel } from "../types/courseSelection";
 import type { Semester } from "../types/semester";
 import type { OperatingSubject } from "../types/subject";
 
@@ -51,7 +52,20 @@ function resolveSourceLabel(
     return "수강신청 결과";
   }
 
-  return source.sourceType === "transfer" ? "전입" : "외부 이수";
+  return externalCourseSourceTypeLabel(source.sourceType);
+}
+
+function externalCourseOriginType(
+  source: ExternalCourseInput
+): "transfer" | "externalCourse" {
+  const normalizedSourceType = source.sourceType
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/\s+/g, "");
+
+  return ["전입", "전입보완", "전학", "transfer"].includes(normalizedSourceType)
+    ? "transfer"
+    : "externalCourse";
 }
 
 function isExternalCourseInput(
@@ -158,7 +172,7 @@ export function buildCourseSelectionRecords(input: {
               sourceLocation: source.sourceLocation
             }
           : {
-              type: source.sourceType,
+              type: externalCourseOriginType(source),
               externalInputId: source.id
             }
     });

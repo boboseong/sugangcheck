@@ -1,4 +1,4 @@
-import { Check, Plus, Trash2, Users, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Plus, Users, X } from "lucide-react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 import {
@@ -56,11 +56,6 @@ type SubjectMasterAutocompleteProps = {
   value: string;
 };
 
-type SubjectDraftRow = {
-  id: string;
-  draft: ExternalCourseInputDraft;
-};
-
 type StudentTargetFieldsProps = {
   filteredStudents: readonly Student[];
   missingSemesters: readonly Semester[];
@@ -71,7 +66,7 @@ type StudentTargetFieldsProps = {
 };
 
 const entryModes: Array<{ label: string; value: ExternalCourseEntryMode }> = [
-  { label: "한 학생 여러 과목", value: "manySubjects" },
+  { label: "기본", value: "manySubjects" },
   { label: "같은 과목 여러 학생", value: "sameSubject" }
 ];
 
@@ -99,17 +94,6 @@ function updateTargetFromKey(
   if (semester) {
     onChange({ target: semester });
   }
-}
-
-function createSubjectDraftRow(
-  missingSemesters: readonly Semester[]
-): SubjectDraftRow {
-  return {
-    id: `external-subject-row-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2)}`,
-    draft: createEmptyExternalCourseDraft(missingSemesters)
-  };
 }
 
 function subjectMasterMetadata(item: SubjectMasterItem) {
@@ -377,18 +361,10 @@ function CourseDraftFields({
       </label>
       <label>
         <span>출처</span>
-        <select
-          onChange={(event) =>
-            onChange({
-              sourceType: event.target
-                .value as ExternalCourseInputDraft["sourceType"]
-            })
-          }
+        <input
+          onChange={(event) => onChange({ sourceType: event.target.value })}
           value={draft.sourceType}
-        >
-          <option value="transfer">전입</option>
-          <option value="externalCourse">외부 이수</option>
-        </select>
+        />
       </label>
       <label>
         <span>선택군</span>
@@ -779,55 +755,34 @@ function ManySubjectsOneStudentPanel({
         .join("|"),
     [missingSemesters]
   );
-  const [rows, setRows] = useState<SubjectDraftRow[]>(() => [
-    createSubjectDraftRow(missingSemesters)
-  ]);
+  const [draft, setDraft] = useState<ExternalCourseInputDraft>(() =>
+    createEmptyExternalCourseDraft(missingSemesters)
+  );
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    setRows([createSubjectDraftRow(missingSemesters)]);
+    setDraft(createEmptyExternalCourseDraft(missingSemesters));
+    setIsDetailsExpanded(false);
     setErrors([]);
   }, [missingSemesterKey, selectedStudent?.studentId]);
 
-  function updateRow(
-    rowId: string,
-    patch: Partial<ExternalCourseInputDraft>
-  ) {
-    setRows((current) =>
-      current.map((row) =>
-        row.id === rowId ? { ...row, draft: { ...row.draft, ...patch } } : row
-      )
-    );
+  function updateDraft(patch: Partial<ExternalCourseInputDraft>) {
+    setDraft((current) => ({ ...current, ...patch }));
   }
 
-  function addRow() {
-    setRows((current) => [...current, createSubjectDraftRow(missingSemesters)]);
-  }
-
-  function removeRow(rowId: string) {
-    setRows((current) =>
-      current.length === 1 ? current : current.filter((row) => row.id !== rowId)
-    );
-  }
-
-  function handleAddSingleRow(rowId: string) {
-    const rowIndex = rows.findIndex((row) => row.id === rowId);
-    const row = rows[rowIndex];
+  function handleAddInput() {
     const nextErrors: string[] = [];
-
-    if (!row) {
-      return;
-    }
 
     if (!selectedStudent) {
       nextErrors.push("학생을 먼저 선택하세요.");
     }
 
-    if (!hasExternalCourseDraftValue(row.draft)) {
-      nextErrors.push(`${rowIndex + 1}행: 추가할 과목을 입력하세요.`);
+    if (!hasExternalCourseDraftValue(draft)) {
+      nextErrors.push("추가할 과목을 입력하세요.");
     } else {
-      validateExternalCourseInputDraft(row.draft).forEach((error) => {
-        nextErrors.push(`${rowIndex + 1}행: ${error}`);
+      validateExternalCourseInputDraft(draft).forEach((error) => {
+        nextErrors.push(error);
       });
     }
 
@@ -836,19 +791,13 @@ function ManySubjectsOneStudentPanel({
       return;
     }
 
-    onAddInputs([createExternalCourseInput(selectedStudent, row.draft)]);
-    setRows((current) =>
-      current.map((item) =>
-        item.id === rowId ? createSubjectDraftRow(missingSemesters) : item
-      )
-    );
+    onAddInputs([createExternalCourseInput(selectedStudent, draft)]);
+    setDraft(createEmptyExternalCourseDraft(missingSemesters));
+    setIsDetailsExpanded(false);
     setErrors([]);
   }
 
-  function handleRowKeyDown(
-    event: KeyboardEvent<HTMLTableRowElement>,
-    rowId: string
-  ) {
+  function handleDraftKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!isEnterReady(event)) {
       return;
     }
@@ -860,42 +809,7 @@ function ManySubjectsOneStudentPanel({
     }
 
     event.preventDefault();
-    handleAddSingleRow(rowId);
-  }
-
-  function handleAddRows() {
-    const nextErrors: string[] = [];
-
-    if (!selectedStudent) {
-      nextErrors.push("학생을 먼저 선택하세요.");
-    }
-
-    const filledRows = rows
-      .map((row, index) => ({ index, row }))
-      .filter(({ row }) => hasExternalCourseDraftValue(row.draft));
-
-    if (filledRows.length === 0) {
-      nextErrors.push("추가할 과목을 입력하세요.");
-    }
-
-    filledRows.forEach(({ index, row }) => {
-      validateExternalCourseInputDraft(row.draft).forEach((error) => {
-        nextErrors.push(`${index + 1}행: ${error}`);
-      });
-    });
-
-    if (nextErrors.length > 0 || !selectedStudent) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    onAddInputs(
-      filledRows.map(({ row }) =>
-        createExternalCourseInput(selectedStudent, row.draft)
-      )
-    );
-    setRows([createSubjectDraftRow(missingSemesters)]);
-    setErrors([]);
+    handleAddInput();
   }
 
   return (
@@ -910,167 +824,138 @@ function ManySubjectsOneStudentPanel({
       />
       <div className="external-bulk-actions">
         <p className="external-bulk-meta">
-          입력 행 {rows.length.toLocaleString()}개
+          {selectedStudent
+            ? `${selectedStudent.name} (${selectedStudent.studentNo}) 과목 입력`
+            : "학생을 먼저 선택하세요"}
         </p>
-        <Button icon={<Plus size={16} />} onClick={addRow} variant="secondary">
-          행 추가
-        </Button>
-        <Button icon={<Plus size={16} />} onClick={handleAddRows}>
-          입력 과목 일괄 추가
+        <Button icon={<Plus size={16} />} onClick={handleAddInput}>
+          입력 과목 추가
         </Button>
       </div>
       <ErrorList errors={errors} />
-      <div className="preview-table-wrap external-subject-row-table">
-        <table className="placeholder-table">
-          <thead>
-            <tr>
-              <th>학기</th>
-              <th>과목명</th>
-              <th>학점</th>
-              <th>과목구분</th>
-              <th>교과군</th>
-              <th>선택구분</th>
-              <th>출처</th>
-              <th>선택군</th>
-              <th>기관명</th>
-              <th>메모</th>
-              <th>삭제</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => (
-              <tr key={row.id} onKeyDown={(event) => handleRowKeyDown(event, row.id)}>
-                <td>
-                  <select
-                    onChange={(event) =>
-                      updateTargetFromKey(event.target.value, (patch) =>
-                        updateRow(row.id, patch)
-                      )
-                    }
-                    value={`${row.draft.target.grade}-${row.draft.target.semester}`}
-                  >
-                    {semesterKeys.map((key) => (
-                      <option key={key} value={key}>
-                        {key}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <SubjectMasterAutocomplete
-                    hideLabel
-                    label={`${index + 1}행 과목명`}
-                    onChange={(subjectName) => updateRow(row.id, { subjectName })}
-                    onEnter={() => handleAddSingleRow(row.id)}
-                    onSelect={(item) => updateRow(row.id, subjectMasterPatch(item))}
-                    value={row.draft.subjectName}
-                  />
-                </td>
-                <td>
-                  <input
-                    onChange={(event) =>
-                      updateRow(row.id, { credits: event.target.value })
-                    }
-                    min="0"
-                    type="number"
-                    value={row.draft.credits}
-                  />
-                </td>
-                <td>
-                  <select
-                    onChange={(event) =>
-                      updateRow(row.id, { groupType: event.target.value })
-                    }
-                    value={row.draft.groupType}
-                  >
-                    <option value="">미입력</option>
-                    {groupTypes.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <select
-                    onChange={(event) =>
-                      updateRow(row.id, { subjectGroup: event.target.value })
-                    }
-                    value={row.draft.subjectGroup}
-                  >
-                    <option value="">미입력</option>
-                    {subjectGroups.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <select
-                    onChange={(event) =>
-                      updateRow(row.id, { selectionType: event.target.value })
-                    }
-                    value={row.draft.selectionType}
-                  >
-                    <option value="">미입력</option>
-                    {selectionTypes.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <select
-                    onChange={(event) =>
-                      updateRow(row.id, {
-                        sourceType: event.target
-                          .value as ExternalCourseInputDraft["sourceType"]
-                      })
-                    }
-                    value={row.draft.sourceType}
-                  >
-                    <option value="transfer">전입</option>
-                    <option value="externalCourse">외부 이수</option>
-                  </select>
-                </td>
-                <td>
-                  <input
-                    onChange={(event) =>
-                      updateRow(row.id, { choiceGroup: event.target.value })
-                    }
-                    value={row.draft.choiceGroup}
-                  />
-                </td>
-                <td>
-                  <input
-                    onChange={(event) =>
-                      updateRow(row.id, { sourceName: event.target.value })
-                    }
-                    value={row.draft.sourceName}
-                  />
-                </td>
-                <td>
-                  <input
-                    onChange={(event) =>
-                      updateRow(row.id, { memo: event.target.value })
-                    }
-                    value={row.draft.memo}
-                  />
-                </td>
-                <td>
-                  <IconButton
-                    disabled={rows.length === 1}
-                    icon={<Trash2 size={16} />}
-                    label="과목 행 삭제"
-                    onClick={() => removeRow(row.id)}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="external-subject-entry-list">
+        <div className="external-subject-entry" onKeyDown={handleDraftKeyDown}>
+          <div className="external-subject-entry__summary">
+            <label>
+              <span>학기</span>
+              <select
+                onChange={(event) =>
+                  updateTargetFromKey(event.target.value, updateDraft)
+                }
+                value={`${draft.target.grade}-${draft.target.semester}`}
+              >
+                {semesterKeys.map((key) => (
+                  <option key={key} value={key}>
+                    {key}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <SubjectMasterAutocomplete
+              label="과목명"
+              onChange={(subjectName) => updateDraft({ subjectName })}
+              onEnter={handleAddInput}
+              onSelect={(item) => updateDraft(subjectMasterPatch(item))}
+              value={draft.subjectName}
+            />
+            <label>
+              <span>학점</span>
+              <input
+                min="0"
+                onChange={(event) => updateDraft({ credits: event.target.value })}
+                type="number"
+                value={draft.credits}
+              />
+            </label>
+            <label>
+              <span>교과군</span>
+              <select
+                onChange={(event) => updateDraft({ subjectGroup: event.target.value })}
+                value={draft.subjectGroup}
+              >
+                <option value="">미입력</option>
+                {subjectGroups.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>선택구분</span>
+              <select
+                onChange={(event) => updateDraft({ selectionType: event.target.value })}
+                value={draft.selectionType}
+              >
+                <option value="">미입력</option>
+                {selectionTypes.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="external-subject-entry__actions">
+              <IconButton
+                icon={
+                  isDetailsExpanded ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )
+                }
+                label={`세부 항목 ${isDetailsExpanded ? "접기" : "펼치기"}`}
+                onClick={() => setIsDetailsExpanded((current) => !current)}
+              />
+            </div>
+          </div>
+          {isDetailsExpanded ? (
+            <div className="external-subject-entry__details">
+              <label>
+                <span>과목구분</span>
+                <select
+                  onChange={(event) => updateDraft({ groupType: event.target.value })}
+                  value={draft.groupType}
+                >
+                  <option value="">미입력</option>
+                  {groupTypes.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>출처</span>
+                <input
+                  onChange={(event) => updateDraft({ sourceType: event.target.value })}
+                  value={draft.sourceType}
+                />
+              </label>
+              <label>
+                <span>선택군</span>
+                <input
+                  onChange={(event) => updateDraft({ choiceGroup: event.target.value })}
+                  value={draft.choiceGroup}
+                />
+              </label>
+              <label>
+                <span>기관명</span>
+                <input
+                  onChange={(event) => updateDraft({ sourceName: event.target.value })}
+                  value={draft.sourceName}
+                />
+              </label>
+              <label>
+                <span>메모</span>
+                <input
+                  onChange={(event) => updateDraft({ memo: event.target.value })}
+                  value={draft.memo}
+                />
+              </label>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";
-import { defaultExternalCourseChoiceGroup } from "../types/courseSelection";
+import {
+  defaultExternalCourseChoiceGroup,
+  defaultExternalCourseSourceType
+} from "../types/courseSelection";
 import type {
   ExternalCourseInput,
   ExternalCourseInputSourceType
@@ -64,7 +67,7 @@ export function createExternalCourseInput(
     selectionType: draft.selectionType || undefined,
     groupType: draft.groupType || undefined,
     credits,
-    sourceType: draft.sourceType,
+    sourceType: draft.sourceType.trim() || defaultExternalCourseSourceType,
     sourceName: draft.sourceName?.trim() || undefined,
     memo: draft.memo?.trim() || undefined,
     updatedAt: new Date().toISOString()

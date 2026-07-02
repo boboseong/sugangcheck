@@ -1,5 +1,8 @@
 import type { ExternalCourseInputDraft } from "../state/externalCourseInputStore";
-import { defaultExternalCourseChoiceGroup } from "../types/courseSelection";
+import {
+  defaultExternalCourseChoiceGroup,
+  defaultExternalCourseSourceType
+} from "../types/courseSelection";
 import type { Semester } from "../types/semester";
 
 export function defaultExternalCourseTarget(
@@ -19,7 +22,7 @@ export function createEmptyExternalCourseDraft(
     selectionType: "",
     groupType: "",
     credits: "",
-    sourceType: "transfer",
+    sourceType: defaultExternalCourseSourceType,
     sourceName: "",
     memo: ""
   };

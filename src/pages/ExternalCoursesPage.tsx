@@ -257,6 +257,13 @@ export function ExternalCoursesPage() {
         )}
       </div>
       <div className="section">
+        <h2>현재까지 입력된 내용</h2>
+        <ExternalCourseInputSummaryTable
+          inputs={externalCourseInputs}
+          onRemoveInput={removeExternalCourseInput}
+        />
+      </div>
+      <div className="section">
         <h2>입력 방식</h2>
         <ExternalCourseInputTabs
           filteredStudents={filteredStudents}
@@ -268,13 +275,6 @@ export function ExternalCoursesPage() {
           studentSemesterPresence={studentSemesterPresence}
           studentQuery={query}
           students={students}
-        />
-      </div>
-      <div className="section">
-        <h2>현재까지 입력된 내용</h2>
-        <ExternalCourseInputSummaryTable
-          inputs={externalCourseInputs}
-          onRemoveInput={removeExternalCourseInput}
         />
       </div>
     </section>

@@ -16,7 +16,7 @@ const input: ExternalCourseInput = {
   subjectGroup: "과학",
   selectionType: "진로선택",
   credits: 3,
-  sourceType: "externalCourse",
+  sourceType: "전입/외부 이수",
   sourceName: "공동교육과정",
   memo: "확인 완료",
   updatedAt: "2026-07-02T00:00:00.000Z"
@@ -29,11 +29,22 @@ describe("ExternalCourseInputSummaryTable", () => {
     );
 
     expect(screen.getByText("총 1건")).toBeInTheDocument();
+    expect(
+      screen.getByRole("table", { name: "현재까지 입력된 전입/외부 이수" })
+    ).toBeInTheDocument();
     expect(screen.getByText("20101")).toBeInTheDocument();
     expect(screen.getByText("김전입")).toBeInTheDocument();
     expect(screen.getByText("2학년 1학기")).toBeInTheDocument();
     expect(screen.getByText("물리학")).toBeInTheDocument();
-    expect(screen.getByText("외부 이수")).toBeInTheDocument();
+    expect(screen.getByText("과학")).toBeInTheDocument();
+    expect(screen.getByText("진로선택")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "1번째 입력 세부 항목 펼치기" }));
+
+    expect(screen.getByText("전입/외부 이수")).toBeInTheDocument();
+    expect(screen.getByText("과학 선택")).toBeInTheDocument();
+    expect(screen.getByText("공동교육과정")).toBeInTheDocument();
+    expect(screen.getByText("확인 완료")).toBeInTheDocument();
   });
 
   it("keeps row deletion available without direct-input wording", () => {

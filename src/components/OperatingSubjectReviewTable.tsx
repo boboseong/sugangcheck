@@ -312,19 +312,6 @@ export function OperatingSubjectReviewTable({
                 <td>
                   {isEditing ? (
                     <input
-                      aria-label={`${subject.subjectName} 선택군`}
-                      onChange={(event) =>
-                        updateDraft(subject, "choiceGroup", event.target.value)
-                      }
-                      value={draft.choiceGroup}
-                    />
-                  ) : (
-                    subject.choiceGroup
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <input
                       aria-label={`${subject.subjectName} 과목명`}
                       className="operating-subject-name-input"
                       onChange={(event) =>
@@ -334,6 +321,19 @@ export function OperatingSubjectReviewTable({
                     />
                   ) : (
                     subject.subjectName
+                  )}
+                </td>
+                <td>
+                  {isEditing ? (
+                    <input
+                      aria-label={`${subject.subjectName} 선택군`}
+                      onChange={(event) =>
+                        updateDraft(subject, "choiceGroup", event.target.value)
+                      }
+                      value={draft.choiceGroup}
+                    />
+                  ) : (
+                    subject.choiceGroup
                   )}
                 </td>
                 <td>

@@ -74,6 +74,21 @@ describe("OperatingSubjectReviewTable", () => {
     expect(within(firstBodyRow as HTMLElement).getByText("알파미등록")).toBeInTheDocument();
   });
 
+  it("aligns subject name and choice group with their table columns", () => {
+    render(
+      <OperatingSubjectReviewTable
+        onUpdateSubject={vi.fn()}
+        subjects={subjects}
+      />
+    );
+
+    const firstBodyRow = screen.getAllByRole("row").slice(1)[0];
+    const cells = within(firstBodyRow as HTMLElement).getAllByRole("cell");
+
+    expect(cells[2]).toHaveTextContent("알파미등록");
+    expect(cells[3]).toHaveTextContent("학생필수");
+  });
+
   it("places the edit action in the first table column", () => {
     render(
       <OperatingSubjectReviewTable

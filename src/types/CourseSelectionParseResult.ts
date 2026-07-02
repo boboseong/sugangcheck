@@ -25,6 +25,16 @@ export type CourseSelectionParseIssue = {
   rawValues: unknown[];
 };
 
+export type ParsedCourseSelectionStudent = {
+  studentId: string;
+  studentNo: string;
+  studentName: string;
+  classNo?: string;
+  number?: string;
+  gender?: string;
+  sourceRowNumber: number;
+};
+
 export type CourseSelectionPreviewRow = {
   rowNumber: number;
   studentKey?: string;
@@ -43,6 +53,7 @@ export type CourseSelectionParseResult = {
   headerRowNumber: number;
   columnMap: CourseSelectionColumnMap;
   detectedSubjects: CourseSelectionDetectedSubject[];
+  students: ParsedCourseSelectionStudent[];
   rows: ParsedCourseSelectionRow[];
   failedRows: CourseSelectionParseIssue[];
   previewRows: CourseSelectionPreviewRow[];

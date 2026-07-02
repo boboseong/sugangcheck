@@ -13,7 +13,10 @@ import {
   createSemesterImportStatusId,
   useImportStatusStore
 } from "../state/importStatusStore";
-import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
+import {
+  replaceCourseSelectionRowsForSemesterInList,
+  useCourseSelectionRawStore
+} from "../state/courseSelectionRawStore";
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
 import {
@@ -26,10 +29,17 @@ import {
   createXlsxBlob,
   templateFileNames
 } from "../templates/xlsxTemplates";
+import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { Semester } from "../types/semester";
 import { assignFilesToSemesters } from "../utils/detectSemesterFromFileName";
 import { downloadBlob } from "../utils/downloadBlob";
-import { semesterLabel } from "../utils/semester";
+import { isSameSemester, semesterLabel } from "../utils/semester";
+import {
+  appendGeneratedCourseSelectionRows,
+  createGeneratedCourseSelectionRows,
+  findMissingOperatingSubjectSelections,
+  type MissingOperatingSubjectSelection
+} from "../validation/courseSelectionOperatingSubjectCompletion";
 
 type PreparedCourseSelectionFile = {
   file: File;
@@ -38,8 +48,61 @@ type PreparedCourseSelectionFile = {
   semesterDetections?: CourseSelectionSemesterDetection[];
 };
 
+export type PendingOperatingSubjectCompletion = {
+  id: string;
+  target: Semester;
+  fileName: string;
+  subjects: PendingOperatingSubjectCompletionSubject[];
+  baseRows: ParsedCourseSelectionRow[];
+  generatedRowsBySubjectId: Record<string, ParsedCourseSelectionRow[]>;
+  baseMessageParts: string[];
+  baseNeedsReview: boolean;
+};
+
+export type PendingOperatingSubjectCompletionDecision = "all" | "none";
+
+export type PendingOperatingSubjectCompletionSubject =
+  MissingOperatingSubjectSelection & {
+    decision?: PendingOperatingSubjectCompletionDecision;
+  };
+
 function semesterKey(semester: Semester): string {
   return `${semester.grade}-${semester.semester}`;
+}
+
+function formatMessage(parts: readonly (string | undefined)[]): string | undefined {
+  const message = parts.filter(Boolean).join(" · ");
+
+  return message || undefined;
+}
+
+function reviewCompletionMessage(subjectCount: number): string | undefined {
+  return subjectCount > 0
+    ? `운영과목에는 있지만 수강신청결과에는 없는 과목 ${subjectCount.toLocaleString()}개 확인 필요`
+    : undefined;
+}
+
+function completionResultMessage(
+  subjects: readonly PendingOperatingSubjectCompletionSubject[]
+): string | undefined {
+  const allCount = subjects.filter((subject) => subject.decision === "all").length;
+  const noneCount = subjects.filter((subject) => subject.decision === "none").length;
+
+  return formatMessage([
+    allCount > 0 ? `모두 이수 O ${allCount.toLocaleString()}개 반영` : undefined,
+    noneCount > 0 ? `모두 이수 X ${noneCount.toLocaleString()}개 미반영` : undefined
+  ]);
+}
+
+function hasSelectedAllPendingDecisions(
+  completions: readonly PendingOperatingSubjectCompletion[]
+): boolean {
+  return (
+    completions.length > 0 &&
+    completions.every((completion) =>
+      completion.subjects.every((subject) => subject.decision !== undefined)
+    )
+  );
 }
 
 async function prepareCourseSelectionFile(
@@ -117,6 +180,24 @@ export function useCourseSelectionImport() {
     (state) => state.seedCreditDifferenceCriteriaFromInputs
   );
   const [preview, setPreview] = useState<WorkbookPreviewTable>();
+  const [pendingOperatingSubjectCompletions, setPendingOperatingSubjectCompletions] =
+    useState<PendingOperatingSubjectCompletion[]>([]);
+
+  function refreshDerivedCourseSelectionState(
+    nextRows: ParsedCourseSelectionRow[],
+    targets: readonly Semester[]
+  ) {
+    const nextStudents = mergeStudentsFromCourseSelectionRows([], nextRows);
+
+    setStudents(nextStudents);
+    for (const target of targets) {
+      updateFromCourseSelectionRows(nextStudents, nextRows, target);
+    }
+    seedCreditDifferenceCriteriaFromInputs({
+      courseSelectionRows: nextRows,
+      operatingSubjects: useOperatingSubjectStore.getState().operatingSubjects
+    });
+  }
 
   async function importFileForSemester(
     file: File,
@@ -136,40 +217,89 @@ export function useCourseSelectionImport() {
         fileName: file.name,
         sheetName
       });
+      const operatingSubjects = useOperatingSubjectStore.getState().operatingSubjects;
+      const missingSubjects = findMissingOperatingSubjectSelections({
+        target,
+        detectedSubjects: parseResult.detectedSubjects,
+        operatingSubjects
+      });
+      const hasReviewItems = needsReview || parseResult.failedRows.length > 0;
+      const baseMessageParts = [
+        needsReview
+          ? `${semesterLabel(target)}로 임시 배치했습니다. 학기 매핑을 확인하세요.`
+          : undefined,
+        parseResult.failedRows.length > 0
+          ? `파싱 실패 ${parseResult.failedRows.length}행`
+          : undefined
+      ].filter(Boolean) as string[];
+
+      setPreview(nextPreview);
+
+      if (missingSubjects.length > 0) {
+        const generatedRowsBySubjectId: Record<string, ParsedCourseSelectionRow[]> =
+          Object.fromEntries(
+            missingSubjects.map((subject) => [
+              subject.id,
+              createGeneratedCourseSelectionRows({
+                semesterImportId: parseResult.semesterImportId,
+                fileName: parseResult.fileName,
+                sheetName: parseResult.sheetName,
+                target,
+                students: parseResult.students,
+                subjects: [subject],
+                existingRows: parseResult.rows
+              })
+            ])
+          );
+        const pendingCompletion: PendingOperatingSubjectCompletion = {
+          id: `${parseResult.semesterImportId}-missing-operating-subjects`,
+          target,
+          fileName: file.name,
+          subjects: missingSubjects.map((subject) => ({ ...subject })),
+          baseRows: parseResult.rows,
+          generatedRowsBySubjectId,
+          baseMessageParts,
+          baseNeedsReview: hasReviewItems
+        };
+
+        setSemesterImportStatus({
+          target,
+          sourceType: "courseSelections",
+          status: "needsReview",
+          fileName: file.name,
+          rowCount: parseResult.rows.length,
+          message: formatMessage([
+            ...baseMessageParts,
+            reviewCompletionMessage(missingSubjects.length)
+          ])
+        });
+        setPendingOperatingSubjectCompletions((current) => [
+          ...current.filter((completion) => !isSameSemester(completion.target, target)),
+          pendingCompletion
+        ]);
+        return;
+      }
+
       const nextRows = replaceCourseSelectionRowsForSemester(
         target,
         parseResult.rows
       );
-      const nextStudents = mergeStudentsFromCourseSelectionRows([], nextRows);
-      const hasReviewItems = needsReview || parseResult.failedRows.length > 0;
-
-      setPreview(nextPreview);
-      setStudents(nextStudents);
-      updateFromCourseSelectionRows(nextStudents, nextRows, target);
-      seedCreditDifferenceCriteriaFromInputs({
-        courseSelectionRows: nextRows,
-        operatingSubjects: useOperatingSubjectStore.getState().operatingSubjects
-      });
+      refreshDerivedCourseSelectionState(nextRows, [target]);
       setSemesterImportStatus({
         target,
         sourceType: "courseSelections",
         status: hasReviewItems ? "needsReview" : "imported",
         fileName: file.name,
         rowCount: parseResult.rows.length,
-        message: hasReviewItems
-          ? [
-              needsReview
-                ? `${semesterLabel(target)}로 임시 배치했습니다. 학기 매핑을 확인하세요.`
-                : undefined,
-              parseResult.failedRows.length > 0
-                ? `파싱 실패 ${parseResult.failedRows.length}행`
-                : undefined
-            ]
-              .filter(Boolean)
-              .join(" · ")
-          : undefined
+        message: formatMessage(baseMessageParts)
       });
+      setPendingOperatingSubjectCompletions((current) =>
+        current.filter((completion) => !isSameSemester(completion.target, target))
+      );
     } catch (error) {
+      setPendingOperatingSubjectCompletions((current) =>
+        current.filter((completion) => !isSameSemester(completion.target, target))
+      );
       setSemesterImportStatus({
         target,
         sourceType: "courseSelections",
@@ -233,6 +363,72 @@ export function useCourseSelectionImport() {
     const nextStudents = mergeStudentsFromCourseSelectionRows([], nextRows);
     setStudents(nextStudents);
     markSemesterUnknown(nextStudents, target);
+    setPendingOperatingSubjectCompletions((current) =>
+      current.filter((completion) => !isSameSemester(completion.target, target))
+    );
+  }
+
+  function setPendingOperatingSubjectCompletionDecision(
+    completionId: string,
+    subjectId: string,
+    decision: PendingOperatingSubjectCompletionDecision
+  ) {
+    setPendingOperatingSubjectCompletions((current) =>
+      current.map((completion) =>
+        completion.id === completionId
+          ? {
+              ...completion,
+              subjects: completion.subjects.map((subject) =>
+                subject.id === subjectId ? { ...subject, decision } : subject
+              )
+            }
+          : completion
+      )
+    );
+  }
+
+  function completePendingOperatingSubjectCompletions() {
+    if (!hasSelectedAllPendingDecisions(pendingOperatingSubjectCompletions)) {
+      return;
+    }
+
+    let nextRows = useCourseSelectionRawStore.getState().courseSelectionRows;
+
+    for (const completion of pendingOperatingSubjectCompletions) {
+      const generatedRows = completion.subjects.flatMap((subject) =>
+        subject.decision === "all"
+          ? (completion.generatedRowsBySubjectId[subject.id] ?? [])
+          : []
+      );
+      const nextSemesterRows = appendGeneratedCourseSelectionRows(
+        completion.baseRows,
+        generatedRows
+      );
+
+      nextRows = replaceCourseSelectionRowsForSemesterInList(
+        nextRows,
+        completion.target,
+        nextSemesterRows
+      );
+      setSemesterImportStatus({
+        target: completion.target,
+        sourceType: "courseSelections",
+        status: completion.baseNeedsReview ? "needsReview" : "imported",
+        fileName: completion.fileName,
+        rowCount: nextSemesterRows.length,
+        message: formatMessage([
+          ...completion.baseMessageParts,
+          completionResultMessage(completion.subjects)
+        ])
+      });
+    }
+
+    useCourseSelectionRawStore.getState().setCourseSelectionRows(nextRows);
+    refreshDerivedCourseSelectionState(
+      nextRows,
+      pendingOperatingSubjectCompletions.map((completion) => completion.target)
+    );
+    setPendingOperatingSubjectCompletions([]);
   }
 
   async function handleDownloadTemplate() {
@@ -244,11 +440,16 @@ export function useCourseSelectionImport() {
 
   return {
     courseSelectionRows,
+    canCompletePendingOperatingSubjectCompletions:
+      hasSelectedAllPendingDecisions(pendingOperatingSubjectCompletions),
+    completePendingOperatingSubjectCompletions,
     handleClearSemester,
     handleDownloadTemplate,
     handleFilesSelected,
     importStatuses,
+    pendingOperatingSubjectCompletions,
     preview,
+    setPendingOperatingSubjectCompletionDecision,
     studentSemesterPresence
   };
 }

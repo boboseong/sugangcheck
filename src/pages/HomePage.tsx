@@ -3,6 +3,7 @@ import { Code, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { latestReleaseUrl, repositoryUrl } from "../app/externalLinks";
 import { DataPreparationDashboard } from "../components/DataPreparationDashboard";
+import { MissingOperatingSubjectCompletionDialog } from "../components/MissingOperatingSubjectCompletionDialog";
 import { PageHeader } from "../components/ui/PageHeader";
 import { useCourseSelectionImport } from "../hooks/useCourseSelectionImport";
 import { useOperatingSubjectImport } from "../hooks/useOperatingSubjectImport";
@@ -24,6 +25,8 @@ export function HomePage() {
   const { lastValidationResult } = useValidationResultStore();
   const [showValidationConfirmation, setShowValidationConfirmation] =
     useState(false);
+  const hasPendingOperatingSubjectCompletions =
+    courseSelectionImport.pendingOperatingSubjectCompletions.length > 0;
 
   function runAndNavigate() {
     const result = runValidation();
@@ -72,6 +75,18 @@ export function HomePage() {
           shouldConfirm: Boolean(lastValidationResult)
         }}
       />
+      {hasPendingOperatingSubjectCompletions ? (
+        <MissingOperatingSubjectCompletionDialog
+          canComplete={
+            courseSelectionImport.canCompletePendingOperatingSubjectCompletions
+          }
+          completions={courseSelectionImport.pendingOperatingSubjectCompletions}
+          onComplete={courseSelectionImport.completePendingOperatingSubjectCompletions}
+          onDecisionChange={
+            courseSelectionImport.setPendingOperatingSubjectCompletionDecision
+          }
+        />
+      ) : null}
 
       <section
         aria-labelledby="dashboard-release-title"

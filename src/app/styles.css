@@ -1369,6 +1369,65 @@ label.button {
   overflow: auto;
 }
 
+.missing-operating-subject-dialog {
+  width: min(720px, 100%);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.missing-operating-subject-dialog__body {
+  min-height: 0;
+  overflow: auto;
+  color: #243447;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.missing-operating-subject-dialog__body p {
+  margin: 0 0 10px;
+}
+
+.missing-operating-subject-table {
+  table-layout: fixed;
+}
+
+.missing-operating-subject-table th:first-child,
+.missing-operating-subject-table td:first-child {
+  width: 84px;
+}
+
+.missing-operating-subject-table th:last-child,
+.missing-operating-subject-table td:last-child {
+  width: 128px;
+}
+
+.missing-operating-subject-choice {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 40px);
+  gap: 6px;
+}
+
+.missing-operating-subject-choice button {
+  min-height: 34px;
+  border: 1px solid #c9d4e5;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #243447;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.missing-operating-subject-choice button:hover {
+  border-color: #1d4ed8;
+}
+
+.missing-operating-subject-choice button.is-selected {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
 .subject-enrollment-student-table th:first-child,
 .subject-enrollment-student-table td:first-child {
   width: 72px;

@@ -6,7 +6,8 @@ import type {
   CourseSelectionDetectedSubject,
   CourseSelectionParseIssue,
   CourseSelectionParseResult,
-  CourseSelectionPreviewRow
+  CourseSelectionPreviewRow,
+  ParsedCourseSelectionStudent
 } from "../types/CourseSelectionParseResult";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { Semester, SemesterKey } from "../types/semester";
@@ -422,6 +423,7 @@ function parseBatchCourseSelectionWorkbook(
   options: ParseCourseSelectionOptions
 ): CourseSelectionParseResult {
   const detectedSubjects = createBatchDetectedSubjects(matrix, layout);
+  const students: ParsedCourseSelectionStudent[] = [];
   const rows: ParsedCourseSelectionRow[] = [];
   const failedRows: CourseSelectionParseIssue[] = [];
   const previewRows: CourseSelectionPreviewRow[] = [];
@@ -467,6 +469,14 @@ function parseBatchCourseSelectionWorkbook(
     }
 
     let selectedSubjectCount = 0;
+    students.push({
+      studentId,
+      studentNo,
+      studentName,
+      classNo: classNo || undefined,
+      number: number || undefined,
+      sourceRowNumber: rowNumber
+    });
 
     for (const subject of detectedSubjects) {
       if (!isSelectedSubjectCell(row[subject.columnIndex])) {
@@ -521,6 +531,7 @@ function parseBatchCourseSelectionWorkbook(
     headerRowNumber: layout.labelRowIndex + 1,
     columnMap: layout.columnMap,
     detectedSubjects,
+    students,
     rows,
     failedRows,
     previewRows
@@ -715,6 +726,7 @@ export function parseCourseSelectionWorkbook(
 
   const { headerRowIndex, columnMap } = findHeaderRow(matrix);
   const detectedSubjects = createDetectedSubjects(matrix, headerRowIndex, columnMap);
+  const students: ParsedCourseSelectionStudent[] = [];
   const rows: ParsedCourseSelectionRow[] = [];
   const failedRows: CourseSelectionParseIssue[] = [];
   const previewRows: CourseSelectionPreviewRow[] = [];
@@ -776,6 +788,15 @@ export function parseCourseSelectionWorkbook(
     }
 
     let selectedSubjectCount = 0;
+    students.push({
+      studentId,
+      studentNo,
+      studentName,
+      classNo: classNo || undefined,
+      number: number || undefined,
+      gender: gender || undefined,
+      sourceRowNumber: rowNumber
+    });
 
     for (const subject of detectedSubjects) {
       if (!isSelectedSubjectCell(row[subject.columnIndex])) {
@@ -831,6 +852,7 @@ export function parseCourseSelectionWorkbook(
     headerRowNumber: headerRowIndex + 1,
     columnMap,
     detectedSubjects,
+    students,
     rows,
     failedRows,
     previewRows

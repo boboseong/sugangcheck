@@ -39,8 +39,26 @@ const validationRunMocks = vi.hoisted(() => ({
   runValidation: vi.fn()
 }));
 
+const courseSelectionImportMocks = vi.hoisted(() => ({
+  canCompletePendingOperatingSubjectCompletions: false,
+  completePendingOperatingSubjectCompletions: vi.fn(),
+  handleFilesSelected: vi.fn(),
+  pendingOperatingSubjectCompletions: [] as unknown[],
+  setPendingOperatingSubjectCompletionDecision: vi.fn()
+}));
+
 vi.mock("../hooks/useCourseSelectionImport", () => ({
-  useCourseSelectionImport: () => ({ handleFilesSelected: vi.fn() })
+  useCourseSelectionImport: () => ({
+    canCompletePendingOperatingSubjectCompletions:
+      courseSelectionImportMocks.canCompletePendingOperatingSubjectCompletions,
+    completePendingOperatingSubjectCompletions:
+      courseSelectionImportMocks.completePendingOperatingSubjectCompletions,
+    handleFilesSelected: courseSelectionImportMocks.handleFilesSelected,
+    pendingOperatingSubjectCompletions:
+      courseSelectionImportMocks.pendingOperatingSubjectCompletions,
+    setPendingOperatingSubjectCompletionDecision:
+      courseSelectionImportMocks.setPendingOperatingSubjectCompletionDecision
+  })
 }));
 
 vi.mock("../hooks/useOperatingSubjectImport", () => ({
@@ -89,6 +107,11 @@ function renderHomeWithRoutes() {
 
 describe("HomePage", () => {
   beforeEach(() => {
+    courseSelectionImportMocks.canCompletePendingOperatingSubjectCompletions = false;
+    courseSelectionImportMocks.completePendingOperatingSubjectCompletions.mockClear();
+    courseSelectionImportMocks.handleFilesSelected.mockClear();
+    courseSelectionImportMocks.pendingOperatingSubjectCompletions = [];
+    courseSelectionImportMocks.setPendingOperatingSubjectCompletionDecision.mockClear();
     validationRunMocks.confirmationMessage = undefined;
     validationRunMocks.runValidation.mockReturnValue({
       buildResult: { records: [], issues: [] },
@@ -131,5 +154,48 @@ describe("HomePage", () => {
 
     expect(screen.getByText("/results")).toBeInTheDocument();
     expect(validationRunMocks.runValidation).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the missing operating-subject O/X dialog on the dashboard upload flow", () => {
+    courseSelectionImportMocks.pendingOperatingSubjectCompletions = [
+      {
+        id: "pending-1-1",
+        target: { grade: 1, semester: 1 },
+        fileName: "2025년1학년1학기_수강신청결과_20250910.xls",
+        subjects: [
+          {
+            id: "common-korean",
+            target: { grade: 1, semester: 1 },
+            subjectName: "공통국어1",
+            normalizedSubjectName: "공통국어 1",
+            choiceGroup: "학교지정",
+            credits: 4
+          }
+        ],
+        baseRows: [],
+        generatedRowsBySubjectId: {},
+        baseMessageParts: [],
+        baseNeedsReview: false
+      }
+    ];
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    const dialog = screen.getByRole("alertdialog", {
+      name: "누락 운영과목 확인"
+    });
+
+    expect(dialog).toHaveTextContent("공통국어1");
+    expect(dialog).toHaveTextContent("1-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "O" }));
+
+    expect(
+      courseSelectionImportMocks.setPendingOperatingSubjectCompletionDecision
+    ).toHaveBeenCalledWith("pending-1-1", "common-korean", "all");
   });
 });

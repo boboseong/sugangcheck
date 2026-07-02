@@ -1,5 +1,6 @@
 import { Download } from "lucide-react";
 import { FilePreviewTable } from "../components/FilePreviewTable";
+import { MissingOperatingSubjectCompletionDialog } from "../components/MissingOperatingSubjectCompletionDialog";
 import { SemesterUploadSlots } from "../components/SemesterUploadSlots";
 import { StudentCourseSummaryTable } from "../components/StudentCourseSummaryTable";
 import { StudentPresenceTable } from "../components/StudentPresenceTable";
@@ -13,12 +14,16 @@ import { useValidationResultStore } from "../state/validationResultStore";
 
 export function CourseSelectionsPage() {
   const {
+    canCompletePendingOperatingSubjectCompletions,
+    completePendingOperatingSubjectCompletions,
     courseSelectionRows,
     handleClearSemester,
     handleDownloadTemplate,
     handleFilesSelected,
     importStatuses,
+    pendingOperatingSubjectCompletions,
     preview,
+    setPendingOperatingSubjectCompletionDecision,
     studentSemesterPresence
   } = useCourseSelectionImport();
   const hasValidationResult = useValidationResultStore(
@@ -77,6 +82,14 @@ export function CourseSelectionsPage() {
         <h2>파일 미리보기</h2>
         <FilePreviewTable preview={preview} />
       </div>
+      {pendingOperatingSubjectCompletions.length > 0 ? (
+        <MissingOperatingSubjectCompletionDialog
+          canComplete={canCompletePendingOperatingSubjectCompletions}
+          completions={pendingOperatingSubjectCompletions}
+          onComplete={completePendingOperatingSubjectCompletions}
+          onDecisionChange={setPendingOperatingSubjectCompletionDecision}
+        />
+      ) : null}
     </section>
   );
 }

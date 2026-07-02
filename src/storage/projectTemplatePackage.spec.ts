@@ -87,7 +87,7 @@ function createFullProjectFile() {
   };
 
   return createProjectFile({
-    appVersion: "0.1.8",
+    appVersion: "0.1.9",
     projectName: state.projectName,
     state,
     savedAt
@@ -97,7 +97,7 @@ function createFullProjectFile() {
 describe("project template package", () => {
   it("exports four human template workbooks without app data sheets or example rows", async () => {
     const projectFile = createProjectFile({
-      appVersion: "0.1.8",
+      appVersion: "0.1.9",
       projectName: "빈 프로젝트",
       state: createEmptyProjectState("빈 프로젝트", savedAt),
       savedAt
@@ -162,7 +162,7 @@ describe("project template package", () => {
 
   it("imports an incomplete template package without auto validation", async () => {
     const projectFile = createProjectFile({
-      appVersion: "0.1.8",
+      appVersion: "0.1.9",
       projectName: "미완성 프로젝트",
       state: createEmptyProjectState("미완성 프로젝트", savedAt),
       savedAt
@@ -197,7 +197,7 @@ describe("project template package", () => {
       relatedRecordIds: []
     };
     const rawProjectFile = createProjectFile({
-      appVersion: "0.1.8",
+      appVersion: "0.1.9",
       projectName: projectFile.projectName,
       state: {
         ...projectFile.data,

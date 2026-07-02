@@ -1209,6 +1209,66 @@ label.button {
   color: #172033;
 }
 
+.course-selection-inner-tabs {
+  gap: 0;
+}
+
+.course-selection-tab-bar {
+  margin-bottom: 14px;
+}
+
+.course-selection-tab-panels {
+  display: grid;
+  gap: 18px;
+}
+
+.course-selection-tab-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.class-student-roster-table-wrap {
+  overflow-x: auto;
+}
+
+.class-student-roster-table {
+  --class-student-roster-density: var(--class-student-roster-class-count, 6);
+  --class-student-roster-font-size: clamp(
+    11px,
+    calc(18px - (var(--class-student-roster-density) * 0.65px)),
+    14px
+  );
+  --class-student-roster-x-padding: clamp(
+    4px,
+    calc(14px - (var(--class-student-roster-density) * 0.8px)),
+    12px
+  );
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  font-size: var(--class-student-roster-font-size);
+}
+
+.class-student-roster-table th:first-child,
+.class-student-roster-table td:first-child {
+  width: clamp(42px, 5.5%, 56px);
+  white-space: nowrap;
+}
+
+.class-student-roster-table th,
+.class-student-roster-table td {
+  padding: 8px var(--class-student-roster-x-padding);
+  line-height: 1.35;
+}
+
+.class-student-roster-table th:not(:first-child),
+.class-student-roster-table td:not(:first-child) {
+  min-width: 0;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
 .subject-enrollment-controls {
   display: grid;
   grid-template-columns: repeat(4, minmax(148px, 1fr)) auto;

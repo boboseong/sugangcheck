@@ -4,12 +4,18 @@ import type {
   PendingOperatingSubjectCompletion,
   PendingOperatingSubjectCompletionDecision
 } from "../hooks/useCourseSelectionImport";
+import type { ParsedCourseSelectionRow } from "../types/courseSelection";
+import { semesterKeys } from "../types/semester";
+import type { StudentSemesterPresence } from "../types/student";
 import { useValidationResultStore } from "../state/validationResultStore";
 import { CourseSelectionsPage } from "./CourseSelectionsPage";
 
 const courseSelectionImportMock = vi.hoisted(() => ({
   completePendingOperatingSubjectCompletions: vi.fn(),
-  setPendingOperatingSubjectCompletionDecision: vi.fn()
+  courseSelectionRows: [] as ParsedCourseSelectionRow[],
+  pendingOperatingSubjectCompletions: [] as PendingOperatingSubjectCompletion[],
+  setPendingOperatingSubjectCompletionDecision: vi.fn(),
+  studentSemesterPresence: [] as StudentSemesterPresence[]
 }));
 
 vi.mock("../state/projectWorkspace", () => ({
@@ -21,47 +27,65 @@ vi.mock("../hooks/useCourseSelectionImport", () => ({
     canCompletePendingOperatingSubjectCompletions: false,
     completePendingOperatingSubjectCompletions:
       courseSelectionImportMock.completePendingOperatingSubjectCompletions,
-    courseSelectionRows: [],
+    courseSelectionRows: courseSelectionImportMock.courseSelectionRows,
     handleClearSemester: vi.fn(),
     handleDownloadTemplate: vi.fn(),
     handleFilesSelected: vi.fn(),
     importStatuses: [],
-    pendingOperatingSubjectCompletions: [
-      {
-        id: "pending-2-1",
-        target: { grade: 2, semester: 1 },
-        fileName: "2학년1학기_수강신청결과.xlsx",
-        subjects: [
-          {
-            id: "korean-history",
-            target: { grade: 2, semester: 1 },
-            subjectName: "한국사",
-            normalizedSubjectName: "한국사",
-            choiceGroup: "학교 지정",
-            credits: 3
-          },
-          {
-            id: "biology",
-            target: { grade: 2, semester: 1 },
-            subjectName: "생명과학",
-            normalizedSubjectName: "생명과학",
-            choiceGroup: "학생선택",
-            credits: 3,
-            decision: "none" as PendingOperatingSubjectCompletionDecision
-          }
-        ],
-        baseRows: [],
-        generatedRowsBySubjectId: {},
-        baseMessageParts: [],
-        baseNeedsReview: false
-      } satisfies PendingOperatingSubjectCompletion
-    ],
+    pendingOperatingSubjectCompletions:
+      courseSelectionImportMock.pendingOperatingSubjectCompletions,
     preview: undefined,
     setPendingOperatingSubjectCompletionDecision:
       courseSelectionImportMock.setPendingOperatingSubjectCompletionDecision,
-    studentSemesterPresence: []
+    studentSemesterPresence: courseSelectionImportMock.studentSemesterPresence
   })
 }));
+
+function createPendingCompletion(): PendingOperatingSubjectCompletion {
+  return {
+    id: "pending-2-1",
+    target: { grade: 2, semester: 1 },
+    fileName: "2학년1학기_수강신청결과.xlsx",
+    subjects: [
+      {
+        id: "korean-history",
+        target: { grade: 2, semester: 1 },
+        subjectName: "한국사",
+        normalizedSubjectName: "한국사",
+        choiceGroup: "학교 지정",
+        credits: 3
+      },
+      {
+        id: "biology",
+        target: { grade: 2, semester: 1 },
+        subjectName: "생명과학",
+        normalizedSubjectName: "생명과학",
+        choiceGroup: "학생선택",
+        credits: 3,
+        decision: "none" as PendingOperatingSubjectCompletionDecision
+      }
+    ],
+    baseRows: [],
+    generatedRowsBySubjectId: {},
+    baseMessageParts: [],
+    baseNeedsReview: false
+  };
+}
+
+function presenceRow(input: {
+  id: string;
+  name: string;
+  studentNo: string;
+}): StudentSemesterPresence {
+  return {
+    studentId: input.id,
+    studentNo: input.studentNo,
+    name: input.name,
+    semesters: Object.fromEntries(
+      semesterKeys.map((key) => [key, key === "1-1" ? "present" : "absent"])
+    ) as StudentSemesterPresence["semesters"]
+  };
+}
 
 function renderPage() {
   return render(
@@ -74,6 +98,11 @@ function renderPage() {
 describe("CourseSelectionsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    courseSelectionImportMock.courseSelectionRows = [];
+    courseSelectionImportMock.pendingOperatingSubjectCompletions = [
+      createPendingCompletion()
+    ];
+    courseSelectionImportMock.studentSemesterPresence = [];
     useValidationResultStore.setState({
       lastValidationResult: undefined,
       validationErrors: []
@@ -107,5 +136,63 @@ describe("CourseSelectionsPage", () => {
     expect(
       courseSelectionImportMock.setPendingOperatingSubjectCompletionDecision
     ).toHaveBeenCalledWith("pending-2-1", "korean-history", "all");
+  });
+
+  it("uses 기본 to show all internal reports and switches to the class roster report", () => {
+    courseSelectionImportMock.studentSemesterPresence = [
+      presenceRow({ id: "student-1", studentNo: "10101", name: "김민호" }),
+      presenceRow({ id: "student-2", studentNo: "20101", name: "양진호" }),
+      presenceRow({ id: "student-3", studentNo: "1202", name: "이서연" })
+    ];
+
+    renderPage();
+
+    expect(screen.getByRole("button", { name: "기본" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(
+      screen.getByRole("heading", { name: "누락 학생 명렬" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "학기별 이수 과목 수" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "반별 학생 명렬" })
+    ).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "반별 학생 명렬" }));
+
+    expect(screen.getByRole("button", { name: "반별 학생 명렬" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(
+      screen.queryByRole("heading", { name: "누락 학생 명렬" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "학기별 이수 과목 수" })
+    ).not.toBeInTheDocument();
+
+    const rosterTable = screen.getByRole("table", { name: "반별 학생 명렬" });
+
+    expect(
+      within(rosterTable)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent)
+    ).toEqual(["번호", "1반", "2반"]);
+    expect(
+      within(rosterTable)
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) =>
+          within(row)
+            .getAllByRole("cell")
+            .map((cell) => cell.textContent)
+        )
+    ).toEqual([
+      ["1", "김민호, 양진호", ""],
+      ["2", "", "이서연"]
+    ]);
   });
 });

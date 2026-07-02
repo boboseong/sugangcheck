@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Download } from "lucide-react";
+import { ClassStudentRosterTable } from "../components/ClassStudentRosterTable";
 import { FilePreviewTable } from "../components/FilePreviewTable";
 import { MissingOperatingSubjectCompletionDialog } from "../components/MissingOperatingSubjectCompletionDialog";
 import { SemesterUploadSlots } from "../components/SemesterUploadSlots";
@@ -11,6 +13,22 @@ import { courseSelectionDownloadGuide } from "../constants/uploadGuides";
 import { useCourseSelectionImport } from "../hooks/useCourseSelectionImport";
 import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useValidationResultStore } from "../state/validationResultStore";
+
+type CourseSelectionInnerTab =
+  | "default"
+  | "missingStudents"
+  | "semesterSubjectCounts"
+  | "classRoster";
+
+const innerTabs = [
+  { id: "default", label: "기본" },
+  { id: "missingStudents", label: "누락 학생 명렬" },
+  { id: "semesterSubjectCounts", label: "학기별 이수 과목 수" },
+  { id: "classRoster", label: "반별 학생 명렬" }
+] as const satisfies readonly {
+  id: CourseSelectionInnerTab;
+  label: string;
+}[];
 
 export function CourseSelectionsPage() {
   const {
@@ -29,6 +47,10 @@ export function CourseSelectionsPage() {
   const hasValidationResult = useValidationResultStore(
     (state) => state.lastValidationResult !== undefined
   );
+  const [activeInnerTab, setActiveInnerTab] =
+    useState<CourseSelectionInnerTab>("default");
+  const shouldShowInnerTab = (tab: CourseSelectionInnerTab) =>
+    activeInnerTab === "default" || activeInnerTab === tab;
 
   return (
     <section className="page">
@@ -70,13 +92,45 @@ export function CourseSelectionsPage() {
           statuses={importStatuses}
         />
       </div>
-      <div className="section">
-        <h2>학생 학기별 존재 여부</h2>
-        <StudentPresenceTable rows={studentSemesterPresence} />
-      </div>
-      <div className="section">
-        <h2>학기별 이수 과목 수</h2>
-        <StudentCourseSummaryTable rows={courseSelectionRows} />
+      <div className="section course-selection-inner-tabs">
+        <div className="tool-tab-bar course-selection-tab-bar">
+          {innerTabs.map((tab) => (
+            <button
+              aria-pressed={activeInnerTab === tab.id}
+              className={[
+                "tool-tab",
+                activeInnerTab === tab.id ? "tool-tab--active" : ""
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              key={tab.id}
+              onClick={() => setActiveInnerTab(tab.id)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="course-selection-tab-panels">
+          {shouldShowInnerTab("missingStudents") ? (
+            <section className="course-selection-tab-panel">
+              <h2>누락 학생 명렬</h2>
+              <StudentPresenceTable rows={studentSemesterPresence} />
+            </section>
+          ) : null}
+          {shouldShowInnerTab("semesterSubjectCounts") ? (
+            <section className="course-selection-tab-panel">
+              <h2>학기별 이수 과목 수</h2>
+              <StudentCourseSummaryTable rows={courseSelectionRows} />
+            </section>
+          ) : null}
+          {shouldShowInnerTab("classRoster") ? (
+            <section className="course-selection-tab-panel">
+              <h2>반별 학생 명렬</h2>
+              <ClassStudentRosterTable rows={studentSemesterPresence} />
+            </section>
+          ) : null}
+        </div>
       </div>
       <div className="section">
         <h2>파일 미리보기</h2>

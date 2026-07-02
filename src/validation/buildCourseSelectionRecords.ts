@@ -54,6 +54,35 @@ function resolveSourceLabel(
   return source.sourceType === "transfer" ? "전입" : "외부 이수";
 }
 
+function isExternalCourseInput(
+  source: ParsedCourseSelectionRow | ExternalCourseInput
+): source is ExternalCourseInput {
+  return "sourceType" in source;
+}
+
+function findOperatingSubject(
+  source: ParsedCourseSelectionRow | ExternalCourseInput,
+  operatingSubjects: readonly OperatingSubject[]
+): OperatingSubject | undefined {
+  return operatingSubjects.find(
+    (subject) =>
+      subject.target.grade === source.target.grade &&
+      subject.target.semester === source.target.semester &&
+      subject.normalizedSubjectName === source.normalizedSubjectName
+  );
+}
+
+function resolveChoiceGroup(
+  source: ParsedCourseSelectionRow | ExternalCourseInput,
+  operatingSubjects: readonly OperatingSubject[]
+): string | undefined {
+  if (isExternalCourseInput(source)) {
+    return source.choiceGroup;
+  }
+
+  return findOperatingSubject(source, operatingSubjects)?.choiceGroup;
+}
+
 export function buildCourseSelectionRecords(input: {
   mode: ValidationMode;
   availablePartialSemesters?: readonly Semester[];
@@ -81,6 +110,7 @@ export function buildCourseSelectionRecords(input: {
       source,
       operatingSubjects: input.operatingSubjects
     });
+    const choiceGroup = resolveChoiceGroup(source, input.operatingSubjects);
 
     if (
       !metadata.subjectGroup ||
@@ -117,6 +147,7 @@ export function buildCourseSelectionRecords(input: {
       subjectGroup: metadata.subjectGroup,
       selectionType: metadata.selectionType,
       groupType: metadata.groupType,
+      choiceGroup,
       credits: credits.credits,
       origin:
         "semesterImportId" in source

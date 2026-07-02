@@ -52,6 +52,7 @@ export type CourseSelectionRecord = {
   subjectGroup: string;
   selectionType: string;
   groupType?: string;
+  choiceGroup?: string;
   credits: number;
   origin: CourseSelectionOrigin;
 };

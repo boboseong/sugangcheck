@@ -217,6 +217,19 @@
     width: auto;
   }
 
+  .student-report-subject-name-cell {
+    gap: 0.5mm;
+  }
+
+  .student-report-choice-badge {
+    min-height: auto;
+    padding: 0.1mm 0.5mm;
+    border: 0.2mm solid currentColor;
+    background: #ffffff;
+    font-size: 4.3pt;
+    line-height: 1;
+  }
+
   .student-report-credit-table__group-button {
     color: inherit;
     text-decoration: none;

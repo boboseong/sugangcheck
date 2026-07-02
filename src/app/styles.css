@@ -2691,8 +2691,48 @@ label.button {
   box-shadow: inset 0 0 0 9999px rgb(36 87 214 / 0.08);
 }
 
+.student-report-subject-name-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
 .student-report-matrix-table td strong {
   font-weight: 800;
+}
+
+.student-report-choice-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.student-report-choice-badge--required {
+  color: #633b00;
+  border-color: #d89b00;
+  background: #fff4d6;
+}
+
+.student-report-choice-badge--other {
+  color: #344054;
+  border-color: #aab6c5;
+  background: #edf1f5;
+}
+
+.student-report-choice-badge--choice {
+  color: #125d56;
+  border-color: #0e9384;
+  background: #e6f7f5;
 }
 
 .student-report-total-row {

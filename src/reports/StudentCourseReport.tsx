@@ -22,6 +22,13 @@ type SemesterRecordSummary = {
   credits: number;
 };
 
+type ChoiceGroupBadgeTone = "required" | "other" | "choice";
+
+type ChoiceGroupBadgeInfo = {
+  label: string;
+  tone: ChoiceGroupBadgeTone;
+};
+
 const subjectGroupCreditColumns = [
   "국어",
   "수학",
@@ -163,6 +170,40 @@ function subjectGroupMatchesCreditColumn(
   return subjectGroup === activeCreditColumn;
 }
 
+function choiceGroupBadgeInfo(choiceGroup?: string): ChoiceGroupBadgeInfo | undefined {
+  if (!choiceGroup?.trim()) {
+    return undefined;
+  }
+
+  const compactChoiceGroup = choiceGroup.replace(/\s+/gu, "");
+
+  if (compactChoiceGroup === "학생필수" || compactChoiceGroup === "학교지정") {
+    return { label: "지정", tone: "required" };
+  }
+
+  if (compactChoiceGroup === "기타") {
+    return { label: "기타", tone: "other" };
+  }
+
+  return { label: "선택", tone: "choice" };
+}
+
+function ChoiceGroupBadge({ choiceGroup }: { choiceGroup?: string }) {
+  const badge = choiceGroupBadgeInfo(choiceGroup);
+
+  if (!badge) {
+    return null;
+  }
+
+  return (
+    <span
+      className={`student-report-choice-badge student-report-choice-badge--${badge.tone}`}
+    >
+      {badge.label}
+    </span>
+  );
+}
+
 export function StudentCourseReport({
   student,
   records,
@@ -259,7 +300,10 @@ export function StudentCourseReport({
                             }
                             key={`${record.id}-name`}
                           >
-                          <strong>{record.subjectName}</strong>
+                            <span className="student-report-subject-name-cell">
+                              <strong>{record.subjectName}</strong>
+                              <ChoiceGroupBadge choiceGroup={record.choiceGroup} />
+                            </span>
                           </td>
                         ) : (
                           <td

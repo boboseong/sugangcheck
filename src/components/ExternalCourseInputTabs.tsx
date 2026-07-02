@@ -1,11 +1,13 @@
 import { Check, Plus, Trash2, Users, X } from "lucide-react";
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   groupTypes,
   selectionTypes,
-  subjectGroups
+  subjectGroups,
+  subjectMasterItems
 } from "../data/subjectMaster";
+import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";
 import {
   createExternalCourseInput,
   validateExternalCourseInputDraft,
@@ -15,16 +17,16 @@ import type { ExternalCourseInput } from "../types/courseSelection";
 import { semesterKeys } from "../types/semester";
 import type { Semester } from "../types/semester";
 import type { Student, StudentSemesterPresence } from "../types/student";
+import type { SubjectMasterItem } from "../types/subject";
 import { parseSemesterKey, semesterLabel } from "../utils/semester";
 import {
   createEmptyExternalCourseDraft,
   hasExternalCourseDraftValue
 } from "./externalCourseInputDraft";
-import { ExternalCourseInputTable } from "./ExternalCourseInputTable";
 import { Button } from "./ui/Button";
 import { IconButton } from "./ui/IconButton";
 
-type ExternalCourseEntryMode = "single" | "sameSubject" | "manySubjects";
+type ExternalCourseEntryMode = "manySubjects" | "sameSubject";
 
 type ExternalCourseInputTabsProps = {
   students: readonly Student[];
@@ -33,10 +35,7 @@ type ExternalCourseInputTabsProps = {
   studentQuery: string;
   selectedStudent?: Student;
   missingSemesters: readonly Semester[];
-  inputs: readonly ExternalCourseInput[];
-  onAddInput: (input: ExternalCourseInput) => void;
   onAddInputs: (inputs: ExternalCourseInput[]) => void;
-  onRemoveInput: (inputId: string) => void;
   onSelectedStudentIdChange: (studentId: string | undefined) => void;
   onStudentQueryChange: (query: string) => void;
 };
@@ -45,6 +44,16 @@ type CourseDraftFieldsProps = {
   draft: ExternalCourseInputDraft;
   actions?: ReactNode;
   onChange: (patch: Partial<ExternalCourseInputDraft>) => void;
+  onSubmit?: () => void;
+};
+
+type SubjectMasterAutocompleteProps = {
+  hideLabel?: boolean;
+  label: string;
+  onChange: (value: string) => void;
+  onEnter?: () => void;
+  onSelect: (item: SubjectMasterItem) => void;
+  value: string;
 };
 
 type SubjectDraftRow = {
@@ -62,9 +71,8 @@ type StudentTargetFieldsProps = {
 };
 
 const entryModes: Array<{ label: string; value: ExternalCourseEntryMode }> = [
-  { label: "직접 입력", value: "single" },
-  { label: "같은 과목 여러 학생", value: "sameSubject" },
-  { label: "한 학생 여러 과목", value: "manySubjects" }
+  { label: "한 학생 여러 과목", value: "manySubjects" },
+  { label: "같은 과목 여러 학생", value: "sameSubject" }
 ];
 
 function getPresenceMissingSemesters(
@@ -104,13 +112,195 @@ function createSubjectDraftRow(
   };
 }
 
+function subjectMasterMetadata(item: SubjectMasterItem) {
+  return [item.groupType, item.subjectGroup, item.selectionType]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function subjectMasterPatch(
+  item: SubjectMasterItem
+): Partial<ExternalCourseInputDraft> {
+  return {
+    subjectName: item.subjectName,
+    groupType: item.groupType ?? "",
+    subjectGroup: item.subjectGroup,
+    selectionType: item.selectionType
+  };
+}
+
+function subjectMasterMatchesQuery(item: SubjectMasterItem, query: string) {
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
+    return false;
+  }
+
+  const loweredQuery = trimmedQuery.toLocaleLowerCase();
+  const normalizedQuery = normalizeSubjectName(trimmedQuery);
+
+  return (
+    item.subjectName.toLocaleLowerCase().includes(loweredQuery) ||
+    item.normalizedSubjectName.includes(normalizedQuery)
+  );
+}
+
+function isEnterReady(event: KeyboardEvent) {
+  return event.key === "Enter" && !event.nativeEvent.isComposing;
+}
+
+function SubjectMasterAutocomplete({
+  hideLabel = false,
+  label,
+  onChange,
+  onEnter,
+  onSelect,
+  value
+}: SubjectMasterAutocompleteProps) {
+  const listboxId = useId();
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const filteredItems = useMemo(
+    () =>
+      subjectMasterItems
+        .filter((item) => subjectMasterMatchesQuery(item, value))
+        .slice(0, 12),
+    [value]
+  );
+  const activeItem = filteredItems[activeIndex];
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [value]);
+
+  function selectItem(item: SubjectMasterItem) {
+    onSelect(item);
+    setIsOpen(false);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.nativeEvent.isComposing) {
+      return;
+    }
+
+    if (event.key === "ArrowDown" && filteredItems.length > 0) {
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((current) => (current + 1) % filteredItems.length);
+      return;
+    }
+
+    if (event.key === "ArrowUp" && filteredItems.length > 0) {
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex(
+        (current) => (current - 1 + filteredItems.length) % filteredItems.length
+      );
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+
+    if (event.key === "Enter") {
+      if (isOpen && activeItem) {
+        event.preventDefault();
+        event.stopPropagation();
+        selectItem(activeItem);
+        return;
+      }
+
+      if (onEnter) {
+        event.preventDefault();
+        event.stopPropagation();
+        onEnter();
+      }
+    }
+  }
+
+  return (
+    <div className="subject-picker">
+      <label>
+        <span className={hideLabel ? "subject-picker__label--hidden" : ""}>
+          {label}
+        </span>
+        <input
+          aria-activedescendant={
+            isOpen && activeItem ? `${listboxId}-${activeItem.id}` : undefined
+          }
+          aria-controls={listboxId}
+          aria-expanded={isOpen}
+          autoComplete="off"
+          onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
+          onChange={(event) => {
+            onChange(event.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(value.trim().length > 0)}
+          onKeyDown={handleKeyDown}
+          role="combobox"
+          value={value}
+        />
+      </label>
+      {isOpen && value.trim() ? (
+        <div className="subject-picker__listbox" id={listboxId} role="listbox">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item, index) => (
+              <button
+                aria-selected={index === activeIndex}
+                className={[
+                  "subject-picker__option",
+                  index === activeIndex ? "subject-picker__option--active" : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                id={`${listboxId}-${item.id}`}
+                key={item.id}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  selectItem(item);
+                }}
+                role="option"
+                type="button"
+              >
+                <strong>{item.subjectName}</strong>
+                <span>{subjectMasterMetadata(item)}</span>
+              </button>
+            ))
+          ) : (
+            <div className="subject-picker__empty">일치하는 마스터 과목이 없습니다.</div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CourseDraftFields({
   draft,
   actions,
-  onChange
+  onChange,
+  onSubmit
 }: CourseDraftFieldsProps) {
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!isEnterReady(event) || !onSubmit) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+
+    if (target.closest("button")) {
+      return;
+    }
+
+    event.preventDefault();
+    onSubmit();
+  }
+
   return (
-    <div className="external-input-form">
+    <div className="external-input-form" onKeyDown={handleKeyDown}>
       <label>
         <span>학기</span>
         <select
@@ -127,18 +317,20 @@ function CourseDraftFields({
           })}
         </select>
       </label>
+      <SubjectMasterAutocomplete
+        label="과목명"
+        onChange={(subjectName) => onChange({ subjectName })}
+        onEnter={onSubmit}
+        onSelect={(item) => onChange(subjectMasterPatch(item))}
+        value={draft.subjectName}
+      />
       <label>
-        <span>과목명</span>
+        <span>학점</span>
         <input
-          onChange={(event) => onChange({ subjectName: event.target.value })}
-          value={draft.subjectName}
-        />
-      </label>
-      <label>
-        <span>선택군</span>
-        <input
-          onChange={(event) => onChange({ choiceGroup: event.target.value })}
-          value={draft.choiceGroup}
+          min="0"
+          onChange={(event) => onChange({ credits: event.target.value })}
+          type="number"
+          value={draft.credits}
         />
       </label>
       <label>
@@ -184,15 +376,6 @@ function CourseDraftFields({
         </select>
       </label>
       <label>
-        <span>학점</span>
-        <input
-          min="0"
-          onChange={(event) => onChange({ credits: event.target.value })}
-          type="number"
-          value={draft.credits}
-        />
-      </label>
-      <label>
         <span>출처</span>
         <select
           onChange={(event) =>
@@ -206,6 +389,13 @@ function CourseDraftFields({
           <option value="transfer">전입</option>
           <option value="externalCourse">외부 이수</option>
         </select>
+      </label>
+      <label>
+        <span>선택군</span>
+        <input
+          onChange={(event) => onChange({ choiceGroup: event.target.value })}
+          value={draft.choiceGroup}
+        />
       </label>
       <label>
         <span>기관명</span>
@@ -452,6 +642,7 @@ function SameSubjectManyStudentsPanel({
         }
         draft={draft}
         onChange={updateDraft}
+        onSubmit={handleAddToStudents}
       />
       <ErrorList errors={errors} />
       <div className="external-bulk-toolbar">
@@ -619,6 +810,59 @@ function ManySubjectsOneStudentPanel({
     );
   }
 
+  function handleAddSingleRow(rowId: string) {
+    const rowIndex = rows.findIndex((row) => row.id === rowId);
+    const row = rows[rowIndex];
+    const nextErrors: string[] = [];
+
+    if (!row) {
+      return;
+    }
+
+    if (!selectedStudent) {
+      nextErrors.push("학생을 먼저 선택하세요.");
+    }
+
+    if (!hasExternalCourseDraftValue(row.draft)) {
+      nextErrors.push(`${rowIndex + 1}행: 추가할 과목을 입력하세요.`);
+    } else {
+      validateExternalCourseInputDraft(row.draft).forEach((error) => {
+        nextErrors.push(`${rowIndex + 1}행: ${error}`);
+      });
+    }
+
+    if (nextErrors.length > 0 || !selectedStudent) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    onAddInputs([createExternalCourseInput(selectedStudent, row.draft)]);
+    setRows((current) =>
+      current.map((item) =>
+        item.id === rowId ? createSubjectDraftRow(missingSemesters) : item
+      )
+    );
+    setErrors([]);
+  }
+
+  function handleRowKeyDown(
+    event: KeyboardEvent<HTMLTableRowElement>,
+    rowId: string
+  ) {
+    if (!isEnterReady(event)) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+
+    if (target.closest("button")) {
+      return;
+    }
+
+    event.preventDefault();
+    handleAddSingleRow(rowId);
+  }
+
   function handleAddRows() {
     const nextErrors: string[] = [];
 
@@ -682,20 +926,20 @@ function ManySubjectsOneStudentPanel({
             <tr>
               <th>학기</th>
               <th>과목명</th>
-              <th>선택군</th>
+              <th>학점</th>
               <th>과목구분</th>
               <th>교과군</th>
               <th>선택구분</th>
-              <th>학점</th>
               <th>출처</th>
+              <th>선택군</th>
               <th>기관명</th>
               <th>메모</th>
               <th>삭제</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
+            {rows.map((row, index) => (
+              <tr key={row.id} onKeyDown={(event) => handleRowKeyDown(event, row.id)}>
                 <td>
                   <select
                     onChange={(event) =>
@@ -705,30 +949,31 @@ function ManySubjectsOneStudentPanel({
                     }
                     value={`${row.draft.target.grade}-${row.draft.target.semester}`}
                   >
-                    {semesterKeys.map((key) => {
-                      const semester = parseSemesterKey(key);
-                      return (
-                        <option key={key} value={key}>
-                          {semester ? semesterLabel(semester) : key}
-                        </option>
-                      );
-                    })}
+                    {semesterKeys.map((key) => (
+                      <option key={key} value={key}>
+                        {key}
+                      </option>
+                    ))}
                   </select>
                 </td>
                 <td>
-                  <input
-                    onChange={(event) =>
-                      updateRow(row.id, { subjectName: event.target.value })
-                    }
+                  <SubjectMasterAutocomplete
+                    hideLabel
+                    label={`${index + 1}행 과목명`}
+                    onChange={(subjectName) => updateRow(row.id, { subjectName })}
+                    onEnter={() => handleAddSingleRow(row.id)}
+                    onSelect={(item) => updateRow(row.id, subjectMasterPatch(item))}
                     value={row.draft.subjectName}
                   />
                 </td>
                 <td>
                   <input
                     onChange={(event) =>
-                      updateRow(row.id, { choiceGroup: event.target.value })
+                      updateRow(row.id, { credits: event.target.value })
                     }
-                    value={row.draft.choiceGroup}
+                    min="0"
+                    type="number"
+                    value={row.draft.credits}
                   />
                 </td>
                 <td>
@@ -777,16 +1022,6 @@ function ManySubjectsOneStudentPanel({
                   </select>
                 </td>
                 <td>
-                  <input
-                    min="0"
-                    onChange={(event) =>
-                      updateRow(row.id, { credits: event.target.value })
-                    }
-                    type="number"
-                    value={row.draft.credits}
-                  />
-                </td>
-                <td>
                   <select
                     onChange={(event) =>
                       updateRow(row.id, {
@@ -799,6 +1034,14 @@ function ManySubjectsOneStudentPanel({
                     <option value="transfer">전입</option>
                     <option value="externalCourse">외부 이수</option>
                   </select>
+                </td>
+                <td>
+                  <input
+                    onChange={(event) =>
+                      updateRow(row.id, { choiceGroup: event.target.value })
+                    }
+                    value={row.draft.choiceGroup}
+                  />
                 </td>
                 <td>
                   <input
@@ -840,14 +1083,11 @@ export function ExternalCourseInputTabs({
   studentQuery,
   selectedStudent,
   missingSemesters,
-  inputs,
-  onAddInput,
   onAddInputs,
-  onRemoveInput,
   onSelectedStudentIdChange,
   onStudentQueryChange
 }: ExternalCourseInputTabsProps) {
-  const [mode, setMode] = useState<ExternalCourseEntryMode>("single");
+  const [mode, setMode] = useState<ExternalCourseEntryMode>("manySubjects");
 
   return (
     <div className="external-input-tabs">
@@ -870,25 +1110,6 @@ export function ExternalCourseInputTabs({
         ))}
       </div>
       <div className="external-input-tab-panel">
-        {mode === "single" ? (
-          <ExternalCourseInputTable
-            formPrefix={
-              <StudentTargetFields
-                filteredStudents={filteredStudents}
-                missingSemesters={missingSemesters}
-                onSelectedStudentIdChange={onSelectedStudentIdChange}
-                onStudentQueryChange={onStudentQueryChange}
-                selectedStudent={selectedStudent}
-                studentQuery={studentQuery}
-              />
-            }
-            inputs={inputs}
-            missingSemesters={missingSemesters}
-            onAddInput={onAddInput}
-            onRemoveInput={onRemoveInput}
-            selectedStudent={selectedStudent}
-          />
-        ) : null}
         {mode === "sameSubject" ? (
           <SameSubjectManyStudentsPanel
             onAddInputs={onAddInputs}

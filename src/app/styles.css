@@ -1562,7 +1562,8 @@ label.button {
 
 .external-input-tabs,
 .external-input-tab-panel,
-.external-bulk-layout {
+.external-bulk-layout,
+.external-input-summary {
   display: grid;
   gap: 12px;
 }
@@ -1683,7 +1684,8 @@ label.button {
 }
 
 .external-bulk-table,
-.external-subject-row-table {
+.external-subject-row-table,
+.external-input-summary-table {
   overflow-x: auto;
 }
 
@@ -1692,7 +1694,26 @@ label.button {
 }
 
 .external-subject-row-table .placeholder-table {
-  min-width: 1180px;
+  min-width: 1360px;
+}
+
+.external-subject-row-table .placeholder-table th:first-child,
+.external-subject-row-table .placeholder-table td:first-child {
+  width: 104px;
+  min-width: 104px;
+}
+
+.external-subject-row-table .placeholder-table td:first-child select {
+  min-width: 76px;
+}
+
+.external-subject-row-table .subject-picker__listbox {
+  position: static;
+  margin-top: 4px;
+}
+
+.external-input-summary-table .placeholder-table {
+  min-width: 1280px;
 }
 
 .form-errors {
@@ -2054,7 +2075,8 @@ label.button {
 }
 
 .subject-picker__option:hover,
-.subject-picker__option:focus {
+.subject-picker__option:focus,
+.subject-picker__option--active {
   background: #eef4fb;
 }
 

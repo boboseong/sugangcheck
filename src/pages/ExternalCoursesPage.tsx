@@ -1,5 +1,6 @@
 import { Download, UserRoundPlus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ExternalCourseInputSummaryTable } from "../components/ExternalCourseInputSummaryTable";
 import { ExternalCourseInputTabs } from "../components/ExternalCourseInputTabs";
 import { UploadImportLauncher } from "../components/UploadImportLauncher";
 import { Button } from "../components/ui/Button";
@@ -44,7 +45,6 @@ function getSemestersWithPresence(
 export function ExternalCoursesPage() {
   const {
     externalCourseInputs,
-    addExternalCourseInput,
     addExternalCourseInputs,
     removeExternalCourseInput,
     setExternalCourseInputs
@@ -120,10 +120,6 @@ export function ExternalCoursesPage() {
         })
         .filter(isSemester)
     : [];
-  const selectedInputs = externalCourseInputs.filter(
-    (input) => input.studentId === selectedStudent?.studentId
-  );
-
   async function handleDownloadTemplate() {
     await downloadBlob(
       createXlsxBlob(
@@ -143,7 +139,7 @@ export function ExternalCoursesPage() {
     }
 
     const confirmed = window.confirm(
-      "전입/외부 이수 직접 입력을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
+      "전입/외부 이수 입력 내용을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
     );
 
     if (!confirmed) {
@@ -182,7 +178,7 @@ export function ExternalCoursesPage() {
     <section className="page">
       <PageHeader
         title="전입생 및 외부 이수 입력"
-        description="수강신청 파일에 없는 학기나 외부 교육과정 이수 과목을 학생별로 직접 입력합니다."
+        description="수강신청 파일에 없는 학기나 외부 교육과정 이수 과목을 학생별로 입력합니다."
       />
       <div className="template-action-bar">
         <UploadImportLauncher
@@ -264,17 +260,21 @@ export function ExternalCoursesPage() {
         <h2>입력 방식</h2>
         <ExternalCourseInputTabs
           filteredStudents={filteredStudents}
-          inputs={selectedInputs}
           missingSemesters={missingSemesters}
-          onAddInput={addExternalCourseInput}
           onAddInputs={addExternalCourseInputs}
-          onRemoveInput={removeExternalCourseInput}
           onSelectedStudentIdChange={setSelectedStudentId}
           onStudentQueryChange={setQuery}
           selectedStudent={selectedStudent}
           studentSemesterPresence={studentSemesterPresence}
           studentQuery={query}
           students={students}
+        />
+      </div>
+      <div className="section">
+        <h2>현재까지 입력된 내용</h2>
+        <ExternalCourseInputSummaryTable
+          inputs={externalCourseInputs}
+          onRemoveInput={removeExternalCourseInput}
         />
       </div>
     </section>

@@ -107,6 +107,8 @@ describe("SubjectEnrollmentPage", () => {
     expect(within(studentDialog).getByText("김하나")).toBeInTheDocument();
     expect(within(studentDialog).getByText("20102")).toBeInTheDocument();
     expect(within(studentDialog).getByText("이두리")).toBeInTheDocument();
+    expect(screen.queryByText("과목구분")).not.toBeInTheDocument();
+    expect(screen.queryByText("보통교과")).not.toBeInTheDocument();
     expect(
       within(studentDialog).queryByText("박세나")
     ).not.toBeInTheDocument();

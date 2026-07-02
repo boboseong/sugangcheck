@@ -52,8 +52,10 @@ describe("subject enrollment export", () => {
     expect(rows[0]).toContain("신청 학생 수");
     expect(rows[0]).not.toContain("원천 행 수");
     expect(rows[0]).not.toContain("중복 행 수");
+    expect(rows[0]).not.toContain("과목구분");
     expect(rows[1]).toContain(2);
     expect(rows[1]).toContain("운영과목");
+    expect(rows[1]).not.toContain("보통교과");
   });
 
   it("creates one sheet for all data", () => {

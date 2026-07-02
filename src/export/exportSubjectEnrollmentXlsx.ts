@@ -32,7 +32,6 @@ const sheetHeader = [
   "선택군",
   "교과군",
   "선택구분",
-  "과목구분",
   "과목명",
   "학점",
   "신청 학생 수",
@@ -107,7 +106,6 @@ function summaryRows(summaries: readonly SubjectEnrollmentSummary[]): unknown[][
     summary.choiceGroup,
     summary.subjectGroup,
     summary.selectionType,
-    summary.groupType ?? "",
     summary.subjectName,
     summary.credits ?? "",
     summary.studentCount,
@@ -155,7 +153,7 @@ function appendSummarySheet(
 ) {
   const sheet = utils.aoa_to_sheet([sheetHeader, ...summaryRows(summaries)]);
 
-  sheet["!cols"] = [8, 8, 14, 16, 18, 14, 16, 28, 8, 12, 14, 48].map(
+  sheet["!cols"] = [8, 8, 14, 16, 18, 14, 28, 8, 12, 14, 48].map(
     (wch) => ({ wch })
   );
   utils.book_append_sheet(workbook, sheet, safeSheetName(sheetName, usedSheetNames));

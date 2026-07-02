@@ -274,8 +274,7 @@ export function filterSubjectEnrollmentSummaries(
       summary.subjectName,
       summary.choiceGroup,
       summary.subjectGroup,
-      summary.selectionType,
-      summary.groupType ?? ""
+      summary.selectionType
     ]
       .join(" ")
       .normalize("NFKC")

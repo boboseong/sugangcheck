@@ -344,7 +344,6 @@ export function SubjectEnrollmentPage() {
                   <th>교과군</th>
                   <th>과목명</th>
                   <th>선택구분</th>
-                  <th>과목구분</th>
                   <th>학점</th>
                   <th>신청 학생 수</th>
                   <th>참조</th>
@@ -372,7 +371,6 @@ export function SubjectEnrollmentPage() {
                       </button>
                     </td>
                     <td>{summary.selectionType}</td>
-                    <td>{summary.groupType ?? "-"}</td>
                     <td>{summary.credits ?? "-"}</td>
                     <td>
                       <strong>{summary.studentCount.toLocaleString()}명</strong>

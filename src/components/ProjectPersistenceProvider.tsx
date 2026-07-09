@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
+import { useDetailedConstraintRuleStore } from "../state/detailedConstraintRuleStore";
 import { useExternalCourseInputStore } from "../state/externalCourseInputStore";
 import { useImportStatusStore } from "../state/importStatusStore";
 import { useNormalizedCourseSelectionStore } from "../state/normalizedCourseSelectionStore";
@@ -66,6 +67,7 @@ export function ProjectPersistenceProvider() {
       useExternalCourseInputStore.subscribe(scheduleSave),
       useValidationRuleSettingStore.subscribe(scheduleSave),
       usePrerequisiteRuleStore.subscribe(scheduleSave),
+      useDetailedConstraintRuleStore.subscribe(scheduleSave),
       useNormalizedCourseSelectionStore.subscribe(scheduleSave),
       useValidationResultStore.subscribe(scheduleSave)
     ];

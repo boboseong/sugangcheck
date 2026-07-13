@@ -11,7 +11,6 @@ import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
 import { courseSelectionDownloadGuide } from "../constants/uploadGuides";
 import { useCourseSelectionImport } from "../hooks/useCourseSelectionImport";
-import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useValidationResultStore } from "../state/validationResultStore";
 
 type CourseSelectionInnerTab =
@@ -45,7 +44,8 @@ export function CourseSelectionsPage() {
     studentSemesterPresence
   } = useCourseSelectionImport();
   const hasValidationResult = useValidationResultStore(
-    (state) => state.lastValidationResult !== undefined
+    (state) =>
+      state.lastValidationResult !== undefined || state.validationErrors.length > 0
   );
   const [activeInnerTab, setActiveInnerTab] =
     useState<CourseSelectionInnerTab>("default");
@@ -62,8 +62,8 @@ export function CourseSelectionsPage() {
         <UploadImportLauncher
           downloadGuide={courseSelectionDownloadGuide}
           fileUploadConfirmation={{
-            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
-            onConfirmedFileSelection: clearDerivedValidationState,
+            message:
+              "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
             shouldConfirm: hasValidationResult
           }}
           onFilesSelected={handleFilesSelected}
@@ -80,8 +80,8 @@ export function CourseSelectionsPage() {
       <div className="section">
         <SemesterUploadSlots
           clearConfirmation={{
-            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
-            onConfirmedClear: clearDerivedValidationState,
+            message:
+              "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
             shouldConfirm: hasValidationResult
           }}
           compact

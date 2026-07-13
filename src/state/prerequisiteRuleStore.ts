@@ -10,6 +10,10 @@ import {
   generatePrerequisiteCandidates,
   mergePrerequisiteRules
 } from "../validation/generatePrerequisiteCandidates";
+import {
+  areValidationInputValuesEqual,
+  markValidationInputChanged
+} from "./validationRevisionStore";
 
 function cloneDefaultRules(): PrerequisiteRule[] {
   return structuredClone(defaultPrerequisiteRules);
@@ -37,40 +41,92 @@ type PrerequisiteRuleStore = {
   restoreDefaultPrerequisiteRules: () => void;
 };
 
-export const usePrerequisiteRuleStore = create<PrerequisiteRuleStore>((set) => ({
+export const usePrerequisiteRuleStore = create<PrerequisiteRuleStore>((set, get) => ({
   prerequisiteRules: cloneDefaultRules(),
-  setPrerequisiteRules: (prerequisiteRules) => set({ prerequisiteRules }),
-  generateCandidatesFromOperatingSubjects: (subjects) =>
-    set((state) => ({
-      prerequisiteRules: mergePrerequisiteRules(
-        state.prerequisiteRules,
-        generatePrerequisiteCandidates(subjects)
-      )
-    })),
-  updatePrerequisiteRule: (rule) =>
-    set((state) => ({
-      prerequisiteRules: updatePrerequisiteRuleInList(
-        state.prerequisiteRules,
-        {
-          ...rule,
-          beforeNormalizedSubjectName: normalizeSubjectName(rule.beforeSubjectName),
-          afterNormalizedSubjectName: normalizeSubjectName(rule.afterSubjectName),
-          updatedAt: new Date().toISOString()
-        }
-      )
-    })),
-  updatePrerequisiteRuleStatus: (ruleId, status) =>
+  setPrerequisiteRules: (prerequisiteRules) => {
+    if (areValidationInputValuesEqual(get().prerequisiteRules, prerequisiteRules)) {
+      return;
+    }
+
+    set({ prerequisiteRules });
+    markValidationInputChanged();
+  },
+  generateCandidatesFromOperatingSubjects: (subjects) => {
+    const currentRules = get().prerequisiteRules;
+    const prerequisiteRules = mergePrerequisiteRules(
+      currentRules,
+      generatePrerequisiteCandidates(subjects)
+    );
+
+    if (areValidationInputValuesEqual(currentRules, prerequisiteRules)) {
+      return;
+    }
+
+    set({ prerequisiteRules });
+    markValidationInputChanged();
+  },
+  updatePrerequisiteRule: (rule) => {
+    const currentRules = get().prerequisiteRules;
+    const currentRule = currentRules.find((item) => item.id === rule.id);
+
+    if (!currentRule) {
+      return;
+    }
+
+    const normalizedRule = {
+      ...rule,
+      beforeNormalizedSubjectName: normalizeSubjectName(rule.beforeSubjectName),
+      afterNormalizedSubjectName: normalizeSubjectName(rule.afterSubjectName),
+      updatedAt: currentRule.updatedAt
+    };
+
+    if (areValidationInputValuesEqual(currentRule, normalizedRule)) {
+      return;
+    }
+
+    set({
+      prerequisiteRules: updatePrerequisiteRuleInList(currentRules, {
+        ...normalizedRule,
+        updatedAt: new Date().toISOString()
+      })
+    });
+    markValidationInputChanged();
+  },
+  updatePrerequisiteRuleStatus: (ruleId, status) => {
+    const currentRule = get().prerequisiteRules.find((rule) => rule.id === ruleId);
+
+    if (!currentRule || currentRule.status === status) {
+      return;
+    }
+
     set((state) => ({
       prerequisiteRules: state.prerequisiteRules.map((rule) =>
         rule.id === ruleId
           ? { ...rule, status, updatedAt: new Date().toISOString() }
           : rule
       )
-    })),
-  removePrerequisiteRule: (ruleId) =>
-    set((state) => ({
-      prerequisiteRules: state.prerequisiteRules.filter((rule) => rule.id !== ruleId)
-    })),
-  restoreDefaultPrerequisiteRules: () =>
-    set({ prerequisiteRules: cloneDefaultRules() })
+    }));
+    markValidationInputChanged();
+  },
+  removePrerequisiteRule: (ruleId) => {
+    const currentRules = get().prerequisiteRules;
+    const prerequisiteRules = currentRules.filter((rule) => rule.id !== ruleId);
+
+    if (prerequisiteRules.length === currentRules.length) {
+      return;
+    }
+
+    set({ prerequisiteRules });
+    markValidationInputChanged();
+  },
+  restoreDefaultPrerequisiteRules: () => {
+    const prerequisiteRules = cloneDefaultRules();
+
+    if (areValidationInputValuesEqual(get().prerequisiteRules, prerequisiteRules)) {
+      return;
+    }
+
+    set({ prerequisiteRules });
+    markValidationInputChanged();
+  }
 }));

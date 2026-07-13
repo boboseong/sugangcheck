@@ -4,8 +4,11 @@ import { MemoryRouter } from "react-router-dom";
 import type { Mock } from "vitest";
 import { UploadImportLauncher } from "./UploadImportLauncher";
 import { CourseSelectionsPage } from "../pages/CourseSelectionsPage";
+import { ExternalCoursesPage } from "../pages/ExternalCoursesPage";
 import { OperatingSubjectsPage } from "../pages/OperatingSubjectsPage";
+import { ValidationRulesPage } from "../pages/ValidationRulesPage";
 import { useValidationResultStore } from "../state/validationResultStore";
+import type { ValidationError } from "../types/validation";
 import type { ValidationEngineResult } from "../validation/types";
 
 const projectWorkspaceMocks = vi.hoisted(() => ({
@@ -24,8 +27,9 @@ vi.mock("../storage/indexedDbStorage", () => ({
 
 vi.mock("../state/projectWorkspace", () => projectWorkspaceMocks);
 
-const confirmationMessage =
-  "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?";
+const confirmationMessage = "기존 점검 결과를 처리합니다. 계속하시겠습니까?";
+const pageConfirmationMessage =
+  "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?";
 
 const validationResult: ValidationEngineResult = {
   durationMs: 1,
@@ -33,10 +37,21 @@ const validationResult: ValidationEngineResult = {
   executedRuleIds: [],
   skippedRuleIds: []
 };
+const validationError: ValidationError = {
+  id: "error-1",
+  ruleId: "minimumCredits",
+  type: "minimumCredits",
+  studentId: "student-1",
+  studentNo: "10101",
+  studentName: "김학생",
+  message: "최소 학점 오류",
+  relatedRecordIds: []
+};
 
 function resetValidationResultStore() {
   useValidationResultStore.setState({
     lastValidationResult: undefined,
+    resultRevision: undefined,
     validationErrors: []
   });
 }
@@ -207,13 +222,13 @@ describe("UploadImportLauncher", () => {
     const operatingSubjectsView = renderInRouter(<OperatingSubjectsPage />);
     fireEvent.click(screen.getByRole("button", { name: "업로드/불러오기" }));
     fireEvent.click(screen.getByRole("button", { name: "전체 학기 업로드" }));
-    expect(screen.getByText(confirmationMessage)).toBeInTheDocument();
+    expect(screen.getByText(pageConfirmationMessage)).toBeInTheDocument();
     operatingSubjectsView.unmount();
 
     renderInRouter(<CourseSelectionsPage />);
     fireEvent.click(screen.getByRole("button", { name: "업로드/불러오기" }));
     fireEvent.click(screen.getByRole("button", { name: "전체 학기 업로드" }));
-    expect(screen.getByText(confirmationMessage)).toBeInTheDocument();
+    expect(screen.getByText(pageConfirmationMessage)).toBeInTheDocument();
   });
 
   it("connects the clear confirmation to operating-subject and course-selection pages", () => {
@@ -226,16 +241,14 @@ describe("UploadImportLauncher", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "1학년 1학기 파일 비우기" })
     );
-    expect(screen.getByText(confirmationMessage)).toBeInTheDocument();
+    expect(screen.getByText(pageConfirmationMessage)).toBeInTheDocument();
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: "삭제 확인" })).getByRole(
         "button",
         { name: "계속" }
       )
     );
-    expect(projectWorkspaceMocks.clearDerivedValidationState).toHaveBeenCalledTimes(
-      1
-    );
+    expect(projectWorkspaceMocks.clearDerivedValidationState).not.toHaveBeenCalled();
     operatingSubjectsView.unmount();
 
     vi.clearAllMocks();
@@ -248,15 +261,59 @@ describe("UploadImportLauncher", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "1학년 1학기 파일 비우기" })
     );
-    expect(screen.getByText(confirmationMessage)).toBeInTheDocument();
+    expect(screen.getByText(pageConfirmationMessage)).toBeInTheDocument();
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: "삭제 확인" })).getByRole(
         "button",
         { name: "계속" }
       )
     );
-    expect(projectWorkspaceMocks.clearDerivedValidationState).toHaveBeenCalledTimes(
-      1
+    expect(projectWorkspaceMocks.clearDerivedValidationState).not.toHaveBeenCalled();
+  });
+
+  it("shows the page confirmation when only a legacy error list remains", () => {
+    useValidationResultStore.setState({
+      lastValidationResult: undefined,
+      validationErrors: [validationError]
+    });
+
+    renderInRouter(<OperatingSubjectsPage />);
+    fireEvent.click(screen.getByRole("button", { name: "업로드/불러오기" }));
+    fireEvent.click(screen.getByRole("button", { name: "전체 학기 업로드" }));
+
+    expect(screen.getByText(pageConfirmationMessage)).toBeInTheDocument();
+  });
+
+  it("warns that template replacements leave existing results stale", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const file = new File(["fixture"], "fixture.xlsx");
+
+    useValidationResultStore.setState({
+      lastValidationResult: validationResult,
+      validationErrors: []
+    });
+
+    const externalView = renderInRouter(<ExternalCoursesPage />);
+    fireEvent.click(screen.getByRole("button", { name: "업로드/불러오기" }));
+    const externalDialog = screen.getByRole("dialog", { name: "업로드/불러오기" });
+    const externalInput = externalDialog.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    fireEvent.change(externalInput, { target: { files: [file] } });
+    expect(confirmSpy).toHaveBeenLastCalledWith(
+      expect.stringContaining("기존 점검 결과가 이전 결과로 표시됩니다")
+    );
+    externalView.unmount();
+
+    renderInRouter(<ValidationRulesPage />);
+    fireEvent.click(screen.getByRole("button", { name: "업로드/불러오기" }));
+    const rulesDialog = screen.getByRole("dialog", { name: "업로드/불러오기" });
+    const rulesInput = rulesDialog.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    fireEvent.change(rulesInput, { target: { files: [file] } });
+    expect(confirmSpy).toHaveBeenLastCalledWith(
+      expect.stringContaining("기존 점검 결과가 이전 결과로 표시됩니다")
     );
   });
 });

@@ -155,6 +155,8 @@ describe("project template package", () => {
       result.projectFile.data.studentSemesterPresence[0]?.semesters ?? {}
     )).toEqual(["present", "present", "present", "present", "present", "present"]);
     expect(result.projectFile.data.lastValidationResult).toBeDefined();
+    expect(result.projectFile.data.inputRevision).toBe(0);
+    expect(result.projectFile.data.resultRevision).toBe(0);
     expect(result.projectFile.data.validationRuleSettings.find(
       (setting) => setting.id === "minimumCredits"
     )?.criteria).toEqual({ minimumTotalCredits: 123 });
@@ -179,6 +181,8 @@ describe("project template package", () => {
     expect(result.projectFile.data.validationErrors).toEqual([]);
     expect(result.projectFile.data.courseSelectionRecords).toEqual([]);
     expect(result.projectFile.data.lastValidationResult).toBeUndefined();
+    expect(result.projectFile.data.inputRevision).toBe(0);
+    expect(result.projectFile.data.resultRevision).toBeUndefined();
     expect(result.dataPreparationStatus?.issues.map((issue) => issue.code)).toContain(
       "missingOperatingSubjects"
     );
@@ -201,6 +205,8 @@ describe("project template package", () => {
       projectName: projectFile.projectName,
       state: {
         ...projectFile.data,
+        inputRevision: 4,
+        resultRevision: 3,
         importStatuses: createInitialImportStatuses(),
         validationErrors: [validationError],
         courseSelectionRecords: [
@@ -243,5 +249,7 @@ describe("project template package", () => {
     expect(result.projectFile.data.lastValidationResult?.errors).toEqual([
       validationError
     ]);
+    expect(result.projectFile.data.inputRevision).toBe(4);
+    expect(result.projectFile.data.resultRevision).toBe(3);
   });
 });

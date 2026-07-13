@@ -28,6 +28,7 @@ type DashboardFileUploadHandler = (
 type DataPreparationDashboardProps = {
   confirmationMessage?: string;
   hasValidationResult: boolean;
+  isValidationResultStale?: boolean;
   onCancelValidationConfirmation: () => void;
   onCourseSelectionFilesSelected?: DashboardFileUploadHandler;
   onConfirmValidation: () => void;
@@ -37,7 +38,7 @@ type DataPreparationDashboardProps = {
   status: DataPreparationStatus;
   uploadConfirmation?: {
     message: string;
-    onConfirmedFileSelection: () => void;
+    onConfirmedFileSelection?: () => void;
     shouldConfirm: boolean;
   };
 };
@@ -103,6 +104,7 @@ function needsTabAttention(counts: ImportStatusCounts): boolean {
 export function DataPreparationDashboard({
   confirmationMessage,
   hasValidationResult,
+  isValidationResultStale = false,
   onCancelValidationConfirmation,
   onCourseSelectionFilesSelected,
   onConfirmValidation,
@@ -178,8 +180,13 @@ export function DataPreparationDashboard({
       : hasAnyCourseSelectionUpload
         ? "입력이 필요한 누락 학생이 없습니다."
         : "수강신청 업로드 후 표시됩니다.";
-  const validationBadge = hasValidationResult
-    ? ({ label: "완료", tone: "ready" } satisfies {
+  const validationBadge = isValidationResultStale
+    ? ({ label: "재점검 필요", tone: "warning" } satisfies {
+        label: string;
+        tone: StatusTone;
+      })
+    : hasValidationResult
+      ? ({ label: "완료", tone: "ready" } satisfies {
         label: string;
         tone: StatusTone;
       })
@@ -309,7 +316,9 @@ export function DataPreparationDashboard({
         </div>
         <h2>점검</h2>
         <p className="workflow-card__value">
-          {hasValidationResult
+          {isValidationResultStale
+            ? "입력 변경됨"
+            : hasValidationResult
             ? "점검 완료"
             : status.canRunFullValidation
               ? "점검 가능"
@@ -318,7 +327,12 @@ export function DataPreparationDashboard({
               : "대기 중"}
         </p>
         <div className="workflow-card__validation-action">
-          {hasValidationResult ? (
+          {isValidationResultStale ? (
+            <Link className="button button--compact" to="/results">
+              <Play size={15} />
+              <span>다시 점검</span>
+            </Link>
+          ) : hasValidationResult ? (
             <Link className="button button--compact" to="/results">
               <ListChecks size={15} />
               <span>점검 결과 화면</span>

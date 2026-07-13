@@ -7,7 +7,6 @@ import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
 import { operatingSubjectDownloadGuide } from "../constants/uploadGuides";
 import { useOperatingSubjectImport } from "../hooks/useOperatingSubjectImport";
-import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useValidationResultStore } from "../state/validationResultStore";
 
 export function OperatingSubjectsPage() {
@@ -22,7 +21,8 @@ export function OperatingSubjectsPage() {
     updateOperatingSubject
   } = useOperatingSubjectImport();
   const hasValidationResult = useValidationResultStore(
-    (state) => state.lastValidationResult !== undefined
+    (state) =>
+      state.lastValidationResult !== undefined || state.validationErrors.length > 0
   );
 
   return (
@@ -35,8 +35,8 @@ export function OperatingSubjectsPage() {
         <UploadImportLauncher
           downloadGuide={operatingSubjectDownloadGuide}
           fileUploadConfirmation={{
-            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
-            onConfirmedFileSelection: clearDerivedValidationState,
+            message:
+              "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
             shouldConfirm: hasValidationResult
           }}
           onFilesSelected={handleFilesSelected}
@@ -53,8 +53,8 @@ export function OperatingSubjectsPage() {
       <div className="section">
         <SemesterUploadSlots
           clearConfirmation={{
-            message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
-            onConfirmedClear: clearDerivedValidationState,
+            message:
+              "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
             shouldConfirm: hasValidationResult
           }}
           compact

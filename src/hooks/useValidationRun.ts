@@ -7,6 +7,7 @@ import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
 import { useValidationResultStore } from "../state/validationResultStore";
+import { useValidationRevisionStore } from "../state/validationRevisionStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { checkDataPreparationStatus } from "../validation/checkDataPreparationStatus";
@@ -48,6 +49,7 @@ export function useValidationRun() {
     }
 
     const mode = dataPreparationStatus.canRunFullValidation ? "full" : "partial";
+    const inputRevision = useValidationRevisionStore.getState().inputRevision;
     const buildResult = buildCourseSelectionRecords({
       mode,
       availablePartialSemesters:
@@ -71,8 +73,8 @@ export function useValidationRun() {
       })
     );
 
-    setBuildResult(buildResult);
-    setValidationResult(validationResult);
+    setBuildResult(buildResult, inputRevision);
+    setValidationResult(validationResult, inputRevision);
 
     return { buildResult, validationResult };
   }

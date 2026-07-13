@@ -38,6 +38,8 @@ const fieldLabels: Partial<Record<keyof ProjectState, string>> = {
   validationRuleSettings: "점검규칙설정",
   prerequisiteRules: "위계규칙",
   detailedConstraintRules: "세부제약",
+  inputRevision: "입력리비전",
+  resultRevision: "결과리비전",
   validationErrors: "점검오류",
   courseSelectionRecords: "정규화수강",
   dataPreparationStatus: "데이터준비상태",
@@ -65,6 +67,8 @@ const workbookFields: Record<ProjectTransferWorkbookId, readonly (keyof ProjectS
       "detailedConstraintRules"
     ],
     validationResults: [
+      "inputRevision",
+      "resultRevision",
       "validationErrors",
       "courseSelectionRecords",
       "dataPreparationStatus",

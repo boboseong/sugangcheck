@@ -6,6 +6,7 @@ import { useNormalizedCourseSelectionStore } from "../state/normalizedCourseSele
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { useStudentStore } from "../state/studentStore";
 import { useValidationResultStore } from "../state/validationResultStore";
+import { useValidationRevisionStore } from "../state/validationRevisionStore";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { OperatingSubject } from "../types/subject";
 import type { ValidationError } from "../types/validation";
@@ -76,14 +77,17 @@ function resetStores() {
   useExternalCourseInputStore.setState({ externalCourseInputs: [] });
   useNormalizedCourseSelectionStore.setState({
     buildIssues: [],
-    courseSelectionRecords: []
+    courseSelectionRecords: [],
+    recordsRevision: undefined
   });
   useOperatingSubjectStore.setState({ operatingSubjects: [] });
   useStudentStore.setState({ students: [] });
   useValidationResultStore.setState({
     lastValidationResult: undefined,
+    resultRevision: undefined,
     validationErrors: []
   });
+  useValidationRevisionStore.setState({ inputRevision: 0 });
 }
 
 describe("StudentReportPage", () => {
@@ -153,6 +157,7 @@ describe("StudentReportPage", () => {
   it("selects the next student with validation errors from the report action row", async () => {
     useStudentStore.setState({ students: [student, nextErrorStudent] });
     useValidationResultStore.setState({
+      resultRevision: 0,
       validationErrors: [validationErrorFor(student), validationErrorFor(nextErrorStudent)]
     });
 
@@ -264,5 +269,50 @@ describe("StudentReportPage", () => {
     expect(
       screen.queryByRole("heading", { name: "박전체 - 수강신청 확인서" })
     ).not.toBeInTheDocument();
+  });
+
+  it("warns about stale results and blocks every report print entry point", async () => {
+    const printSpy = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    const staleError = validationErrorFor(student);
+
+    useStudentStore.setState({ students: [student] });
+    useValidationResultStore.setState({
+      lastValidationResult: {
+        errors: [staleError],
+        executedRuleIds: ["minimumCredits"],
+        skippedRuleIds: [],
+        durationMs: 1
+      },
+      resultRevision: 0,
+      validationErrors: [staleError]
+    });
+    useNormalizedCourseSelectionStore.setState({
+      buildIssues: [],
+      courseSelectionRecords: [],
+      recordsRevision: 0
+    });
+    useValidationRevisionStore.setState({ inputRevision: 1 });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <StudentReportPage />
+        </MemoryRouter>
+      );
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "입력 자료가 변경되었습니다. 다시 점검해 주세요."
+    );
+    for (const name of [
+      "선택 학생 출력",
+      "전체 학생 출력",
+      "반별 학생 출력",
+      "오류 학생 출력"
+    ]) {
+      expect(screen.getByRole("button", { name })).toBeDisabled();
+      fireEvent.click(screen.getByRole("button", { name }));
+    }
+    expect(printSpy).not.toHaveBeenCalled();
   });
 });

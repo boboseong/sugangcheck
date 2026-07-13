@@ -17,7 +17,7 @@ import {
   createStudentAuxiliaryKey
 } from "../utils/studentKey";
 
-export const currentProjectSchemaVersion = 5;
+export const currentProjectSchemaVersion = 6;
 
 type LegacyOperatingSubject = Omit<OperatingSubject, "choiceGroup"> &
   Partial<Pick<OperatingSubject, "choiceGroup">> & {
@@ -29,10 +29,17 @@ type LegacyExternalCourseInput = Omit<ExternalCourseInput, "choiceGroup"> &
 
 type MigratableProjectState = Omit<
   ProjectState,
-  "schemaVersion" | "detailedConstraintRules" | "operatingSubjects" | "externalCourseInputs"
+  | "schemaVersion"
+  | "detailedConstraintRules"
+  | "operatingSubjects"
+  | "externalCourseInputs"
+  | "inputRevision"
+  | "resultRevision"
 > & {
   schemaVersion: number;
   detailedConstraintRules?: ProjectState["detailedConstraintRules"];
+  inputRevision?: number;
+  resultRevision?: number;
   operatingSubjects: LegacyOperatingSubject[];
   externalCourseInputs: LegacyExternalCourseInput[];
   subjectOverrides?: unknown;
@@ -61,7 +68,20 @@ type IdentitySource = {
   currentNumber?: unknown;
 };
 
-const supportedProjectSchemaVersions = [1, 2, 3, 4, currentProjectSchemaVersion] as const;
+const supportedProjectSchemaVersions = [
+  1,
+  2,
+  3,
+  4,
+  5,
+  currentProjectSchemaVersion
+] as const;
+
+function validRevision(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : undefined;
+}
 
 function normalizeIdentifier(value: unknown): string {
   return String(value ?? "").normalize("NFKC").trim().replace(/\s+/g, "");
@@ -286,7 +306,7 @@ export function migrateProjectState(
 ): ProjectState {
   if (
     !supportedProjectSchemaVersions.includes(
-      projectState.schemaVersion as 1 | 2 | 3 | 4 | 5
+      projectState.schemaVersion as 1 | 2 | 3 | 4 | 5 | 6
     )
   ) {
     throw new Error(
@@ -297,10 +317,14 @@ export function migrateProjectState(
   const identityByOldId = createIdentityMap(projectState);
   const { subjectOverrides: _subjectOverrides, ...stateWithoutSubjectOverrides } =
     projectState;
+  const inputRevision = validRevision(projectState.inputRevision) ?? 0;
+  const resultRevision = validRevision(projectState.resultRevision);
 
   return {
     ...stateWithoutSubjectOverrides,
     schemaVersion: currentProjectSchemaVersion,
+    inputRevision,
+    resultRevision,
     detailedConstraintRules: projectState.detailedConstraintRules ?? [],
     operatingSubjects: projectState.operatingSubjects.map(migrateOperatingSubject),
     students: projectState.students.map((student) =>

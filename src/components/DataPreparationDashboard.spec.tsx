@@ -136,4 +136,25 @@ describe("DataPreparationDashboard", () => {
       })
     ).toHaveAttribute("href", "/course-selections");
   });
+
+  it("shows a recheck state instead of completed for stale validation results", () => {
+    render(
+      <MemoryRouter>
+        <DataPreparationDashboard
+          hasValidationResult
+          isValidationResultStale
+          onCancelValidationConfirmation={vi.fn()}
+          onConfirmValidation={vi.fn()}
+          onRunValidation={vi.fn()}
+          showValidationConfirmation={false}
+          status={createStatus({ canRunFullValidation: true })}
+        />
+      </MemoryRouter>
+    );
+
+    expect(within(card("점검")).getByText("재점검 필요")).toBeInTheDocument();
+    expect(within(card("점검")).getByText("입력 변경됨")).toBeInTheDocument();
+    expect(within(card("점검")).getByRole("link", { name: "다시 점검" }))
+      .toHaveAttribute("href", "/results");
+  });
 });

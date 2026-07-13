@@ -2394,6 +2394,23 @@ label.button {
   gap: 10px;
 }
 
+.stale-validation-result-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #f4c36f;
+  border-radius: 8px;
+  color: #7a4300;
+  background: #fff4d6;
+  font-weight: 700;
+}
+
+.stale-validation-result-notice p {
+  margin: 0;
+}
+
 .run-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

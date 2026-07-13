@@ -11,6 +11,7 @@ import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
 import { useValidationResultStore } from "../state/validationResultStore";
+import { useValidationRevisionStore } from "../state/validationRevisionStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 import { defaultValidationRuleSettings } from "../data/defaultValidationRules";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
@@ -56,15 +57,18 @@ function resetStores() {
   useImportStatusStore.setState({ importStatuses: createInitialImportStatuses() });
   useNormalizedCourseSelectionStore.setState({
     buildIssues: [],
-    courseSelectionRecords: []
+    courseSelectionRecords: [],
+    recordsRevision: undefined
   });
   useOperatingSubjectStore.setState({ operatingSubjects: [] });
   usePrerequisiteRuleStore.setState({ prerequisiteRules: [] });
   useStudentSemesterPresenceStore.setState({ studentSemesterPresence: [] });
   useValidationResultStore.setState({
     lastValidationResult: undefined,
+    resultRevision: undefined,
     validationErrors: []
   });
+  useValidationRevisionStore.setState({ inputRevision: 0 });
   useValidationRuleSettingStore.setState({
     validationRuleSettings: structuredClone(defaultValidationRuleSettings)
   });
@@ -141,5 +145,19 @@ describe("useValidationRun", () => {
       "subjectMetadataMismatch"
     ]);
     expect(useValidationResultStore.getState().lastValidationResult).toBeDefined();
+    expect(useValidationResultStore.getState().resultRevision).toBe(0);
+    expect(useNormalizedCourseSelectionStore.getState().recordsRevision).toBe(0);
+  });
+
+  it("tags the result and normalized records with the current input revision", () => {
+    useValidationRevisionStore.setState({ inputRevision: 3 });
+    const { result } = renderHook(() => useValidationRun());
+
+    act(() => {
+      result.current.runValidation();
+    });
+
+    expect(useValidationResultStore.getState().resultRevision).toBe(3);
+    expect(useNormalizedCourseSelectionStore.getState().recordsRevision).toBe(3);
   });
 });

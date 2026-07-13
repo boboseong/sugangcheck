@@ -10,8 +10,8 @@ import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import { useDetailedConstraintRuleStore } from "../state/detailedConstraintRuleStore";
 import { useOperatingSubjectStore } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
-import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
+import { useValidationResultStore } from "../state/validationResultStore";
 import {
   createValidationRulesTemplateWorkbook,
   createXlsxBlob,
@@ -21,6 +21,10 @@ import {
 import { downloadBlob } from "../utils/downloadBlob";
 
 export function ValidationRulesPage() {
+  const hasValidationResult = useValidationResultStore(
+    (state) =>
+      state.lastValidationResult !== undefined || state.validationErrors.length > 0
+  );
   const {
     restoreDefaultValidationRuleSettings,
     seedCreditDifferenceCriteriaFromInputs,
@@ -75,7 +79,9 @@ export function ValidationRulesPage() {
     }
 
     const confirmed = window.confirm(
-      "점검 규칙 설정, 위계 규칙, 세부 제약 목록을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
+      hasValidationResult
+        ? "점검 규칙 설정, 위계 규칙, 세부 제약 목록을 선택한 템플릿 파일 내용으로 교체합니다. 입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속할까요?"
+        : "점검 규칙 설정, 위계 규칙, 세부 제약 목록을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
     );
 
     if (!confirmed) {
@@ -96,7 +102,6 @@ export function ValidationRulesPage() {
       });
       setPrerequisiteRules(result.prerequisiteRules);
       setDetailedConstraintRules(result.detailedConstraintRules);
-      clearDerivedValidationState();
       window.alert(
         `점검 설정 ${result.validationRuleSettings.length.toLocaleString()}건, 위계 규칙 ${result.prerequisiteRules.length.toLocaleString()}건, 세부 제약 ${result.detailedConstraintRules.length.toLocaleString()}건을 가져왔습니다.`
       );

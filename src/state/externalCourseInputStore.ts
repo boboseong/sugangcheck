@@ -11,6 +11,10 @@ import type {
 import type { Semester } from "../types/semester";
 import type { Student } from "../types/student";
 import { toCreditNumber } from "../utils/number";
+import {
+  areValidationInputValuesEqual,
+  markValidationInputChanged
+} from "./validationRevisionStore";
 
 export type ExternalCourseInputDraft = {
   target: Semester;
@@ -86,24 +90,57 @@ type ExternalCourseInputStore = {
 };
 
 export const useExternalCourseInputStore = create<ExternalCourseInputStore>(
-  (set) => ({
+  (set, get) => ({
     externalCourseInputs: [],
-    setExternalCourseInputs: (externalCourseInputs) =>
-      set({ externalCourseInputs }),
-    addExternalCourseInput: (input) =>
+    setExternalCourseInputs: (externalCourseInputs) => {
+      if (
+        areValidationInputValuesEqual(
+          get().externalCourseInputs,
+          externalCourseInputs
+        )
+      ) {
+        return;
+      }
+
+      set({ externalCourseInputs });
+      markValidationInputChanged();
+    },
+    addExternalCourseInput: (input) => {
       set((state) => ({
         externalCourseInputs: [...state.externalCourseInputs, input]
-      })),
-    addExternalCourseInputs: (inputs) =>
+      }));
+      markValidationInputChanged();
+    },
+    addExternalCourseInputs: (inputs) => {
+      if (inputs.length === 0) {
+        return;
+      }
+
       set((state) => ({
         externalCourseInputs: [...state.externalCourseInputs, ...inputs]
-      })),
-    removeExternalCourseInput: (inputId) =>
-      set((state) => ({
-        externalCourseInputs: state.externalCourseInputs.filter(
-          (input) => input.id !== inputId
-        )
-      })),
-    resetExternalCourseInputs: () => set({ externalCourseInputs: [] })
+      }));
+      markValidationInputChanged();
+    },
+    removeExternalCourseInput: (inputId) => {
+      const currentInputs = get().externalCourseInputs;
+      const externalCourseInputs = currentInputs.filter(
+        (input) => input.id !== inputId
+      );
+
+      if (externalCourseInputs.length === currentInputs.length) {
+        return;
+      }
+
+      set({ externalCourseInputs });
+      markValidationInputChanged();
+    },
+    resetExternalCourseInputs: () => {
+      if (get().externalCourseInputs.length === 0) {
+        return;
+      }
+
+      set({ externalCourseInputs: [] });
+      markValidationInputChanged();
+    }
   })
 );

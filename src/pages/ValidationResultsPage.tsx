@@ -9,12 +9,14 @@ import {
 import { PageHeader } from "../components/ui/PageHeader";
 import { ValidationErrorTable } from "../components/ValidationErrorTable";
 import { ValidationRunConfirmationDropdown } from "../components/ValidationRunConfirmationDropdown";
+import { StaleValidationResultNotice } from "../components/StaleValidationResultNotice";
 import {
   exportValidationErrorsXlsx,
   validationErrorListFileName
 } from "../export/exportValidationErrorsXlsx";
 import { useValidationRun } from "../hooks/useValidationRun";
 import { useValidationResultStore } from "../state/validationResultStore";
+import { useValidationRevisionStore } from "../state/validationRevisionStore";
 import { downloadBlob } from "../utils/downloadBlob";
 import { semesterLabel } from "../utils/semester";
 
@@ -32,7 +34,15 @@ export function ValidationResultsPage() {
     confirmationMessage,
     runValidation
   } = useValidationRun();
-  const { lastValidationResult, validationErrors } = useValidationResultStore();
+  const { lastValidationResult, resultRevision, validationErrors } =
+    useValidationResultStore();
+  const inputRevision = useValidationRevisionStore(
+    (state) => state.inputRevision
+  );
+  const hasValidationResult =
+    lastValidationResult !== undefined || validationErrors.length > 0;
+  const isValidationResultStale =
+    hasValidationResult && resultRevision !== inputRevision;
   const [filters, setFilters] = useState(defaultFilters);
   const [showValidationConfirmation, setShowValidationConfirmation] =
     useState(false);
@@ -75,6 +85,10 @@ export function ValidationResultsPage() {
   }
 
   async function handleDownloadErrors() {
+    if (isValidationResultStale) {
+      return;
+    }
+
     await downloadBlob(
       exportValidationErrorsXlsx(filteredErrors),
       validationErrorListFileName
@@ -87,6 +101,7 @@ export function ValidationResultsPage() {
         title="점검 결과"
         description="점검 오류를 유형, 학생 또는 과목 기준으로 확인합니다."
       />
+      {isValidationResultStale ? <StaleValidationResultNotice /> : null}
       <div className="prep-status-row">
         <span className="status-badge status-badge--empty">
           전체 {validationErrors.length.toLocaleString()}건
@@ -110,7 +125,7 @@ export function ValidationResultsPage() {
         </button>
         <button
           className="button button--secondary button--compact"
-          disabled={filteredErrors.length === 0}
+          disabled={isValidationResultStale || filteredErrors.length === 0}
           onClick={handleDownloadErrors}
           type="button"
         >

@@ -45,8 +45,17 @@ import {
   useStudentStore
 } from "./studentStore";
 import { useDetailedConstraintRuleStore } from "./detailedConstraintRuleStore";
+import {
+  runProjectHydration
+} from "./projectHydration";
 import { useValidationResultStore } from "./validationResultStore";
+import {
+  markValidationInputChanged,
+  useValidationRevisionStore
+} from "./validationRevisionStore";
 import { useValidationRuleSettingStore } from "./validationRuleSettingStore";
+
+export { isProjectHydrating, runProjectHydration } from "./projectHydration";
 
 export type ProjectImportSection =
   | "operatingSubjects"
@@ -62,22 +71,6 @@ export type SemesterProjectImportSection = Extract<
 export type ProjectSectionImportResult = {
   skippedExternalCourseInputCount: number;
 };
-
-let hydrationDepth = 0;
-
-export function isProjectHydrating(): boolean {
-  return hydrationDepth > 0;
-}
-
-export function runProjectHydration<T>(callback: () => T): T {
-  hydrationDepth += 1;
-
-  try {
-    return callback();
-  } finally {
-    hydrationDepth -= 1;
-  }
-}
 
 function clone<T>(value: T): T {
   return structuredClone(value);
@@ -167,6 +160,7 @@ export function createEmptyProjectState(
     validationRuleSettings: clone(defaultValidationRuleSettings),
     prerequisiteRules: clone(defaultPrerequisiteRules),
     detailedConstraintRules: clone(defaultDetailedConstraintRules),
+    inputRevision: 0,
     validationErrors: [],
     courseSelectionRecords: []
   };
@@ -175,6 +169,7 @@ export function createEmptyProjectState(
 export function collectProjectState(now = new Date().toISOString()): ProjectState {
   const projectMeta = useProjectMetaStore.getState();
   const validationResultState = useValidationResultStore.getState();
+  const { inputRevision } = useValidationRevisionStore.getState();
 
   return {
     schemaVersion: currentProjectSchemaVersion,
@@ -201,6 +196,8 @@ export function collectProjectState(now = new Date().toISOString()): ProjectStat
     detailedConstraintRules: clone(
       useDetailedConstraintRuleStore.getState().detailedConstraintRules
     ),
+    inputRevision,
+    resultRevision: validationResultState.resultRevision,
     validationErrors: clone(validationResultState.validationErrors),
     courseSelectionRecords: clone(
       useNormalizedCourseSelectionStore.getState().courseSelectionRecords
@@ -262,15 +259,20 @@ export function applyProjectState(
     useDetailedConstraintRuleStore.setState({
       detailedConstraintRules: clone(projectState.detailedConstraintRules)
     });
+    useValidationRevisionStore.setState({
+      inputRevision: projectState.inputRevision
+    });
     useNormalizedCourseSelectionStore.setState({
       courseSelectionRecords: clone(projectState.courseSelectionRecords ?? []),
-      buildIssues: []
+      buildIssues: [],
+      recordsRevision: projectState.resultRevision
     });
     useValidationResultStore.setState({
       validationErrors: clone(projectState.validationErrors),
       lastValidationResult: projectState.lastValidationResult
         ? clone(projectState.lastValidationResult)
-        : undefined
+        : undefined,
+      resultRevision: projectState.resultRevision
     });
     seedCreditDifferenceCriteriaFromCurrentInputs();
   });
@@ -349,8 +351,9 @@ export function importProjectSection(
       });
     }
 
-    clearDerivedValidationState();
   });
+
+  markValidationInputChanged();
 
   return result;
 }
@@ -425,8 +428,9 @@ export function importProjectSectionSemester(
       seedCreditDifferenceCriteriaFromCurrentInputs();
     }
 
-    clearDerivedValidationState();
   });
+
+  markValidationInputChanged();
 
   return result;
 }

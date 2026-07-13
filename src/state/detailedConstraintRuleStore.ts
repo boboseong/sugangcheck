@@ -2,6 +2,10 @@ import { create } from "zustand";
 import { defaultDetailedConstraintRules } from "../data/defaultDetailedConstraintRules";
 import type { DetailedConstraintRule } from "../types/validation";
 import { normalizeDetailedConstraintRule } from "../validation/detailedConstraintRules";
+import {
+  areValidationInputValuesEqual,
+  markValidationInputChanged
+} from "./validationRevisionStore";
 
 function cloneDefaultRules(): DetailedConstraintRule[] {
   return structuredClone(defaultDetailedConstraintRules);
@@ -25,30 +29,74 @@ type DetailedConstraintRuleStore = {
 };
 
 export const useDetailedConstraintRuleStore =
-  create<DetailedConstraintRuleStore>((set) => ({
+  create<DetailedConstraintRuleStore>((set, get) => ({
     detailedConstraintRules: cloneDefaultRules(),
-    setDetailedConstraintRules: (detailedConstraintRules) =>
+    setDetailedConstraintRules: (rules) => {
+      const detailedConstraintRules = rules.map(normalizeDetailedConstraintRule);
+
+      if (
+        areValidationInputValuesEqual(
+          get().detailedConstraintRules,
+          detailedConstraintRules
+        )
+      ) {
+        return;
+      }
+
+      set({ detailedConstraintRules });
+      markValidationInputChanged();
+    },
+    updateDetailedConstraintRule: (rule) => {
+      const currentRules = get().detailedConstraintRules;
+      const currentRule = currentRules.find((item) => item.id === rule.id);
+
+      if (!currentRule) {
+        return;
+      }
+
+      const normalizedRule = normalizeDetailedConstraintRule({
+        ...rule,
+        updatedAt: currentRule.updatedAt
+      });
+
+      if (areValidationInputValuesEqual(currentRule, normalizedRule)) {
+        return;
+      }
+
       set({
-        detailedConstraintRules: detailedConstraintRules.map(
-          normalizeDetailedConstraintRule
+        detailedConstraintRules: updateDetailedConstraintRuleInList(currentRules, {
+          ...normalizedRule,
+          updatedAt: new Date().toISOString()
+        })
+      });
+      markValidationInputChanged();
+    },
+    removeDetailedConstraintRule: (ruleId) => {
+      const currentRules = get().detailedConstraintRules;
+      const detailedConstraintRules = currentRules.filter(
+        (rule) => rule.id !== ruleId
+      );
+
+      if (detailedConstraintRules.length === currentRules.length) {
+        return;
+      }
+
+      set({ detailedConstraintRules });
+      markValidationInputChanged();
+    },
+    restoreDefaultDetailedConstraintRules: () => {
+      const detailedConstraintRules = cloneDefaultRules();
+
+      if (
+        areValidationInputValuesEqual(
+          get().detailedConstraintRules,
+          detailedConstraintRules
         )
-      }),
-    updateDetailedConstraintRule: (rule) =>
-      set((state) => ({
-        detailedConstraintRules: updateDetailedConstraintRuleInList(
-          state.detailedConstraintRules,
-          {
-            ...rule,
-            updatedAt: new Date().toISOString()
-          }
-        )
-      })),
-    removeDetailedConstraintRule: (ruleId) =>
-      set((state) => ({
-        detailedConstraintRules: state.detailedConstraintRules.filter(
-          (rule) => rule.id !== ruleId
-        )
-      })),
-    restoreDefaultDetailedConstraintRules: () =>
-      set({ detailedConstraintRules: cloneDefaultRules() })
+      ) {
+        return;
+      }
+
+      set({ detailedConstraintRules });
+      markValidationInputChanged();
+    }
   }));

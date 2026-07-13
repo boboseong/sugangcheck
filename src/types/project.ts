@@ -14,7 +14,7 @@ import type {
 } from "./validation";
 import type { ValidationEngineResult } from "../validation/types";
 
-export type AppSchemaVersion = 5;
+export type AppSchemaVersion = 6;
 
 export type ProjectEnvelope = {
   schemaVersion: AppSchemaVersion;
@@ -39,6 +39,8 @@ export type ProjectState = {
   validationRuleSettings: ValidationRuleSetting[];
   prerequisiteRules: PrerequisiteRule[];
   detailedConstraintRules: DetailedConstraintRule[];
+  inputRevision: number;
+  resultRevision?: number;
   validationErrors: ValidationError[];
   courseSelectionRecords?: CourseSelectionRecord[];
   dataPreparationStatus?: DataPreparationStatus;

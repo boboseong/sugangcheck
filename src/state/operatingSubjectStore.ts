@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import type { OperatingSubject } from "../types/subject";
 import type { Semester } from "../types/semester";
+import {
+  areValidationInputValuesEqual,
+  markValidationInputChanged
+} from "./validationRevisionStore";
 
 function sameSemester(subject: OperatingSubject, target: Semester): boolean {
   return (
@@ -54,27 +58,47 @@ type OperatingSubjectStore = {
   clearOperatingSubjectsForSemester: (target: Semester) => void;
 };
 
-export const useOperatingSubjectStore = create<OperatingSubjectStore>((set) => ({
+export const useOperatingSubjectStore = create<OperatingSubjectStore>((set, get) => ({
   operatingSubjects: [],
-  replaceOperatingSubjectsForSemester: (target, subjects) =>
-    set((state) => ({
-      operatingSubjects: replaceOperatingSubjectsForSemesterInList(
-        state.operatingSubjects,
-        target,
-        subjects
-      )
-    })),
-  updateOperatingSubject: (subject) =>
-    set((state) => ({
-      operatingSubjects: updateOperatingSubjectInList(
-        state.operatingSubjects,
-        subject
-      )
-    })),
-  clearOperatingSubjectsForSemester: (target) =>
-    set((state) => ({
-      operatingSubjects: state.operatingSubjects.filter(
-        (subject) => !sameSemester(subject, target)
-      )
-    }))
+  replaceOperatingSubjectsForSemester: (target, subjects) => {
+    const currentSubjects = get().operatingSubjects;
+    const operatingSubjects = replaceOperatingSubjectsForSemesterInList(
+      currentSubjects,
+      target,
+      subjects
+    );
+
+    if (areValidationInputValuesEqual(currentSubjects, operatingSubjects)) {
+      return;
+    }
+
+    set({ operatingSubjects });
+    markValidationInputChanged();
+  },
+  updateOperatingSubject: (subject) => {
+    const currentSubjects = get().operatingSubjects;
+    const currentSubject = currentSubjects.find((item) => item.id === subject.id);
+
+    if (!currentSubject || areValidationInputValuesEqual(currentSubject, subject)) {
+      return;
+    }
+
+    set({
+      operatingSubjects: updateOperatingSubjectInList(currentSubjects, subject)
+    });
+    markValidationInputChanged();
+  },
+  clearOperatingSubjectsForSemester: (target) => {
+    const currentSubjects = get().operatingSubjects;
+    const operatingSubjects = currentSubjects.filter(
+      (subject) => !sameSemester(subject, target)
+    );
+
+    if (operatingSubjects.length === currentSubjects.length) {
+      return;
+    }
+
+    set({ operatingSubjects });
+    markValidationInputChanged();
+  }
 }));

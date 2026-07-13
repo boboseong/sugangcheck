@@ -9,8 +9,8 @@ import { useCourseSelectionImport } from "../hooks/useCourseSelectionImport";
 import { useOperatingSubjectImport } from "../hooks/useOperatingSubjectImport";
 import { useValidationRun } from "../hooks/useValidationRun";
 import { appVersion } from "../state/projectMetaStore";
-import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useValidationResultStore } from "../state/validationResultStore";
+import { useValidationRevisionStore } from "../state/validationRevisionStore";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -22,7 +22,18 @@ export function HomePage() {
     dataPreparationStatus,
     runValidation
   } = useValidationRun();
-  const { lastValidationResult } = useValidationResultStore();
+  const {
+    lastValidationResult,
+    resultRevision,
+    validationErrors = []
+  } = useValidationResultStore();
+  const inputRevision = useValidationRevisionStore(
+    (state) => state.inputRevision
+  );
+  const hasValidationResult =
+    lastValidationResult !== undefined || validationErrors.length > 0;
+  const isValidationResultStale =
+    hasValidationResult && resultRevision !== inputRevision;
   const [showValidationConfirmation, setShowValidationConfirmation] =
     useState(false);
   const hasPendingOperatingSubjectCompletions =
@@ -61,7 +72,8 @@ export function HomePage() {
 
       <DataPreparationDashboard
         confirmationMessage={confirmationMessage}
-        hasValidationResult={Boolean(lastValidationResult)}
+        hasValidationResult={hasValidationResult}
+        isValidationResultStale={isValidationResultStale}
         onCancelValidationConfirmation={() => setShowValidationConfirmation(false)}
         onCourseSelectionFilesSelected={courseSelectionImport.handleFilesSelected}
         onConfirmValidation={runAndNavigate}
@@ -70,9 +82,9 @@ export function HomePage() {
         showValidationConfirmation={showValidationConfirmation}
         status={dataPreparationStatus}
         uploadConfirmation={{
-          message: "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?",
-          onConfirmedFileSelection: clearDerivedValidationState,
-          shouldConfirm: Boolean(lastValidationResult)
+          message:
+            "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
+          shouldConfirm: hasValidationResult
         }}
       />
       {hasPendingOperatingSubjectCompletions ? (

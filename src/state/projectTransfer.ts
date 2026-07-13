@@ -150,6 +150,8 @@ export function createProjectTransferState(
   }
 
   if (shouldIncludeValidationResultsInTransfer(options)) {
+    transferState.inputRevision = sourceState.inputRevision;
+    transferState.resultRevision = sourceState.resultRevision;
     transferState.validationErrors = clone(sourceState.validationErrors);
     transferState.courseSelectionRecords = clone(
       sourceState.courseSelectionRecords ?? []

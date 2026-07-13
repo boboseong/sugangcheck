@@ -6,13 +6,13 @@ import { UploadImportLauncher } from "../components/UploadImportLauncher";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
 import { readWorkbookFromFile } from "../parsers/readWorkbook";
-import { clearDerivedValidationState } from "../state/projectWorkspace";
 import { useExternalCourseInputStore } from "../state/externalCourseInputStore";
 import {
   createStudentSemesterPresence,
   useStudentSemesterPresenceStore
 } from "../state/studentSemesterPresenceStore";
 import { useStudentStore } from "../state/studentStore";
+import { useValidationResultStore } from "../state/validationResultStore";
 import {
   createExternalCourseTemplateWorkbook,
   createXlsxBlob,
@@ -52,6 +52,10 @@ export function ExternalCoursesPage() {
   const { setStudentSemesterPresence, studentSemesterPresence } =
     useStudentSemesterPresenceStore();
   const { setStudents, students } = useStudentStore();
+  const hasValidationResult = useValidationResultStore(
+    (state) =>
+      state.lastValidationResult !== undefined || state.validationErrors.length > 0
+  );
   const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>();
   const studentById = useMemo(
@@ -139,7 +143,9 @@ export function ExternalCoursesPage() {
     }
 
     const confirmed = window.confirm(
-      "전입/외부 이수 입력 내용을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
+      hasValidationResult
+        ? "전입/외부 이수 입력 내용을 선택한 템플릿 파일 내용으로 교체합니다. 입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속할까요?"
+        : "전입/외부 이수 입력 내용을 선택한 템플릿 파일 내용으로 교체합니다. 계속할까요?"
     );
 
     if (!confirmed) {
@@ -162,7 +168,6 @@ export function ExternalCoursesPage() {
         )
       );
       setExternalCourseInputs(result.inputs);
-      clearDerivedValidationState();
       setSelectedStudentId(result.inputs[0]?.studentId);
       window.alert(
         `전입/외부 이수 ${result.inputs.length.toLocaleString()}건을 가져왔습니다. 새 학생 ${result.createdStudents.length.toLocaleString()}명을 추가했습니다.`

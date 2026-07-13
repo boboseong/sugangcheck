@@ -7,6 +7,10 @@ import type {
   ValidationRuleSetting
 } from "../types/validation";
 import { seedSemesterCreditSubjectCriteriaInSettings } from "../validation/semesterCreditSubjectCriteria";
+import {
+  areValidationInputValuesEqual,
+  markValidationInputChanged
+} from "./validationRevisionStore";
 
 function cloneDefaultSettings(): ValidationRuleSetting[] {
   return structuredClone(defaultValidationRuleSettings);
@@ -67,45 +71,110 @@ type ValidationRuleSettingStore = {
 };
 
 export const useValidationRuleSettingStore =
-  create<ValidationRuleSettingStore>((set) => ({
+  create<ValidationRuleSettingStore>((set, get) => ({
     validationRuleSettings: cloneDefaultSettings(),
-    setValidationRuleSettings: (validationRuleSettings) =>
-      set({ validationRuleSettings }),
-    updateRuleEnabled: (ruleId, enabled) =>
+    setValidationRuleSettings: (validationRuleSettings) => {
+      if (
+        areValidationInputValuesEqual(
+          get().validationRuleSettings,
+          validationRuleSettings
+        )
+      ) {
+        return;
+      }
+
+      set({ validationRuleSettings });
+      markValidationInputChanged();
+    },
+    updateRuleEnabled: (ruleId, enabled) => {
+      const currentSetting = get().validationRuleSettings.find(
+        (setting) => setting.id === ruleId
+      );
+
+      if (!currentSetting || currentSetting.enabled === enabled) {
+        return;
+      }
+
       set((state) => ({
         validationRuleSettings: updateValidationRuleSettingInList(
           state.validationRuleSettings,
           ruleId,
           { enabled }
         )
-      })),
-    updateRuleIncludeExternalInputs: (ruleId, includeExternalInputs) =>
+      }));
+      markValidationInputChanged();
+    },
+    updateRuleIncludeExternalInputs: (ruleId, includeExternalInputs) => {
+      const currentSetting = get().validationRuleSettings.find(
+        (setting) => setting.id === ruleId
+      );
+
+      if (
+        !currentSetting ||
+        currentSetting.includeExternalInputs === includeExternalInputs
+      ) {
+        return;
+      }
+
       set((state) => ({
         validationRuleSettings: updateValidationRuleSettingInList(
           state.validationRuleSettings,
           ruleId,
           { includeExternalInputs }
         )
-      })),
-    updateRuleCriteria: (ruleId, criteriaPatch) =>
+      }));
+      markValidationInputChanged();
+    },
+    updateRuleCriteria: (ruleId, criteriaPatch) => {
+      const currentSetting = get().validationRuleSettings.find(
+        (setting) => setting.id === ruleId
+      );
+      const hasChangedCriteria =
+        currentSetting !== undefined &&
+        Object.entries(criteriaPatch).some(
+          ([key, value]) =>
+            !areValidationInputValuesEqual(currentSetting.criteria[key], value)
+        );
+
+      if (!hasChangedCriteria) {
+        return;
+      }
+
       set((state) => ({
         validationRuleSettings: updateValidationRuleCriteriaInList(
           state.validationRuleSettings,
           ruleId,
           criteriaPatch
         )
-      })),
-    seedCreditDifferenceCriteriaFromInputs: (input) =>
-      set((state) => {
-        const result = seedSemesterCreditSubjectCriteriaInSettings(
-          state.validationRuleSettings,
-          input
-        );
+      }));
+      markValidationInputChanged();
+    },
+    seedCreditDifferenceCriteriaFromInputs: (input) => {
+      const result = seedSemesterCreditSubjectCriteriaInSettings(
+        get().validationRuleSettings,
+        input
+      );
 
-        return result.changed
-          ? { validationRuleSettings: result.settings }
-          : state;
-      }),
-    restoreDefaultValidationRuleSettings: () =>
-      set({ validationRuleSettings: cloneDefaultSettings() })
+      if (!result.changed) {
+        return;
+      }
+
+      set({ validationRuleSettings: result.settings });
+      markValidationInputChanged();
+    },
+    restoreDefaultValidationRuleSettings: () => {
+      const validationRuleSettings = cloneDefaultSettings();
+
+      if (
+        areValidationInputValuesEqual(
+          get().validationRuleSettings,
+          validationRuleSettings
+        )
+      ) {
+        return;
+      }
+
+      set({ validationRuleSettings });
+      markValidationInputChanged();
+    }
   }));

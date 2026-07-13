@@ -82,7 +82,7 @@ describe("ProjectPersistenceProvider detailed constraint autosave", () => {
       createdAt: savedAt,
       projectName: "자동저장 테스트",
       savedAt,
-      schemaVersion: 5
+      schemaVersion: 6
     });
     vi.spyOn(db.projects, "put").mockImplementation((record) =>
       Promise.resolve(record.id) as never

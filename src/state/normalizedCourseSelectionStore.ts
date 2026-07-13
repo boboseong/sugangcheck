@@ -7,7 +7,11 @@ import type {
 type NormalizedCourseSelectionStore = {
   courseSelectionRecords: CourseSelectionRecord[];
   buildIssues: BuildCourseSelectionRecordsResult["issues"];
-  setBuildResult: (result: BuildCourseSelectionRecordsResult) => void;
+  recordsRevision?: number;
+  setBuildResult: (
+    result: BuildCourseSelectionRecordsResult,
+    revision: number
+  ) => void;
   clearCourseSelectionRecords: () => void;
 };
 
@@ -15,11 +19,16 @@ export const useNormalizedCourseSelectionStore =
   create<NormalizedCourseSelectionStore>((set) => ({
     courseSelectionRecords: [],
     buildIssues: [],
-    setBuildResult: (result) =>
+    setBuildResult: (result, recordsRevision) =>
       set({
         courseSelectionRecords: result.records,
-        buildIssues: result.issues
+        buildIssues: result.issues,
+        recordsRevision
       }),
     clearCourseSelectionRecords: () =>
-      set({ courseSelectionRecords: [], buildIssues: [] })
+      set({
+        courseSelectionRecords: [],
+        buildIssues: [],
+        recordsRevision: undefined
+      })
   }));

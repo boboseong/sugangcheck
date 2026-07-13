@@ -19,7 +19,7 @@ type SemesterUploadSlotsProps = {
   accept?: string;
   clearConfirmation?: {
     message: string;
-    onConfirmedClear: () => void;
+    onConfirmedClear?: () => void;
     shouldConfirm: boolean;
   };
   compact?: boolean;
@@ -149,7 +149,7 @@ export function SemesterUploadSlots({
       return;
     }
 
-    clearConfirmation?.onConfirmedClear();
+    clearConfirmation?.onConfirmedClear?.();
     onClearSemester(pendingClearTarget);
     setPendingClearTarget(undefined);
   }

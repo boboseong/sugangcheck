@@ -102,4 +102,87 @@ describe("migrateProjectState", () => {
     expect(migrated.operatingSubjects[0]?.choiceGroup).toBe("학생필수");
     expect(migrated.externalCourseInputs[0]?.choiceGroup).toBe("기타");
   });
+
+  it("marks a legacy v5 validation result as having unknown provenance", () => {
+    const legacyState = {
+      schemaVersion: 5,
+      projectName: "v5-result",
+      createdAt: "2026-07-01T00:00:00.000Z",
+      updatedAt: "2026-07-01T00:00:00.000Z",
+      importStatuses: [],
+      students: [],
+      studentSemesterPresence: [],
+      operatingSubjects: [],
+      courseSelectionRows: [],
+      externalCourseInputs: [],
+      validationRuleSettings: [],
+      prerequisiteRules: [],
+      detailedConstraintRules: [],
+      validationErrors: [],
+      courseSelectionRecords: [],
+      lastValidationResult: {
+        errors: [],
+        executedRuleIds: [],
+        skippedRuleIds: [],
+        durationMs: 1
+      }
+    } as unknown as Parameters<typeof migrateProjectState>[0];
+
+    const migrated = migrateProjectState(legacyState);
+
+    expect(migrated.inputRevision).toBe(0);
+    expect(migrated.resultRevision).toBeUndefined();
+  });
+
+  it("does not invent a result revision for an empty legacy project", () => {
+    const legacyState = {
+      schemaVersion: 5,
+      projectName: "v5-empty",
+      createdAt: "2026-07-01T00:00:00.000Z",
+      updatedAt: "2026-07-01T00:00:00.000Z",
+      importStatuses: [],
+      students: [],
+      studentSemesterPresence: [],
+      operatingSubjects: [],
+      courseSelectionRows: [],
+      externalCourseInputs: [],
+      validationRuleSettings: [],
+      prerequisiteRules: [],
+      detailedConstraintRules: [],
+      validationErrors: [],
+      courseSelectionRecords: []
+    } as unknown as Parameters<typeof migrateProjectState>[0];
+
+    const migrated = migrateProjectState(legacyState);
+
+    expect(migrated.inputRevision).toBe(0);
+    expect(migrated.resultRevision).toBeUndefined();
+  });
+
+  it("preserves an existing v6 stale revision pair", () => {
+    const currentState = {
+      schemaVersion: 6,
+      projectName: "v6-stale",
+      createdAt: "2026-07-10T00:00:00.000Z",
+      updatedAt: "2026-07-10T00:00:00.000Z",
+      importStatuses: [],
+      students: [],
+      studentSemesterPresence: [],
+      operatingSubjects: [],
+      courseSelectionRows: [],
+      externalCourseInputs: [],
+      validationRuleSettings: [],
+      prerequisiteRules: [],
+      detailedConstraintRules: [],
+      inputRevision: 2,
+      resultRevision: 1,
+      validationErrors: [],
+      courseSelectionRecords: []
+    } as unknown as Parameters<typeof migrateProjectState>[0];
+
+    const migrated = migrateProjectState(currentState);
+
+    expect(migrated.inputRevision).toBe(2);
+    expect(migrated.resultRevision).toBe(1);
+  });
 });

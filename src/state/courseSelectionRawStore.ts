@@ -2,6 +2,10 @@ import { create } from "zustand";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { Semester, SemesterKey } from "../types/semester";
 import { semesterToKey } from "../utils/semester";
+import {
+  areValidationInputValuesEqual,
+  markValidationInputChanged
+} from "./validationRevisionStore";
 
 function sameSemester(row: ParsedCourseSelectionRow, target: Semester): boolean {
   return (
@@ -69,23 +73,50 @@ type CourseSelectionRawStore = {
 export const useCourseSelectionRawStore = create<CourseSelectionRawStore>(
   (set, get) => ({
     courseSelectionRows: [],
-    setCourseSelectionRows: (courseSelectionRows) => set({ courseSelectionRows }),
+    setCourseSelectionRows: (courseSelectionRows) => {
+      if (
+        areValidationInputValuesEqual(
+          get().courseSelectionRows,
+          courseSelectionRows
+        )
+      ) {
+        return;
+      }
+
+      set({ courseSelectionRows });
+      markValidationInputChanged();
+    },
     replaceCourseSelectionRowsForSemester: (target, rows) => {
       const courseSelectionRows = replaceCourseSelectionRowsForSemesterInList(
         get().courseSelectionRows,
         target,
         rows
       );
-      set({ courseSelectionRows });
+      if (
+        !areValidationInputValuesEqual(get().courseSelectionRows, courseSelectionRows)
+      ) {
+        set({ courseSelectionRows });
+        markValidationInputChanged();
+      }
       return courseSelectionRows;
     },
     clearCourseSelectionRowsForSemester: (target) => {
       const courseSelectionRows = get().courseSelectionRows.filter(
         (row) => !sameSemester(row, target)
       );
-      set({ courseSelectionRows });
+      if (courseSelectionRows.length !== get().courseSelectionRows.length) {
+        set({ courseSelectionRows });
+        markValidationInputChanged();
+      }
       return courseSelectionRows;
     },
-    resetCourseSelectionRows: () => set({ courseSelectionRows: [] })
+    resetCourseSelectionRows: () => {
+      if (get().courseSelectionRows.length === 0) {
+        return;
+      }
+
+      set({ courseSelectionRows: [] });
+      markValidationInputChanged();
+    }
   })
 );

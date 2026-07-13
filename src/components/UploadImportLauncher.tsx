@@ -29,7 +29,7 @@ type UploadImportLauncherProps = {
   };
   fileUploadConfirmation?: {
     message: string;
-    onConfirmedFileSelection: () => void;
+    onConfirmedFileSelection?: () => void;
     shouldConfirm: boolean;
   };
   fileDescription?: string;
@@ -197,7 +197,7 @@ export function UploadImportLauncher({
     confirmedFileUploadModeRef.current = undefined;
 
     if (shouldClear) {
-      fileUploadConfirmation?.onConfirmedFileSelection();
+      fileUploadConfirmation?.onConfirmedFileSelection?.();
     }
   }
 

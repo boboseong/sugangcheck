@@ -388,7 +388,8 @@ function runAutomaticValidation(projectState: ProjectState): {
         dataPreparationStatus,
         courseSelectionRecords: [],
         validationErrors: [],
-        lastValidationResult: undefined
+        lastValidationResult: undefined,
+        resultRevision: undefined
       },
       dataPreparationStatus,
       autoValidationRan: false
@@ -420,7 +421,8 @@ function runAutomaticValidation(projectState: ProjectState): {
       dataPreparationStatus,
       courseSelectionRecords: buildResult.records,
       validationErrors: validationResult.errors,
-      lastValidationResult: validationResult
+      lastValidationResult: validationResult,
+      resultRevision: projectState.inputRevision
     },
     dataPreparationStatus,
     autoValidationRan: true

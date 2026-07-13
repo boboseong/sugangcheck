@@ -14,6 +14,7 @@ import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
 import { useStudentSemesterPresenceStore } from "../state/studentSemesterPresenceStore";
 import { useStudentStore } from "../state/studentStore";
 import { useValidationResultStore } from "../state/validationResultStore";
+import { useValidationRevisionStore } from "../state/validationRevisionStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
 
 const autosaveDelayMs = 450;
@@ -69,7 +70,8 @@ export function ProjectPersistenceProvider() {
       usePrerequisiteRuleStore.subscribe(scheduleSave),
       useDetailedConstraintRuleStore.subscribe(scheduleSave),
       useNormalizedCourseSelectionStore.subscribe(scheduleSave),
-      useValidationResultStore.subscribe(scheduleSave)
+      useValidationResultStore.subscribe(scheduleSave),
+      useValidationRevisionStore.subscribe(scheduleSave)
     ];
 
     return () => {

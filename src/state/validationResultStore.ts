@@ -5,17 +5,23 @@ import type { ValidationEngineResult } from "../validation/types";
 type ValidationResultStore = {
   validationErrors: ValidationError[];
   lastValidationResult?: ValidationEngineResult;
-  setValidationResult: (result: ValidationEngineResult) => void;
+  resultRevision?: number;
+  setValidationResult: (result: ValidationEngineResult, revision: number) => void;
   clearValidationResult: () => void;
 };
 
 export const useValidationResultStore = create<ValidationResultStore>((set) => ({
   validationErrors: [],
-  setValidationResult: (result) =>
+  setValidationResult: (result, resultRevision) =>
     set({
       validationErrors: result.errors,
-      lastValidationResult: result
+      lastValidationResult: result,
+      resultRevision
     }),
   clearValidationResult: () =>
-    set({ validationErrors: [], lastValidationResult: undefined })
+    set({
+      validationErrors: [],
+      lastValidationResult: undefined,
+      resultRevision: undefined
+    })
 }));

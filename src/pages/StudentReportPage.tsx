@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Printer, School, Users } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { StudentSelector } from "../components/StudentSelector";
+import { StaleValidationResultNotice } from "../components/StaleValidationResultNotice";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
 import { useCourseSelectionRecordBuild } from "../hooks/useCourseSelectionRecordBuild";
 import { StudentCourseReport } from "../reports/StudentCourseReport";
 import { printStudentReport } from "../reports/printStudentReport";
 import { useStudentStore } from "../state/studentStore";
+import { useNormalizedCourseSelectionStore } from "../state/normalizedCourseSelectionStore";
 import { useValidationResultStore } from "../state/validationResultStore";
+import { useValidationRevisionStore } from "../state/validationRevisionStore";
 import type { CourseSelectionRecord } from "../types/courseSelection";
 import type { Student } from "../types/student";
 import type { ValidationError } from "../types/validation";
@@ -36,9 +39,27 @@ function groupByStudentId<T extends { studentId: string }>(items: readonly T[]):
 
 export function StudentReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { records: courseSelectionRecords } = useCourseSelectionRecordBuild();
+  const { records: currentCourseSelectionRecords } =
+    useCourseSelectionRecordBuild();
+  const {
+    courseSelectionRecords: storedCourseSelectionRecords,
+    recordsRevision
+  } = useNormalizedCourseSelectionStore();
   const { students } = useStudentStore();
-  const { validationErrors } = useValidationResultStore();
+  const { lastValidationResult, resultRevision, validationErrors } =
+    useValidationResultStore();
+  const inputRevision = useValidationRevisionStore(
+    (state) => state.inputRevision
+  );
+  const hasValidationResult =
+    lastValidationResult !== undefined || validationErrors.length > 0;
+  const isValidationResultStale =
+    hasValidationResult && resultRevision !== inputRevision;
+  const courseSelectionRecords = isValidationResultStale
+    ? recordsRevision !== undefined && recordsRevision === resultRevision
+      ? storedCourseSelectionRecords
+      : emptyCourseSelectionRecords
+    : currentCourseSelectionRecords;
   const studentIdFromUrl = searchParams.get("studentId") ?? undefined;
   const [selectedStudentId, setSelectedStudentId] = useState<string | undefined>(
     studentIdFromUrl
@@ -120,7 +141,7 @@ export function StudentReportPage() {
   }, [classOptions, selectedPrintClassNo]);
 
   useEffect(() => {
-    if (printRequestCount === 0) {
+    if (printRequestCount === 0 || isValidationResultStale) {
       return undefined;
     }
 
@@ -137,7 +158,7 @@ export function StudentReportPage() {
       window.clearTimeout(timeoutId);
       window.removeEventListener("afterprint", handleAfterPrint);
     };
-  }, [printRequestCount]);
+  }, [isValidationResultStale, printRequestCount]);
 
   function handleSelectStudent(studentId: string) {
     setSelectedStudentId(studentId);
@@ -146,7 +167,7 @@ export function StudentReportPage() {
   }
 
   function printStudents(targetStudents: readonly Student[]) {
-    if (targetStudents.length === 0) {
+    if (isValidationResultStale || targetStudents.length === 0) {
       return;
     }
 
@@ -193,6 +214,7 @@ export function StudentReportPage() {
         title="학생별 확인서"
         description="학생 1명의 6개 학기 수강 계획, 교과군별 학점 요약, 오류 내용을 확인서 형태로 확인합니다."
       />
+      {isValidationResultStale ? <StaleValidationResultNotice /> : null}
       <div className="section">
         <StudentSelector
           onSelectStudent={handleSelectStudent}
@@ -211,14 +233,14 @@ export function StudentReportPage() {
           다음 오류 학생
         </Button>
         <Button
-          disabled={!selectedStudent}
+          disabled={isValidationResultStale || !selectedStudent}
           icon={<Printer size={18} />}
           onClick={() => (selectedStudent ? printStudents([selectedStudent]) : undefined)}
         >
           선택 학생 출력
         </Button>
         <Button
-          disabled={students.length === 0}
+          disabled={isValidationResultStale || students.length === 0}
           icon={<Users size={18} />}
           onClick={printAllStudents}
           variant="secondary"
@@ -226,7 +248,7 @@ export function StudentReportPage() {
           전체 학생 출력
         </Button>
         <Button
-          disabled={classOptions.length === 0}
+          disabled={isValidationResultStale || classOptions.length === 0}
           icon={<School size={18} />}
           onClick={openClassPrintPanel}
           variant="secondary"
@@ -234,7 +256,7 @@ export function StudentReportPage() {
           반별 학생 출력
         </Button>
         <Button
-          disabled={errorStudents.length === 0}
+          disabled={isValidationResultStale || errorStudents.length === 0}
           icon={<AlertTriangle size={18} />}
           onClick={() => printStudents(errorStudents)}
           variant="secondary"
@@ -255,7 +277,7 @@ export function StudentReportPage() {
           </div>
           <div className="all-print-confirm-panel__actions">
             <Button
-              disabled={students.length === 0}
+              disabled={isValidationResultStale || students.length === 0}
               icon={<Printer size={18} />}
               onClick={confirmAllStudentPrint}
             >
@@ -286,7 +308,9 @@ export function StudentReportPage() {
           <strong>{selectedClassStudents.length}명</strong>
           <div className="class-print-panel__actions">
             <Button
-              disabled={selectedClassStudents.length === 0}
+              disabled={
+                isValidationResultStale || selectedClassStudents.length === 0
+              }
               icon={<Printer size={18} />}
               onClick={printSelectedClass}
             >

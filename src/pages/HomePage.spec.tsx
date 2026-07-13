@@ -76,7 +76,11 @@ vi.mock("../hooks/useValidationRun", () => ({
 }));
 
 vi.mock("../state/validationResultStore", () => ({
-  useValidationResultStore: () => ({ lastValidationResult: undefined })
+  useValidationResultStore: () => ({
+    lastValidationResult: undefined,
+    resultRevision: undefined,
+    validationErrors: []
+  })
 }));
 
 function validationResult(): ValidationEngineResult {

@@ -10,7 +10,7 @@ import {
   type StoredProjectRecord
 } from "./indexedDbStorage";
 
-const appVersion = "0.1.9";
+const appVersion = "0.1.10";
 const savedAt = "2026-07-02T00:00:00.000Z";
 
 function createStoredRecord(id: string, projectName: string): StoredProjectRecord {

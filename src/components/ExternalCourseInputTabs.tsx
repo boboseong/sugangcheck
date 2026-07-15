@@ -1,6 +1,6 @@
 import { Check, ChevronDown, ChevronRight, Plus, Users, X } from "lucide-react";
-import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useId, useMemo, useState } from "react";
+import type { KeyboardEvent, ReactNode, Ref } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   groupTypes,
   selectionTypes,
@@ -49,6 +49,7 @@ type CourseDraftFieldsProps = {
 
 type SubjectMasterAutocompleteProps = {
   hideLabel?: boolean;
+  inputRef?: Ref<HTMLInputElement>;
   label: string;
   onChange: (value: string) => void;
   onEnter?: () => void;
@@ -135,6 +136,7 @@ function isEnterReady(event: KeyboardEvent) {
 
 function SubjectMasterAutocomplete({
   hideLabel = false,
+  inputRef,
   label,
   onChange,
   onEnter,
@@ -224,6 +226,7 @@ function SubjectMasterAutocomplete({
           }}
           onFocus={() => setIsOpen(value.trim().length > 0)}
           onKeyDown={handleKeyDown}
+          ref={inputRef}
           role="combobox"
           value={value}
         />
@@ -760,6 +763,7 @@ function ManySubjectsOneStudentPanel({
   );
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const subjectInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDraft(createEmptyExternalCourseDraft(missingSemesters));
@@ -791,10 +795,15 @@ function ManySubjectsOneStudentPanel({
       return;
     }
 
+    onSelectedStudentIdChange(selectedStudent.studentId);
     onAddInputs([createExternalCourseInput(selectedStudent, draft)]);
-    setDraft(createEmptyExternalCourseDraft(missingSemesters));
+    setDraft({
+      ...createEmptyExternalCourseDraft(missingSemesters),
+      target: draft.target
+    });
     setIsDetailsExpanded(false);
     setErrors([]);
+    subjectInputRef.current?.focus();
   }
 
   function handleDraftKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -825,7 +834,7 @@ function ManySubjectsOneStudentPanel({
       <div className="external-bulk-actions">
         <p className="external-bulk-meta">
           {selectedStudent
-            ? `${selectedStudent.name} (${selectedStudent.studentNo}) 과목 입력`
+            ? `연속 입력 대상: ${selectedStudent.name} (${selectedStudent.studentNo}) · ${draft.target.grade}-${draft.target.semester}`
             : "학생을 먼저 선택하세요"}
         </p>
         <Button icon={<Plus size={16} />} onClick={handleAddInput}>
@@ -852,6 +861,7 @@ function ManySubjectsOneStudentPanel({
               </select>
             </label>
             <SubjectMasterAutocomplete
+              inputRef={subjectInputRef}
               label="과목명"
               onChange={(subjectName) => updateDraft({ subjectName })}
               onEnter={handleAddInput}

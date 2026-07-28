@@ -40,6 +40,7 @@ export function validatePrerequisites(
           errors.push(
             createValidationError({
               ruleId: "prerequisites",
+              instanceId: rule.id,
               studentId: afterRecord.studentId,
               studentNo: afterRecord.studentNo,
               studentName: afterRecord.studentName,

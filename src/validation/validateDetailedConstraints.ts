@@ -67,6 +67,7 @@ function createDetailedConstraintError(input: {
 }): ValidationError {
   const baseError = createValidationError({
     ruleId: "detailedConstraints",
+    instanceId: input.rule.id,
     studentId: input.student.studentId,
     studentNo: input.student.studentNo,
     studentName: input.student.studentName,
@@ -77,12 +78,6 @@ function createDetailedConstraintError(input: {
 
   return {
     ...baseError,
-    id: [
-      "detailedConstraints",
-      input.rule.id,
-      input.student.studentId,
-      input.relatedRecordIds.join("-") || "no-record"
-    ].join("-"),
     relatedSubjectNames: input.relatedSubjectNames
   };
 }

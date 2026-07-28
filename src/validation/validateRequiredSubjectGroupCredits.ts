@@ -37,6 +37,7 @@ export function validateRequiredSubjectGroupCredits({
         errors.push(
           createValidationError({
             ruleId: "requiredSubjectGroupCredits",
+            instanceId: criteria.subjectGroup,
             studentId: firstRecord.studentId,
             studentNo: firstRecord.studentNo,
             studentName: firstRecord.studentName,

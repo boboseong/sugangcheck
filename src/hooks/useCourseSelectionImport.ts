@@ -1,14 +1,7 @@
 import { useState } from "react";
-import {
-  detectCourseSelectionSemestersFromWorkbook,
-  parseCourseSelectionWorkbook,
-  type CourseSelectionSemesterDetection
-} from "../parsers/parseCourseSelectionFile";
-import {
-  readWorkbookFromFile,
-  workbookToPreviewTable,
-  type WorkbookPreviewTable
-} from "../parsers/readWorkbook";
+import type { WorkBook } from "xlsx";
+import type { CourseSelectionSemesterDetection } from "../parsers/parseCourseSelectionFile";
+import type { WorkbookPreviewTable } from "../parsers/readWorkbook";
 import {
   createSemesterImportStatusId,
   useImportStatusStore
@@ -24,11 +17,6 @@ import {
   useStudentStore
 } from "../state/studentStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
-import {
-  createCourseSelectionTemplateWorkbook,
-  createXlsxBlob,
-  templateFileNames
-} from "../templates/xlsxTemplates";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { Semester } from "../types/semester";
 import { assignFilesToSemesters } from "../utils/detectSemesterFromFileName";
@@ -43,7 +31,7 @@ import {
 
 type PreparedCourseSelectionFile = {
   file: File;
-  workbook?: Awaited<ReturnType<typeof readWorkbookFromFile>>;
+  workbook?: WorkBook;
   preview?: WorkbookPreviewTable;
   semesterDetections?: CourseSelectionSemesterDetection[];
 };
@@ -105,10 +93,23 @@ function hasSelectedAllPendingDecisions(
   );
 }
 
+// The workbook parsers pull in xlsx, which dwarfs the rest of the app. They are
+// only reachable once a user picks a file, so they load on demand.
+function loadWorkbookModules() {
+  return Promise.all([
+    import("../parsers/parseCourseSelectionFile"),
+    import("../parsers/readWorkbook")
+  ]);
+}
+
 async function prepareCourseSelectionFile(
   file: File
 ): Promise<PreparedCourseSelectionFile> {
   try {
+    const [
+      { detectCourseSelectionSemestersFromWorkbook },
+      { readWorkbookFromFile, workbookToPreviewTable }
+    ] = await loadWorkbookModules();
     const workbook = await readWorkbookFromFile(file);
 
     return {
@@ -207,6 +208,10 @@ export function useCourseSelectionImport() {
     sheetName?: string
   ) {
     try {
+      const [
+        { parseCourseSelectionWorkbook },
+        { readWorkbookFromFile, workbookToPreviewTable }
+      ] = await loadWorkbookModules();
       const workbook = preparedFile?.workbook ?? (await readWorkbookFromFile(file));
       const nextPreview = sheetName
         ? workbookToPreviewTable(workbook, { sheetName })
@@ -432,6 +437,9 @@ export function useCourseSelectionImport() {
   }
 
   async function handleDownloadTemplate() {
+    const { createCourseSelectionTemplateWorkbook, createXlsxBlob, templateFileNames } =
+      await import("../templates/xlsxTemplates");
+
     await downloadBlob(
       createXlsxBlob(createCourseSelectionTemplateWorkbook(courseSelectionRows)),
       templateFileNames.courseSelection

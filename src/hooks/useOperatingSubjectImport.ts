@@ -1,16 +1,10 @@
 import { useState } from "react";
-import {
-  detectOperatingSubjectSemesterFromWorkbook,
-  detectOperatingSubjectSemestersFromWorkbook,
-  parseOperatingSubjectWorkbook,
-  type OperatingSubjectSemesterColumnDetection,
-  type OperatingSubjectSemesterDetectionResult
+import type { WorkBook } from "xlsx";
+import type {
+  OperatingSubjectSemesterColumnDetection,
+  OperatingSubjectSemesterDetectionResult
 } from "../parsers/parseOperatingSubjectFile";
-import {
-  readWorkbookFromFile,
-  workbookToPreviewTable,
-  type WorkbookPreviewTable
-} from "../parsers/readWorkbook";
+import type { WorkbookPreviewTable } from "../parsers/readWorkbook";
 import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import {
   createSemesterImportStatusId,
@@ -22,11 +16,6 @@ import {
 } from "../state/operatingSubjectStore";
 import { usePrerequisiteRuleStore } from "../state/prerequisiteRuleStore";
 import { useValidationRuleSettingStore } from "../state/validationRuleSettingStore";
-import {
-  createOperatingSubjectTemplateWorkbook,
-  createXlsxBlob,
-  templateFileNames
-} from "../templates/xlsxTemplates";
 import type { Semester } from "../types/semester";
 import { assignFilesToSemesters } from "../utils/detectSemesterFromFileName";
 import { downloadBlob } from "../utils/downloadBlob";
@@ -34,7 +23,7 @@ import { isSameSemester, semesterLabel } from "../utils/semester";
 
 type PreparedOperatingSubjectFile = {
   file: File;
-  workbook?: Awaited<ReturnType<typeof readWorkbookFromFile>>;
+  workbook?: WorkBook;
   preview?: WorkbookPreviewTable;
   semesterDetection?: OperatingSubjectSemesterDetectionResult;
   semesterColumnDetections?: OperatingSubjectSemesterColumnDetection[];
@@ -44,10 +33,26 @@ function semesterKey(semester: Semester): string {
   return `${semester.grade}-${semester.semester}`;
 }
 
+// The workbook parsers pull in xlsx, which dwarfs the rest of the app. They are
+// only reachable once a user picks a file, so they load on demand.
+function loadWorkbookModules() {
+  return Promise.all([
+    import("../parsers/parseOperatingSubjectFile"),
+    import("../parsers/readWorkbook")
+  ]);
+}
+
 async function prepareOperatingSubjectFile(
   file: File
 ): Promise<PreparedOperatingSubjectFile> {
   try {
+    const [
+      {
+        detectOperatingSubjectSemesterFromWorkbook,
+        detectOperatingSubjectSemestersFromWorkbook
+      },
+      { readWorkbookFromFile, workbookToPreviewTable }
+    ] = await loadWorkbookModules();
     const workbook = await readWorkbookFromFile(file);
 
     return {
@@ -136,6 +141,10 @@ export function useOperatingSubjectImport() {
     preparedFile?: PreparedOperatingSubjectFile
   ) {
     try {
+      const [
+        { parseOperatingSubjectWorkbook },
+        { readWorkbookFromFile, workbookToPreviewTable }
+      ] = await loadWorkbookModules();
       const workbook = preparedFile?.workbook ?? (await readWorkbookFromFile(file));
       const nextPreview = preparedFile?.preview ?? workbookToPreviewTable(workbook);
       const detectedSemester =
@@ -250,6 +259,9 @@ export function useOperatingSubjectImport() {
   }
 
   async function handleDownloadTemplate() {
+    const { createOperatingSubjectTemplateWorkbook, createXlsxBlob, templateFileNames } =
+      await import("../templates/xlsxTemplates");
+
     await downloadBlob(
       createXlsxBlob(createOperatingSubjectTemplateWorkbook(operatingSubjects)),
       templateFileNames.operatingSubject

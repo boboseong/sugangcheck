@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Info, ShieldCheck } from "lucide-react";
 import { IconButton } from "../ui/IconButton";
@@ -49,7 +50,9 @@ export function AppLayout() {
           </div>
         </header>
         <main>
-          <Outlet />
+          <Suspense fallback={<p className="route-loading">불러오는 중…</p>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

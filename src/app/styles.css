@@ -1583,6 +1583,12 @@ label.button {
   font-size: 12px;
 }
 
+.route-loading {
+  color: #667085;
+  font-size: 14px;
+  padding: 32px;
+}
+
 .student-search-panel,
 .external-input-form {
   display: grid;

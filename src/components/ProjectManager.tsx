@@ -33,13 +33,9 @@ import {
   createProjectFileBlob,
   projectFileName
 } from "../storage/projectFileExport";
-import {
-  readProjectTransferFile
-} from "../storage/projectTransferPackage";
-import {
-  createProjectTemplatePackageBlob,
-  projectTemplatePackageFileName
-} from "../storage/projectTemplatePackage";
+// projectTransferPackage and projectTemplatePackage pull in xlsx and jszip.
+// ProjectManager renders inside AppLayout on every route, so these are loaded
+// on demand from the handlers that need them rather than at module scope.
 import { downloadBlob } from "../utils/downloadBlob";
 
 function projectNameFromPrompt(message: string, defaultValue: string) {
@@ -90,6 +86,8 @@ export function ProjectManager() {
 
   function handleDownloadTemplatePackage() {
     void runProjectAction(async () => {
+      const { createProjectTemplatePackageBlob, projectTemplatePackageFileName } =
+        await import("../storage/projectTemplatePackage");
       const savedAt = new Date();
       const savedAtText = savedAt.toISOString();
       const sourceState = collectProjectState(savedAtText);
@@ -148,6 +146,9 @@ export function ProjectManager() {
     }
 
     void runProjectAction(async () => {
+      const { readProjectTransferFile } = await import(
+        "../storage/projectTransferPackage"
+      );
       await saveCurrentProjectSnapshot();
       const result = await readProjectTransferFile(file);
       const { projectFile } = result;

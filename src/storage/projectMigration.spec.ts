@@ -185,4 +185,35 @@ describe("migrateProjectState", () => {
     expect(migrated.inputRevision).toBe(2);
     expect(migrated.resultRevision).toBe(1);
   });
+
+  it("migrates a truncated project file to empty collections instead of throwing", () => {
+    const truncatedState = {
+      schemaVersion: currentProjectSchemaVersion
+    } as unknown as Parameters<typeof migrateProjectState>[0];
+
+    const migrated = migrateProjectState(truncatedState);
+
+    expect(migrated.operatingSubjects).toEqual([]);
+    expect(migrated.students).toEqual([]);
+    expect(migrated.studentSemesterPresence).toEqual([]);
+    expect(migrated.courseSelectionRows).toEqual([]);
+    expect(migrated.externalCourseInputs).toEqual([]);
+    expect(migrated.validationErrors).toEqual([]);
+    expect(migrated.detailedConstraintRules).toEqual([]);
+  });
+
+  it("tolerates a validation result that carries no error list", () => {
+    const stateWithoutErrors = {
+      schemaVersion: currentProjectSchemaVersion,
+      lastValidationResult: {
+        executedRuleIds: [],
+        skippedRuleIds: [],
+        durationMs: 0
+      }
+    } as unknown as Parameters<typeof migrateProjectState>[0];
+
+    const migrated = migrateProjectState(stateWithoutErrors);
+
+    expect(migrated.lastValidationResult?.errors).toEqual([]);
+  });
 });

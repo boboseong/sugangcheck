@@ -77,6 +77,12 @@ const supportedProjectSchemaVersions = [
   currentProjectSchemaVersion
 ] as const;
 
+// Project files can be hand-edited or truncated, so every collection is
+// treated as optional rather than trusted from the parsed JSON.
+function asArray<T>(value: readonly T[] | undefined): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 function validRevision(value: unknown): number | undefined {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
     ? value
@@ -157,7 +163,7 @@ function createIdentityMap(projectState: MigratableProjectState): Map<string, Id
   projectState.externalCourseInputs?.forEach(add);
   projectState.validationErrors?.forEach(add);
   projectState.courseSelectionRecords?.forEach(add);
-  projectState.lastValidationResult?.errors.forEach(add);
+  asArray(projectState.lastValidationResult?.errors).forEach(add);
 
   return identityByOldId;
 }
@@ -286,7 +292,7 @@ function migrateValidationResult(
 
   return {
     ...result,
-    errors: result.errors.map((error) =>
+    errors: asArray(result.errors).map((error) =>
       migrateValidationError(identityByOldId, error)
     )
   };
@@ -325,21 +331,23 @@ export function migrateProjectState(
     schemaVersion: currentProjectSchemaVersion,
     inputRevision,
     resultRevision,
-    detailedConstraintRules: projectState.detailedConstraintRules ?? [],
-    operatingSubjects: projectState.operatingSubjects.map(migrateOperatingSubject),
-    students: projectState.students.map((student) =>
+    detailedConstraintRules: asArray(projectState.detailedConstraintRules),
+    operatingSubjects: asArray(projectState.operatingSubjects).map(
+      migrateOperatingSubject
+    ),
+    students: asArray(projectState.students).map((student) =>
       migrateStudent(identityByOldId, student)
     ),
-    studentSemesterPresence: projectState.studentSemesterPresence.map((presence) =>
-      migrateStudentPresence(identityByOldId, presence)
+    studentSemesterPresence: asArray(projectState.studentSemesterPresence).map(
+      (presence) => migrateStudentPresence(identityByOldId, presence)
     ),
-    courseSelectionRows: projectState.courseSelectionRows.map((row) =>
+    courseSelectionRows: asArray(projectState.courseSelectionRows).map((row) =>
       migrateParsedRow(identityByOldId, row)
     ),
-    externalCourseInputs: projectState.externalCourseInputs.map((input) =>
+    externalCourseInputs: asArray(projectState.externalCourseInputs).map((input) =>
       migrateExternalInput(identityByOldId, input)
     ),
-    validationErrors: projectState.validationErrors.map((error) =>
+    validationErrors: asArray(projectState.validationErrors).map((error) =>
       migrateValidationError(identityByOldId, error)
     ),
     courseSelectionRecords: projectState.courseSelectionRecords?.map((record) =>

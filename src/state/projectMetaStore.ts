@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { currentProjectSchemaVersion } from "../storage/projectMigration";
 
 export const appVersion = "0.1.10";
 export const defaultProjectName = "새 점검 프로젝트";
@@ -28,7 +29,7 @@ export const useProjectMetaStore = create<ProjectMetaState>((set) => ({
   appVersion,
   createdAt: new Date().toISOString(),
   projectName: defaultProjectName,
-  schemaVersion: 3,
+  schemaVersion: currentProjectSchemaVersion,
   setActiveProjectId: (activeProjectId) => set({ activeProjectId }),
   setProjectName: (projectName) => set({ projectName }),
   hydrateProjectMeta: (patch) => set(patch),

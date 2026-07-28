@@ -1,4 +1,4 @@
-import { utils, type WorkBook } from "xlsx";
+import { utils, type WorkBook } from "@e965/xlsx";
 import { subjectMasterItems } from "../data/subjectMaster";
 import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";
 import { readWorkbookFromFile } from "./readWorkbook";

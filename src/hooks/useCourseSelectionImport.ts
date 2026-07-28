@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { WorkBook } from "xlsx";
+import type { WorkBook } from "@e965/xlsx";
 import type { CourseSelectionSemesterDetection } from "../parsers/parseCourseSelectionFile";
 import type { WorkbookPreviewTable } from "../parsers/readWorkbook";
 import {

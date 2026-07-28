@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { utils } from "xlsx";
+import { utils } from "@e965/xlsx";
 import { parseCourseSelectionWorkbook } from "../parsers/parseCourseSelectionFile";
 import { parseOperatingSubjectWorkbook } from "../parsers/parseOperatingSubjectFile";
 import type {

@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { utils, write } from "xlsx";
+import { utils, write } from "@e965/xlsx";
 import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import {
   createInitialImportStatuses,

@@ -1,4 +1,4 @@
-import { read, utils, type WorkBook } from "xlsx";
+import { read, utils, type WorkBook } from "@e965/xlsx";
 
 export const allowedWorkbookExtensions = new Set(["xls", "xlsx", "xlsm"]);
 

@@ -1,4 +1,4 @@
-import { utils } from "xlsx";
+import { utils } from "@e965/xlsx";
 import { describe, expect, it } from "vitest";
 import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";
 import type { CourseSelectionRecord } from "../types/courseSelection";

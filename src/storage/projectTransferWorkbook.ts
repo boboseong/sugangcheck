@@ -1,4 +1,4 @@
-import { read, utils, write, type WorkBook } from "xlsx";
+import { read, utils, write, type WorkBook } from "@e965/xlsx";
 import type {
   ProjectTransferSection
 } from "../state/projectTransfer";
@@ -315,6 +315,22 @@ export function createProjectTransferWorkbookBuffer(input: {
   }) as ArrayBuffer;
 }
 
+const unsafeRowKeys = new Set(["__proto__", "constructor", "prototype"]);
+
+export function sanitizeRow(
+  row: Record<string, unknown>
+): Record<string, unknown> {
+  const safeRow: Record<string, unknown> = Object.create(null);
+
+  for (const key of Object.keys(row)) {
+    if (!unsafeRowKeys.has(key)) {
+      safeRow[key] = row[key];
+    }
+  }
+
+  return safeRow;
+}
+
 export function parseProjectTransferWorkbook(
   buffer: ArrayBuffer,
   workbookId: ProjectTransferWorkbookId
@@ -326,9 +342,13 @@ export function parseProjectTransferWorkbook(
     throw new Error(`${workbookLabels[workbookId]} 파일에 앱데이터 시트가 없습니다.`);
   }
 
-  const rows = utils.sheet_to_json<Record<string, unknown>>(appDataSheet, {
-    defval: ""
-  });
+  // Object-mode sheet_to_json keys rows by header cell, so a crafted workbook
+  // can carry a "__proto__" (or "constructor"/"prototype") header. Rebuild each
+  // row on a null-prototype object and drop those keys so a shared file can
+  // never reach Object.prototype.
+  const rows = utils
+    .sheet_to_json<Record<string, unknown>>(appDataSheet, { defval: "" })
+    .map(sanitizeRow);
   const fields: Partial<ProjectState> = {};
   const rowsByField = new Map<keyof ProjectState, Record<string, unknown>[]>();
 

@@ -1,4 +1,4 @@
-import { utils } from "xlsx";
+import { utils } from "@e965/xlsx";
 import { describe, expect, it } from "vitest";
 import { defaultValidationRuleSettings } from "../data/defaultValidationRules";
 import { getSemesterCreditSubjectCriteria } from "../validation/semesterCreditSubjectCriteria";

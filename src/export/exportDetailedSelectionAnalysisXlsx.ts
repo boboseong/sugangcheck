@@ -1,4 +1,4 @@
-import { utils, write, type WorkBook } from "xlsx";
+import { utils, write, type WorkBook } from "@e965/xlsx";
 import type {
   DetailedSelectionAnalysisResult,
   DetailedSelectionAnalysisRow,

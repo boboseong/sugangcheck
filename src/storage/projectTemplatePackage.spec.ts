@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { read, utils } from "xlsx";
+import { read, utils } from "@e965/xlsx";
 import { describe, expect, it } from "vitest";
 import { defaultValidationRuleSettings } from "../data/defaultValidationRules";
 import { normalizeSubjectName } from "../normalizers/normalizeSubjectName";

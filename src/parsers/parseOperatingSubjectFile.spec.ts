@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { utils } from "xlsx";
+import { utils } from "@e965/xlsx";
 import { missingOperatingSubjectInfoLabel } from "../types/subject";
 import { parseOperatingSubjectWorkbook } from "./parseOperatingSubjectFile";
 

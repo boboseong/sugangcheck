@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { read, type WorkBook } from "xlsx";
+import { read, type WorkBook } from "@e965/xlsx";
 import { parseCourseSelectionWorkbook } from "../parsers/parseCourseSelectionFile";
 import { parseOperatingSubjectWorkbook } from "../parsers/parseOperatingSubjectFile";
 import {

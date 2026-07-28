@@ -121,13 +121,13 @@ describe("useValidationRun", () => {
     expect(useValidationResultStore.getState().lastValidationResult).toBeUndefined();
   });
 
-  it("runs partial validation after the in-app confirmation is accepted", () => {
+  it("runs partial validation after the in-app confirmation is accepted", async () => {
     const confirmSpy = vi.spyOn(window, "confirm");
     const { result } = renderHook(() => useValidationRun());
-    let runResult: ReturnType<typeof result.current.runValidation>;
+    let runResult: Awaited<ReturnType<typeof result.current.runValidation>>;
 
-    act(() => {
-      runResult = result.current.runValidation();
+    await act(async () => {
+      runResult = await result.current.runValidation();
     });
 
     expect(runResult?.validationResult).toBeDefined();
@@ -149,12 +149,12 @@ describe("useValidationRun", () => {
     expect(useNormalizedCourseSelectionStore.getState().recordsRevision).toBe(0);
   });
 
-  it("tags the result and normalized records with the current input revision", () => {
+  it("tags the result and normalized records with the current input revision", async () => {
     useValidationRevisionStore.setState({ inputRevision: 3 });
     const { result } = renderHook(() => useValidationRun());
 
-    act(() => {
-      result.current.runValidation();
+    await act(async () => {
+      await result.current.runValidation();
     });
 
     expect(useValidationResultStore.getState().resultRevision).toBe(3);

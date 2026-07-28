@@ -32,6 +32,7 @@ export function ValidationResultsPage() {
     buildIssues,
     canRunValidation,
     confirmationMessage,
+    isValidating,
     runValidation
   } = useValidationRun();
   const { lastValidationResult, resultRevision, validationErrors } =
@@ -67,7 +68,7 @@ export function ValidationResultsPage() {
   }, [canRunValidation, confirmationMessage, searchParams, setSearchParams]);
 
   function runFromResults() {
-    runValidation();
+    void runValidation();
     setShowValidationConfirmation(false);
   }
 
@@ -116,12 +117,12 @@ export function ValidationResultsPage() {
         ) : null}
         <button
           className="button button--compact"
-          disabled={!canRunValidation}
+          disabled={!canRunValidation || isValidating}
           onClick={handleRunValidation}
           type="button"
         >
           <Play size={16} />
-          <span>점검</span>
+          <span>{isValidating ? "점검 중…" : "점검"}</span>
         </button>
         <button
           className="button button--secondary button--compact"

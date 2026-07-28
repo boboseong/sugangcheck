@@ -33,10 +33,7 @@ import {
 import type { ProjectFile, ProjectState } from "../types/project";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { checkDataPreparationStatus } from "../validation/checkDataPreparationStatus";
-import {
-  createDefaultValidationRuleFunctionMap,
-  runValidationEngine
-} from "../validation/validationEngine";
+import { runDefaultValidation } from "../validation/validationEngine";
 import { createProjectFile } from "./projectFileExport";
 import { parseSemesterKey, semesterLabel, semesterToKey } from "../utils/semester";
 
@@ -402,18 +399,14 @@ function runAutomaticValidation(projectState: ProjectState): {
     externalCourseInputs: projectState.externalCourseInputs,
     operatingSubjects: projectState.operatingSubjects
   });
-  const validationResult = runValidationEngine(
-    {
-      mode: "full",
-      records: buildResult.records,
-      ruleSettings: projectState.validationRuleSettings
-    },
-    createDefaultValidationRuleFunctionMap({
-      detailedConstraintRules: projectState.detailedConstraintRules,
-      operatingSubjects: projectState.operatingSubjects,
-      prerequisiteRules: projectState.prerequisiteRules
-    })
-  );
+  const validationResult = runDefaultValidation({
+    mode: "full",
+    records: buildResult.records,
+    ruleSettings: projectState.validationRuleSettings,
+    detailedConstraintRules: projectState.detailedConstraintRules,
+    operatingSubjects: projectState.operatingSubjects,
+    prerequisiteRules: projectState.prerequisiteRules
+  });
 
   return {
     projectState: {

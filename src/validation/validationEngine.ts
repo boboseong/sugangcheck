@@ -67,9 +67,11 @@ export function createValidationError({
   };
 }
 
+// `validators` is deliberately required: defaulting it to an empty map made a
+// caller that forgot it skip every rule and report zero errors.
 export function runValidationEngine(
   input: ValidationEngineInput,
-  validators: ValidationRuleFunctionMap = {}
+  validators: ValidationRuleFunctionMap
 ): ValidationEngineResult {
   const startedAt = performance.now();
   const errors: ValidationError[] = [];
@@ -100,6 +102,33 @@ export function runValidationEngine(
     skippedRuleIds,
     durationMs: performance.now() - startedAt
   };
+}
+
+// Everything the default rule set needs, in a shape that survives postMessage.
+export type ValidationRunInput = ValidationEngineInput & {
+  detailedConstraintRules: DetailedConstraintRule[];
+  operatingSubjects: OperatingSubject[];
+  prerequisiteRules: PrerequisiteRule[];
+};
+
+export function runDefaultValidation(
+  input: ValidationRunInput
+): ValidationEngineResult {
+  const {
+    detailedConstraintRules,
+    operatingSubjects,
+    prerequisiteRules,
+    ...engineInput
+  } = input;
+
+  return runValidationEngine(
+    engineInput,
+    createDefaultValidationRuleFunctionMap({
+      detailedConstraintRules,
+      operatingSubjects,
+      prerequisiteRules
+    })
+  );
 }
 
 export function createDefaultValidationRuleFunctionMap(input: {

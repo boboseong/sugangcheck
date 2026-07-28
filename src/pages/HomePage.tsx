@@ -20,6 +20,7 @@ export function HomePage() {
     canRunValidation,
     confirmationMessage,
     dataPreparationStatus,
+    isValidating,
     runValidation
   } = useValidationRun();
   const {
@@ -39,8 +40,8 @@ export function HomePage() {
   const hasPendingOperatingSubjectCompletions =
     courseSelectionImport.pendingOperatingSubjectCompletions.length > 0;
 
-  function runAndNavigate() {
-    const result = runValidation();
+  async function runAndNavigate() {
+    const result = await runValidation();
 
     if (result) {
       setShowValidationConfirmation(false);
@@ -58,7 +59,7 @@ export function HomePage() {
       return;
     }
 
-    runAndNavigate();
+    void runAndNavigate();
   }
 
   return (
@@ -73,6 +74,7 @@ export function HomePage() {
       <DataPreparationDashboard
         confirmationMessage={confirmationMessage}
         hasValidationResult={hasValidationResult}
+        isValidating={isValidating}
         isValidationResultStale={isValidationResultStale}
         onCancelValidationConfirmation={() => setShowValidationConfirmation(false)}
         onCourseSelectionFilesSelected={courseSelectionImport.handleFilesSelected}

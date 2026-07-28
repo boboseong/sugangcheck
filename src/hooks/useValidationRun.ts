@@ -1,3 +1,4 @@
+import { useMemo, useRef, useState } from "react";
 import { useCourseSelectionRawStore } from "../state/courseSelectionRawStore";
 import { useDetailedConstraintRuleStore } from "../state/detailedConstraintRuleStore";
 import { useExternalCourseInputStore } from "../state/externalCourseInputStore";
@@ -12,10 +13,7 @@ import { useValidationRuleSettingStore } from "../state/validationRuleSettingSto
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { checkDataPreparationStatus } from "../validation/checkDataPreparationStatus";
 import { validationRunConfirmationMessage } from "../validation/dataPreparationIssues";
-import {
-  createDefaultValidationRuleFunctionMap,
-  runValidationEngine
-} from "../validation/validationEngine";
+import { runValidationInWorker } from "../workers/runValidationInWorker";
 
 export function useValidationRun() {
   const { courseSelectionRows } = useCourseSelectionRawStore();
@@ -29,54 +27,78 @@ export function useValidationRun() {
   const { buildIssues, courseSelectionRecords, setBuildResult } =
     useNormalizedCourseSelectionStore();
   const { setValidationResult } = useValidationResultStore();
-  const dataPreparationStatus = checkDataPreparationStatus({
-    importStatuses,
-    studentSemesterPresence,
-    operatingSubjects,
-    courseSelectionRows,
-    externalCourseInputs,
-    prerequisiteRules,
-    validationRuleSettings
-  });
+  const [isValidating, setIsValidating] = useState(false);
+  const runningRef = useRef(false);
+  // This walks every course selection row against the operating subjects, so it
+  // is kept off the render path and recomputed only when its inputs change.
+  const dataPreparationStatus = useMemo(
+    () =>
+      checkDataPreparationStatus({
+        importStatuses,
+        studentSemesterPresence,
+        operatingSubjects,
+        courseSelectionRows,
+        externalCourseInputs,
+        prerequisiteRules,
+        validationRuleSettings
+      }),
+    [
+      importStatuses,
+      studentSemesterPresence,
+      operatingSubjects,
+      courseSelectionRows,
+      externalCourseInputs,
+      prerequisiteRules,
+      validationRuleSettings
+    ]
+  );
   const canRunValidation =
     dataPreparationStatus.canRunFullValidation ||
     dataPreparationStatus.canRunPartialValidation;
   const confirmationMessage = validationRunConfirmationMessage(dataPreparationStatus);
 
-  function runValidation() {
-    if (!canRunValidation) {
+  async function runValidation() {
+    // The run is asynchronous now, so a second click while one is in flight
+    // would post a duplicate job and race on the stored result.
+    if (!canRunValidation || runningRef.current) {
       return undefined;
     }
 
-    const mode = dataPreparationStatus.canRunFullValidation ? "full" : "partial";
-    const inputRevision = useValidationRevisionStore.getState().inputRevision;
-    const buildResult = buildCourseSelectionRecords({
-      mode,
-      availablePartialSemesters:
-        mode === "partial"
-          ? dataPreparationStatus.availablePartialSemesters
-          : undefined,
-      courseSelectionRows,
-      externalCourseInputs,
-      operatingSubjects
-    });
-    const validationResult = runValidationEngine(
-      {
+    runningRef.current = true;
+    setIsValidating(true);
+
+    try {
+      const mode = dataPreparationStatus.canRunFullValidation ? "full" : "partial";
+      // Captured before the await: if inputs change mid-run the stored revision
+      // no longer matches and the result is correctly shown as stale.
+      const inputRevision = useValidationRevisionStore.getState().inputRevision;
+      const buildResult = buildCourseSelectionRecords({
+        mode,
+        availablePartialSemesters:
+          mode === "partial"
+            ? dataPreparationStatus.availablePartialSemesters
+            : undefined,
+        courseSelectionRows,
+        externalCourseInputs,
+        operatingSubjects
+      });
+      const validationResult = await runValidationInWorker({
         mode,
         records: buildResult.records,
-        ruleSettings: validationRuleSettings
-      },
-      createDefaultValidationRuleFunctionMap({
+        ruleSettings: validationRuleSettings,
         detailedConstraintRules,
         operatingSubjects,
         prerequisiteRules
-      })
-    );
+      });
 
-    setBuildResult(buildResult, inputRevision);
-    setValidationResult(validationResult, inputRevision);
+      setBuildResult(buildResult, inputRevision);
+      setValidationResult(validationResult, inputRevision);
 
-    return { buildResult, validationResult };
+      return { buildResult, validationResult };
+    } finally {
+      runningRef.current = false;
+      setIsValidating(false);
+    }
   }
 
   return {
@@ -85,6 +107,7 @@ export function useValidationRun() {
     confirmationMessage,
     courseSelectionRecords,
     dataPreparationStatus,
+    isValidating,
     runValidation
   };
 }

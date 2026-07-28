@@ -34,6 +34,7 @@ type DataPreparationDashboardProps = {
   onConfirmValidation: () => void;
   onOperatingSubjectFilesSelected?: DashboardFileUploadHandler;
   onRunValidation: () => void;
+  isValidating?: boolean;
   showValidationConfirmation: boolean;
   status: DataPreparationStatus;
   uploadConfirmation?: {
@@ -110,6 +111,7 @@ export function DataPreparationDashboard({
   onConfirmValidation,
   onOperatingSubjectFilesSelected,
   onRunValidation,
+  isValidating = false,
   showValidationConfirmation,
   status,
   uploadConfirmation
@@ -340,11 +342,12 @@ export function DataPreparationDashboard({
           ) : canRunValidation ? (
             <button
               className="button button--compact"
+              disabled={isValidating}
               onClick={onRunValidation}
               type="button"
             >
               <Play size={15} />
-              <span>점검</span>
+              <span>{isValidating ? "점검 중…" : "점검"}</span>
             </button>
           ) : (
             <div className="workflow-card__blocked" role="status">

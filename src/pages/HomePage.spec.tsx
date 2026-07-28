@@ -117,7 +117,7 @@ describe("HomePage", () => {
     courseSelectionImportMocks.pendingOperatingSubjectCompletions = [];
     courseSelectionImportMocks.setPendingOperatingSubjectCompletionDecision.mockClear();
     validationRunMocks.confirmationMessage = undefined;
-    validationRunMocks.runValidation.mockReturnValue({
+    validationRunMocks.runValidation.mockResolvedValue({
       buildResult: { records: [], issues: [] },
       validationResult: validationResult()
     });
@@ -151,12 +151,13 @@ describe("HomePage", () => {
     expect(validationRunMocks.runValidation).not.toHaveBeenCalled();
   });
 
-  it("runs validation immediately when no guidance is needed", () => {
+  it("runs validation immediately when no guidance is needed", async () => {
     renderHomeWithRoutes();
 
     fireEvent.click(screen.getByRole("button", { name: "점검" }));
 
-    expect(screen.getByText("/results")).toBeInTheDocument();
+    // Validation resolves off the main thread, so navigation lands a tick later.
+    expect(await screen.findByText("/results")).toBeInTheDocument();
     expect(validationRunMocks.runValidation).toHaveBeenCalledTimes(1);
   });
 

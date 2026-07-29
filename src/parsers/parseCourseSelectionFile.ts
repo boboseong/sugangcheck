@@ -254,12 +254,15 @@ function findHeaderRow(matrix: unknown[][]): {
     }
   });
 
-  if (!best || best.columnMap.name === undefined) {
+  if (
+    !best ||
+    (best.columnMap.name === undefined && best.columnMap.studentNo === undefined)
+  ) {
     throw new Error("수강신청 결과 파일에서 학생 정보 헤더를 찾지 못했습니다.");
   }
 
   const firstSubjectColumn = Math.max(
-    best.columnMap.name,
+    best.columnMap.name ?? 0,
     best.columnMap.studentNo ?? 0,
     best.columnMap.grade ?? 0,
     best.columnMap.classNo ?? 0,
@@ -271,7 +274,6 @@ function findHeaderRow(matrix: unknown[][]): {
     headerRowIndex: best.headerRowIndex,
     columnMap: {
       ...best.columnMap,
-      name: best.columnMap.name,
       firstSubjectColumn
     }
   };
@@ -431,26 +433,27 @@ function parseBatchCourseSelectionWorkbook(
   matrix.slice(layout.dataStartRowIndex).forEach((row, offset) => {
     const rowNumber = layout.dataStartRowIndex + offset + 1;
     const sourceStudentNo = studentNoFromBatchRow(row, layout.studentNoColumns);
-    const studentName = compactString(valueAt(row, layout.columnMap.name));
+    const sourceStudentName = compactString(valueAt(row, layout.columnMap.name));
     const studentNoParts = parseStudentNoParts(sourceStudentNo.studentNo);
     const classNo = studentNoParts?.classNo ?? "";
     const number = studentNoParts?.number ?? "";
     const studentNo = sourceStudentNo.studentNo;
+    const studentName = sourceStudentName || studentNo;
     const studentId =
       createStudentAuxiliaryKey({
         grade: studentNoParts?.grade ?? sourceStudentNo.grade,
         studentNo: sourceStudentNo.studentNo,
-        name: studentName,
+        name: sourceStudentName,
         classNo,
         number
       }) || `student-row-${rowNumber}`;
     const issueMessages: string[] = [];
 
-    if (!studentName) {
-      issueMessages.push("학생 이름을 찾지 못했습니다.");
-    }
-
     if (!studentNo) {
+      if (!sourceStudentName) {
+        issueMessages.push("학생 이름을 찾지 못했습니다.");
+      }
+
       issueMessages.push("학번을 찾지 못했습니다.");
     }
 
@@ -734,7 +737,7 @@ export function parseCourseSelectionWorkbook(
   matrix.slice(headerRowIndex + 1).forEach((row, offset) => {
     const rowNumber = headerRowIndex + offset + 2;
     const sourceStudentNo = compactString(valueAt(row, columnMap.studentNo));
-    const studentName = compactString(valueAt(row, columnMap.name));
+    const sourceStudentName = compactString(valueAt(row, columnMap.name));
     const studentNoParts = parseStudentNoParts(sourceStudentNo);
     const grade =
       compactString(valueAt(row, columnMap.grade)) ||
@@ -755,21 +758,22 @@ export function parseCourseSelectionWorkbook(
       number
     });
     const studentNo = generatedStudentNo || sourceStudentNo;
+    const studentName = sourceStudentName || sourceStudentNo || studentNo;
     const studentId =
       createStudentAuxiliaryKey({
         grade,
         studentNo: sourceStudentNo,
-        name: studentName,
+        name: sourceStudentName,
         classNo,
         number
       }) || `student-row-${rowNumber}`;
     const issueMessages: string[] = [];
 
-    if (!studentName) {
-      issueMessages.push("학생 이름을 찾지 못했습니다.");
-    }
-
     if (!studentNo) {
+      if (!sourceStudentName) {
+        issueMessages.push("학생 이름을 찾지 못했습니다.");
+      }
+
       issueMessages.push("학번을 찾지 못했습니다.");
     }
 

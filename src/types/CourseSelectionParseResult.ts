@@ -7,7 +7,7 @@ export type CourseSelectionColumnMap = {
   classNo?: number;
   number?: number;
   gender?: number;
-  name: number;
+  name?: number;
   firstSubjectColumn: number;
 };
 

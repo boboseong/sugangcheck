@@ -1,0 +1,1 @@
+function s(t){const r=new Map;for(const e of t){const n=r.get(e.studentId);n?n.push(e):r.set(e.studentId,[e])}return r}function u(t){return t.reduce((r,e)=>r+e.credits,0)}function o(t){return t[0]}export{o as n,u as r,s as t};

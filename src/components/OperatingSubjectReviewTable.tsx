@@ -217,219 +217,221 @@ export function OperatingSubjectReviewTable({
           </select>
         </label>
       </div>
-      <table className="placeholder-table">
-        <thead>
-          <tr>
-            <th className="operating-subject-review__actions-column">수정</th>
-            <th>학기</th>
-            <th>과목명</th>
-            <th>선택군</th>
-            <th>학점</th>
-            <th>과목구분</th>
-            <th>교과군</th>
-            <th>선택구분</th>
-            <th>상태</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleSubjects.length === 0 ? (
+      <div className="operating-subject-review__table-wrap">
+        <table className="placeholder-table">
+          <thead>
             <tr>
-              <td colSpan={9}>필터에 맞는 운영과목이 없습니다.</td>
+              <th className="operating-subject-review__actions-column">수정</th>
+              <th>학기</th>
+              <th>과목명</th>
+              <th>선택군</th>
+              <th>학점</th>
+              <th>과목구분</th>
+              <th>교과군</th>
+              <th>선택구분</th>
+              <th>상태</th>
             </tr>
-          ) : null}
-          {visibleSubjects.map((subject) => {
-            const isEditing = editingSubjectId === subject.id;
-            const draft = draftFor(subject);
-            const saveDisabled = !isValidDraft(draft);
+          </thead>
+          <tbody>
+            {visibleSubjects.length === 0 ? (
+              <tr>
+                <td colSpan={9}>필터에 맞는 운영과목이 없습니다.</td>
+              </tr>
+            ) : null}
+            {visibleSubjects.map((subject) => {
+              const isEditing = editingSubjectId === subject.id;
+              const draft = draftFor(subject);
+              const saveDisabled = !isValidDraft(draft);
 
-            return (
-              <tr key={subject.id}>
-                <td className="operating-subject-review__actions-column">
-                  {isEditing ? (
-                    <div className="operating-subject-actions">
+              return (
+                <tr key={subject.id}>
+                  <td className="operating-subject-review__actions-column">
+                    {isEditing ? (
+                      <div className="operating-subject-actions">
+                        <Button
+                          className="button--compact"
+                          disabled={saveDisabled}
+                          icon={<Save size={15} />}
+                          onClick={() => saveDraft(subject)}
+                        >
+                          저장
+                        </Button>
+                        <Button
+                          className="button--compact"
+                          icon={<X size={15} />}
+                          onClick={() => cancelEditing(subject)}
+                          variant="secondary"
+                        >
+                          취소
+                        </Button>
+                      </div>
+                    ) : (
                       <Button
                         className="button--compact"
-                        disabled={saveDisabled}
-                        icon={<Save size={15} />}
-                        onClick={() => saveDraft(subject)}
-                      >
-                        저장
-                      </Button>
-                      <Button
-                        className="button--compact"
-                        icon={<X size={15} />}
-                        onClick={() => cancelEditing(subject)}
+                        icon={<Pencil size={15} />}
+                        onClick={() => startEditing(subject)}
                         variant="secondary"
                       >
-                        취소
+                        수정
                       </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      className="button--compact"
-                      icon={<Pencil size={15} />}
-                      onClick={() => startEditing(subject)}
-                      variant="secondary"
-                    >
-                      수정
-                    </Button>
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <div className="operating-subject-semester-controls">
-                      <select
-                        aria-label={`${subject.subjectName} 학년`}
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <div className="operating-subject-semester-controls">
+                        <select
+                          aria-label={`${subject.subjectName} 학년`}
+                          onChange={(event) =>
+                            updateDraft(subject, "grade", event.target.value)
+                          }
+                          value={draft.grade}
+                        >
+                          {grades.map((grade) => (
+                            <option key={grade} value={grade}>
+                              {grade}학년
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          aria-label={`${subject.subjectName} 학기`}
+                          onChange={(event) =>
+                            updateDraft(subject, "semester", event.target.value)
+                          }
+                          value={draft.semester}
+                        >
+                          {semesterTerms.map((semester) => (
+                            <option key={semester} value={semester}>
+                              {semester}학기
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      semesterLabel(subject.target)
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        aria-label={`${subject.subjectName} 과목명`}
+                        className="operating-subject-name-input"
                         onChange={(event) =>
-                          updateDraft(subject, "grade", event.target.value)
+                          updateDraft(subject, "subjectName", event.target.value)
                         }
-                        value={draft.grade}
+                        value={draft.subjectName}
+                      />
+                    ) : (
+                      subject.subjectName
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        aria-label={`${subject.subjectName} 선택군`}
+                        onChange={(event) =>
+                          updateDraft(subject, "choiceGroup", event.target.value)
+                        }
+                        value={draft.choiceGroup}
+                      />
+                    ) : (
+                      subject.choiceGroup
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        aria-label={`${subject.subjectName} 학점`}
+                        min="0"
+                        onChange={(event) =>
+                          updateDraft(subject, "credits", event.target.value)
+                        }
+                        step="0.5"
+                        type="number"
+                        value={draft.credits}
+                      />
+                    ) : (
+                      subject.credits
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select
+                        aria-label={`${subject.subjectName} 과목구분`}
+                        onChange={(event) =>
+                          updateDraft(subject, "groupType", event.target.value)
+                        }
+                        value={draft.groupType}
                       >
-                        {grades.map((grade) => (
-                          <option key={grade} value={grade}>
-                            {grade}학년
+                        <option value="">미입력</option>
+                        {optionList(groupTypes, draft.groupType).map((value) => (
+                          <option key={value} value={value}>
+                            {value}
                           </option>
                         ))}
                       </select>
+                    ) : (
+                      (subject.groupType ?? "-")
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
                       <select
-                        aria-label={`${subject.subjectName} 학기`}
+                        aria-label={`${subject.subjectName} 교과군`}
                         onChange={(event) =>
-                          updateDraft(subject, "semester", event.target.value)
+                          updateDraft(subject, "subjectGroup", event.target.value)
                         }
-                        value={draft.semester}
+                        value={draft.subjectGroup}
                       >
-                        {semesterTerms.map((semester) => (
-                          <option key={semester} value={semester}>
-                            {semester}학기
+                        <option value="">미입력</option>
+                        {optionList(subjectGroups, draft.subjectGroup).map((value) => (
+                          <option key={value} value={value}>
+                            {value}
                           </option>
                         ))}
                       </select>
-                    </div>
-                  ) : (
-                    semesterLabel(subject.target)
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <input
-                      aria-label={`${subject.subjectName} 과목명`}
-                      className="operating-subject-name-input"
-                      onChange={(event) =>
-                        updateDraft(subject, "subjectName", event.target.value)
+                    ) : (
+                      subject.subjectGroup
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select
+                        aria-label={`${subject.subjectName} 선택구분`}
+                        onChange={(event) =>
+                          updateDraft(subject, "selectionType", event.target.value)
+                        }
+                        value={draft.selectionType}
+                      >
+                        <option value="">미입력</option>
+                        {optionList(selectionTypes, draft.selectionType).map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      subject.selectionType
+                    )}
+                  </td>
+                  <td>
+                    <StatusBadge
+                      tone={
+                        subject.masterMatchStatus === "matched"
+                          ? "ready"
+                          : subject.masterMatchStatus === "manual"
+                            ? "warning"
+                            : "error"
                       }
-                      value={draft.subjectName}
-                    />
-                  ) : (
-                    subject.subjectName
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <input
-                      aria-label={`${subject.subjectName} 선택군`}
-                      onChange={(event) =>
-                        updateDraft(subject, "choiceGroup", event.target.value)
-                      }
-                      value={draft.choiceGroup}
-                    />
-                  ) : (
-                    subject.choiceGroup
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <input
-                      aria-label={`${subject.subjectName} 학점`}
-                      min="0"
-                      onChange={(event) =>
-                        updateDraft(subject, "credits", event.target.value)
-                      }
-                      step="0.5"
-                      type="number"
-                      value={draft.credits}
-                    />
-                  ) : (
-                    subject.credits
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <select
-                      aria-label={`${subject.subjectName} 과목구분`}
-                      onChange={(event) =>
-                        updateDraft(subject, "groupType", event.target.value)
-                      }
-                      value={draft.groupType}
                     >
-                      <option value="">미입력</option>
-                      {optionList(groupTypes, draft.groupType).map((value) => (
-                        <option key={value} value={value}>
-                          {value}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    (subject.groupType ?? "-")
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <select
-                      aria-label={`${subject.subjectName} 교과군`}
-                      onChange={(event) =>
-                        updateDraft(subject, "subjectGroup", event.target.value)
-                      }
-                      value={draft.subjectGroup}
-                    >
-                      <option value="">미입력</option>
-                      {optionList(subjectGroups, draft.subjectGroup).map((value) => (
-                        <option key={value} value={value}>
-                          {value}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    subject.subjectGroup
-                  )}
-                </td>
-                <td>
-                  {isEditing ? (
-                    <select
-                      aria-label={`${subject.subjectName} 선택구분`}
-                      onChange={(event) =>
-                        updateDraft(subject, "selectionType", event.target.value)
-                      }
-                      value={draft.selectionType}
-                    >
-                      <option value="">미입력</option>
-                      {optionList(selectionTypes, draft.selectionType).map((value) => (
-                        <option key={value} value={value}>
-                          {value}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    subject.selectionType
-                  )}
-                </td>
-                <td>
-                  <StatusBadge
-                    tone={
-                      subject.masterMatchStatus === "matched"
-                        ? "ready"
-                        : subject.masterMatchStatus === "manual"
-                          ? "warning"
-                          : "error"
-                    }
-                  >
-                    {statusLabels[subject.masterMatchStatus]}
-                  </StatusBadge>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                      {statusLabels[subject.masterMatchStatus]}
+                    </StatusBadge>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

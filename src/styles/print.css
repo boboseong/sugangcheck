@@ -17,6 +17,19 @@
     -webkit-print-color-adjust: exact;
   }
 
+  /* Screen-only stickiness: on paper it either does nothing or repeats the
+     header in the wrong place. */
+  .placeholder-table thead th,
+  .placeholder-table .operating-subject-review__actions-column {
+    position: static;
+  }
+
+  .operating-subject-review__table-wrap,
+  .subject-enrollment-table-wrap {
+    overflow: visible;
+    max-height: none;
+  }
+
   html,
   body,
   #root {

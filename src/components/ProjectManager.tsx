@@ -5,10 +5,12 @@ import {
   FilePlus2,
   Pencil,
   RotateCcw,
+  Settings2,
   Trash2,
-  Upload
+  Upload,
+  X
 } from "lucide-react";
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import {
   assertProjectNameAvailable,
   clearAllProjectRecords,
@@ -49,7 +51,9 @@ export function ProjectManager() {
   const { activeProjectId, projectName, setProjectName } = useProjectMetaStore();
   const [projects, setProjects] = useState<StoredProjectSummary[]>([]);
   const [busy, setBusy] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const menuId = useId();
 
   async function refreshProjects() {
     setProjects(await listProjectRecords());
@@ -190,6 +194,22 @@ export function ProjectManager() {
     });
   }, [activeProjectId]);
 
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [menuOpen]);
+
   function handleSwitchProject(nextProjectId: string) {
     if (!nextProjectId || nextProjectId === activeProjectId) {
       return;
@@ -329,6 +349,68 @@ export function ProjectManager() {
     });
   }
 
+  // The topbar used to carry these as seven unlabelled 38px icons, which wrapped
+  // onto three rows below ~1120px and put "초기화"/"전체 삭제" a slip away from
+  // the routine actions. They live behind one labelled menu now.
+  const projectMenuActions = [
+    {
+      label: "새 프로젝트",
+      hint: "빈 프로젝트를 만들고 전환합니다.",
+      icon: <FilePlus2 size={18} aria-hidden="true" />,
+      disabled: busy,
+      run: handleCreateProject
+    },
+    {
+      label: "현재 프로젝트 복제",
+      hint: "지금 자료를 그대로 복사해 새 이름으로 저장합니다.",
+      icon: <Copy size={18} aria-hidden="true" />,
+      disabled: busy || !activeProjectId,
+      run: handleCloneProject
+    },
+    {
+      label: "프로젝트 이름 변경",
+      hint: `현재 이름: ${projectName}`,
+      icon: <Pencil size={18} aria-hidden="true" />,
+      disabled: busy || !activeProjectId,
+      run: handleRenameProject
+    },
+    {
+      label: "프로젝트 불러오기",
+      hint: "저장해 둔 프로젝트 파일을 엽니다.",
+      icon: <Upload size={18} aria-hidden="true" />,
+      disabled: busy,
+      run: handleOpenImportFilePicker
+    },
+    {
+      label: "원본 데이터 다운로드",
+      hint: "원천 자료를 엑셀로 내려받습니다.",
+      icon: <Database size={18} aria-hidden="true" />,
+      disabled: busy || !activeProjectId,
+      run: handleDownloadRawData
+    }
+  ];
+  const destructiveMenuActions = [
+    {
+      label: "현재 프로젝트 초기화",
+      hint: "이 프로젝트의 업로드 자료와 점검 결과를 모두 지웁니다.",
+      icon: <RotateCcw size={18} aria-hidden="true" />,
+      disabled: busy || !activeProjectId,
+      run: handleResetCurrentProject
+    },
+    {
+      label: "모든 프로젝트 삭제",
+      hint: "저장된 프로젝트를 전부 지웁니다.",
+      icon: <Trash2 size={18} aria-hidden="true" />,
+      disabled: busy,
+      run: handleClearAllProjects
+    }
+  ];
+
+  function runMenuAction(action: () => void) {
+    setMenuOpen(false);
+    action();
+  }
+
   return (
     <div className="project-manager" aria-label="프로젝트 관리">
       <label className="project-manager__select">
@@ -356,24 +438,6 @@ export function ProjectManager() {
         onChange={handleImportProjectFile}
         type="file"
       />
-      <IconButton
-        disabled={busy}
-        icon={<FilePlus2 size={18} />}
-        label="새 프로젝트"
-        onClick={handleCreateProject}
-      />
-      <IconButton
-        disabled={busy || !activeProjectId}
-        icon={<Copy size={18} />}
-        label="현재 프로젝트 복제"
-        onClick={handleCloneProject}
-      />
-      <IconButton
-        disabled={busy || !activeProjectId}
-        icon={<Pencil size={18} />}
-        label="프로젝트 이름 변경"
-        onClick={handleRenameProject}
-      />
       <Button
         disabled={busy || !activeProjectId}
         icon={<Download size={16} />}
@@ -383,29 +447,67 @@ export function ProjectManager() {
         점검자료 다운로드
       </Button>
       <IconButton
+        aria-expanded={menuOpen}
+        aria-haspopup="dialog"
         disabled={busy}
-        icon={<Upload size={18} />}
-        label="프로젝트 불러오기"
-        onClick={handleOpenImportFilePicker}
+        icon={<Settings2 size={18} />}
+        label="프로젝트 관리"
+        onClick={() => setMenuOpen(true)}
       />
-      <IconButton
-        disabled={busy || !activeProjectId}
-        icon={<RotateCcw size={18} />}
-        label="현재 프로젝트 초기화"
-        onClick={handleResetCurrentProject}
-      />
-      <IconButton
-        disabled={busy}
-        icon={<Trash2 size={18} />}
-        label="모든 프로젝트 삭제"
-        onClick={handleClearAllProjects}
-      />
-      <IconButton
-        disabled={busy || !activeProjectId}
-        icon={<Database size={18} />}
-        label="원본 데이터 다운로드"
-        onClick={handleDownloadRawData}
-      />
+      {menuOpen ? (
+        <div className="import-launcher-modal" role="presentation">
+          <div
+            aria-labelledby={`${menuId}-title`}
+            aria-modal="true"
+            className="import-launcher-dialog project-menu-dialog"
+            role="dialog"
+          >
+            <div className="import-launcher-dialog__header">
+              <h2 id={`${menuId}-title`}>프로젝트 관리</h2>
+              <IconButton
+                icon={<X size={16} />}
+                label="닫기"
+                onClick={() => setMenuOpen(false)}
+              />
+            </div>
+            <div className="project-menu-group">
+              {projectMenuActions.map((action) => (
+                <button
+                  className="project-menu-item"
+                  disabled={action.disabled}
+                  key={action.label}
+                  onClick={() => runMenuAction(action.run)}
+                  type="button"
+                >
+                  {action.icon}
+                  <span>
+                    <strong>{action.label}</strong>
+                    <span className="project-menu-item__hint">{action.hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="project-menu-group project-menu-group--danger">
+              <p className="project-menu-group__title">되돌릴 수 없는 작업</p>
+              {destructiveMenuActions.map((action) => (
+                <button
+                  className="project-menu-item project-menu-item--danger"
+                  disabled={action.disabled}
+                  key={action.label}
+                  onClick={() => runMenuAction(action.run)}
+                  type="button"
+                >
+                  {action.icon}
+                  <span>
+                    <strong>{action.label}</strong>
+                    <span className="project-menu-item__hint">{action.hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -100,106 +100,108 @@ export function PrerequisiteRuleReviewTable({
           규칙 추가
         </Button>
       </div>
-      <table className="placeholder-table">
-        <thead>
-          <tr>
-            <th>점검</th>
-            <th>선이수</th>
-            <th>후이수</th>
-            <th>병행</th>
-            <th>외부 포함</th>
-            <th>출처</th>
-            <th>삭제</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rules.map((rule) => (
-            <tr key={rule.id}>
-              <td>
-                <label className="checkbox-label checkbox-label--inline">
-                  <input
-                    checked={rule.status === "active"}
-                    disabled={disabled}
-                    onChange={(event) =>
-                      onUpdateRule({
-                        ...rule,
-                        status: event.target.checked ? "active" : "disabled"
-                      })
-                    }
-                    type="checkbox"
-                  />
-                </label>
-              </td>
-              <td>
-                <OperatingSubjectPicker
-                  disabled={disabled}
-                  hideLabel
-                  label="선이수"
-                  onChange={(subjectName) =>
-                    onUpdateRule({ ...rule, beforeSubjectName: subjectName })
-                  }
-                  options={subjectOptions}
-                  value={rule.beforeSubjectName}
-                />
-              </td>
-              <td>
-                <OperatingSubjectPicker
-                  disabled={disabled}
-                  hideLabel
-                  label="후이수"
-                  onChange={(subjectName) =>
-                    onUpdateRule({ ...rule, afterSubjectName: subjectName })
-                  }
-                  options={subjectOptions}
-                  value={rule.afterSubjectName}
-                />
-              </td>
-              <td>
-                <label className="checkbox-label checkbox-label--inline">
-                  <input
-                    checked={rule.allowConcurrent}
-                    disabled={disabled}
-                    onChange={(event) =>
-                      onUpdateRule({ ...rule, allowConcurrent: event.target.checked })
-                    }
-                    type="checkbox"
-                  />
-                </label>
-              </td>
-              <td>
-                <label className="checkbox-label checkbox-label--inline">
-                  <input
-                    checked={rule.includeExternalInputsOverride ?? true}
-                    disabled={disabled}
-                    onChange={(event) =>
-                      onUpdateRule({
-                        ...rule,
-                        includeExternalInputsOverride: event.target.checked
-                      })
-                    }
-                    type="checkbox"
-                  />
-                </label>
-              </td>
-              <td>
-                <StatusBadge
-                  tone={rule.status === "active" ? "ready" : "warning"}
-                >
-                  {rule.source}
-                </StatusBadge>
-              </td>
-              <td>
-                <IconButton
-                  disabled={disabled}
-                  icon={<Trash2 size={16} />}
-                  label="위계 규칙 삭제"
-                  onClick={() => onRemoveRule(rule.id)}
-                />
-              </td>
+      <div className="prerequisite-rule-table-wrap">
+        <table className="placeholder-table">
+          <thead>
+            <tr>
+              <th>점검</th>
+              <th>선이수</th>
+              <th>후이수</th>
+              <th>병행</th>
+              <th>외부 포함</th>
+              <th>출처</th>
+              <th>삭제</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rules.map((rule) => (
+              <tr key={rule.id}>
+                <td>
+                  <label className="checkbox-label checkbox-label--inline">
+                    <input
+                      checked={rule.status === "active"}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        onUpdateRule({
+                          ...rule,
+                          status: event.target.checked ? "active" : "disabled"
+                        })
+                      }
+                      type="checkbox"
+                    />
+                  </label>
+                </td>
+                <td>
+                  <OperatingSubjectPicker
+                    disabled={disabled}
+                    hideLabel
+                    label="선이수"
+                    onChange={(subjectName) =>
+                      onUpdateRule({ ...rule, beforeSubjectName: subjectName })
+                    }
+                    options={subjectOptions}
+                    value={rule.beforeSubjectName}
+                  />
+                </td>
+                <td>
+                  <OperatingSubjectPicker
+                    disabled={disabled}
+                    hideLabel
+                    label="후이수"
+                    onChange={(subjectName) =>
+                      onUpdateRule({ ...rule, afterSubjectName: subjectName })
+                    }
+                    options={subjectOptions}
+                    value={rule.afterSubjectName}
+                  />
+                </td>
+                <td>
+                  <label className="checkbox-label checkbox-label--inline">
+                    <input
+                      checked={rule.allowConcurrent}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        onUpdateRule({ ...rule, allowConcurrent: event.target.checked })
+                      }
+                      type="checkbox"
+                    />
+                  </label>
+                </td>
+                <td>
+                  <label className="checkbox-label checkbox-label--inline">
+                    <input
+                      checked={rule.includeExternalInputsOverride ?? true}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        onUpdateRule({
+                          ...rule,
+                          includeExternalInputsOverride: event.target.checked
+                        })
+                      }
+                      type="checkbox"
+                    />
+                  </label>
+                </td>
+                <td>
+                  <StatusBadge
+                    tone={rule.status === "active" ? "ready" : "warning"}
+                  >
+                    {rule.source}
+                  </StatusBadge>
+                </td>
+                <td>
+                  <IconButton
+                    disabled={disabled}
+                    icon={<Trash2 size={16} />}
+                    label="위계 규칙 삭제"
+                    onClick={() => onRemoveRule(rule.id)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

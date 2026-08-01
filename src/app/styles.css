@@ -38,6 +38,22 @@ textarea {
   font: inherit;
 }
 
+/* Left at the browser default these render at 13px, well under the rest of the
+   app's 34–42px controls and hard to hit on the rules page's 59 of them. */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #175cd3;
+  flex: none;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #175cd3;
+  outline-offset: 2px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -173,6 +189,7 @@ textarea {
 .topbar__meta {
   display: grid;
   gap: 2px;
+  min-width: 0;
 }
 
 .topbar__eyebrow {
@@ -182,11 +199,16 @@ textarea {
   font-weight: 700;
 }
 
+/* A long project name used to wrap to three lines and drive the whole topbar
+   past 100px tall. The full name stays available through the title attribute. */
 .topbar__title {
   margin: 0;
+  overflow: hidden;
   color: #172033;
   font-size: 20px;
   line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topbar__actions {
@@ -197,16 +219,44 @@ textarea {
   justify-content: flex-end;
 }
 
+.brand__offline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* `nowrap` so the row compresses the select rather than spilling the download
+   button and the menu onto extra rows and doubling the topbar height. The
+   narrow breakpoint below restores wrapping. */
 .project-manager {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
 }
 
+/* The select gives up width instead of holding a fixed 260px and forcing the
+   rest of the row to wrap; the buttons keep their intrinsic size so their
+   labels stay on one line. */
+.project-manager__select {
+  flex: 0 1 260px;
+  min-width: 0;
+}
+
+.project-manager > .button,
+.project-manager > .icon-button {
+  flex: none;
+  white-space: nowrap;
+}
+
 .project-manager__select select {
-  width: min(260px, 36vw);
+  width: 100%;
   min-height: 38px;
   border: 1px solid #c9d4e5;
   border-radius: 8px;
@@ -345,6 +395,77 @@ textarea {
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 24px 60px rgb(15 23 42 / 0.18);
+}
+
+.project-menu-dialog {
+  width: min(520px, 100%);
+}
+
+.project-menu-group {
+  display: grid;
+  gap: 6px;
+}
+
+.project-menu-group--danger {
+  padding-top: 14px;
+  border-top: 1px solid #e7ecf3;
+}
+
+.project-menu-group__title {
+  margin: 0 0 2px;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.project-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #172033;
+  text-align: left;
+  cursor: pointer;
+}
+
+.project-menu-item > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-menu-item strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.project-menu-item__hint {
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.project-menu-item:hover:not(:disabled) {
+  border-color: #dce3ef;
+  background: #f2f6fb;
+}
+
+.project-menu-item:disabled {
+  color: #98a2b3;
+  cursor: not-allowed;
+}
+
+.project-menu-item--danger {
+  color: #b42318;
+}
+
+.project-menu-item--danger:hover:not(:disabled) {
+  border-color: #fda29b;
+  background: #fef3f2;
 }
 
 .import-launcher-dialog__header {
@@ -900,10 +1021,14 @@ label.button {
   background: #fee4e2;
 }
 
+/* `border-collapse: separate` (not `collapse`) and no `overflow` on the table:
+   both are required for the sticky header row and the sticky first column to
+   stay put while the table scrolls. Rounded corners come from the corner cells
+   instead of clipping the table box. */
 .placeholder-table {
   width: 100%;
-  border-collapse: collapse;
-  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid #dce3ef;
   border-radius: 8px;
   background: #ffffff;
@@ -921,6 +1046,22 @@ label.button {
   color: #526070;
   background: #f8fafc;
   font-weight: 800;
+}
+
+/* Column headers stay visible on tables that run for thousands of rows. Only
+   `thead` cells stick — tables that use `th` as a row label must not float. */
+.placeholder-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.placeholder-table thead tr:first-child th:first-child {
+  border-top-left-radius: 7px;
+}
+
+.placeholder-table thead tr:first-child th:last-child {
+  border-top-right-radius: 7px;
 }
 
 .placeholder-table tr:last-child td {
@@ -1117,8 +1258,16 @@ label.button {
   color: #172033;
 }
 
-.operating-subject-review {
-  overflow-x: auto;
+/* The scroller wraps the table only. Putting it on the whole panel would drag
+   the filter/sort toolbar along with the 1080px table and push it off-window.
+   It scrolls on both axes and is height-capped so the sticky header row has a
+   scrollport to stick to — a sticky `top` resolves against the nearest
+   scrollable ancestor, which is this element and not the page. Kept close to
+   the viewport height so the trade for the sticky header costs as few visible
+   rows as possible. */
+.operating-subject-review__table-wrap {
+  overflow: auto;
+  max-height: min(88vh, 900px);
 }
 
 .operating-subject-review .placeholder-table {
@@ -1140,8 +1289,10 @@ label.button {
   box-shadow: 1px 0 0 #e7ecf3;
 }
 
-.placeholder-table th.operating-subject-review__actions-column {
-  z-index: 2;
+/* Corner cell: sticks both ways, so it has to sit above the header row (1) and
+   the body's sticky column (1). */
+.placeholder-table thead th.operating-subject-review__actions-column {
+  z-index: 3;
   background: #f8fafc;
 }
 
@@ -1184,6 +1335,15 @@ label.button {
   padding: 6px 8px;
   background: #ffffff;
   color: #172033;
+}
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
 }
 
 .table-toolbar {
@@ -1304,7 +1464,8 @@ label.button {
 }
 
 .subject-enrollment-table-wrap {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: min(88vh, 900px);
 }
 
 .subject-enrollment-table {
@@ -1811,11 +1972,15 @@ label.button {
   background: #ffffff;
 }
 
+/* The column floors have to add up to less than the panel width, or the last
+   column (the delete button) gets pushed past the window edge. Current floors
+   total 522px + gaps + button, which fits a 1024px window. The `fr` shares keep
+   the wide-window proportions unchanged. */
 .external-subject-entry__summary {
   display: grid;
   grid-template-columns:
-    minmax(96px, 0.7fr) minmax(220px, 2fr) minmax(84px, 0.6fr)
-    minmax(126px, 0.9fr) minmax(136px, 1fr) max-content;
+    minmax(84px, 0.7fr) minmax(150px, 2fr) minmax(72px, 0.6fr)
+    minmax(104px, 0.9fr) minmax(112px, 1fr) max-content;
   gap: 10px;
   align-items: end;
   min-width: 0;
@@ -2018,7 +2183,10 @@ label.button {
 .rule-row__controls label {
   grid-auto-flow: column;
   align-items: center;
+  min-height: 32px;
+  gap: 8px;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .rule-row__criteria--compact {
@@ -2076,6 +2244,14 @@ label.button {
 
 .rule-row__criteria-table-wrap {
   overflow-x: auto;
+}
+
+.prerequisite-rule-table-wrap {
+  overflow-x: auto;
+}
+
+.prerequisite-rule-table-wrap .placeholder-table {
+  min-width: 820px;
 }
 
 .rule-row__criteria-table {
@@ -2378,6 +2554,8 @@ label.button {
 .checkbox-label {
   grid-auto-flow: column;
   align-items: center;
+  min-height: 32px;
+  cursor: pointer;
 }
 
 .checkbox-label--inline {
@@ -3256,6 +3434,10 @@ label.button {
   .section-import-control,
   .template-action-bar {
     justify-content: flex-start;
+  }
+
+  .project-manager {
+    flex-wrap: wrap;
   }
 
   .project-manager__select,

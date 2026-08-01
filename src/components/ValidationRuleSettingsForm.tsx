@@ -12,7 +12,6 @@ import {
   semesterCreditSubjectCriteriaKey
 } from "../validation/semesterCreditSubjectCriteria";
 import { Button } from "./ui/Button";
-import { StatusBadge } from "./ui/StatusBadge";
 
 type ValidationRuleSettingsFormProps = {
   settings: readonly ValidationRuleSetting[];
@@ -73,14 +72,6 @@ export function ValidationRuleSettingsForm({
   onCriteriaChange,
   onRestoreDefaults
 }: ValidationRuleSettingsFormProps) {
-  function renderStatusBadge(setting: ValidationRuleSetting) {
-    return (
-      <StatusBadge tone={setting.enabled ? "ready" : "empty"}>
-        {setting.enabled ? "사용" : "꺼짐"}
-      </StatusBadge>
-    );
-  }
-
   function renderRuleControls(setting: ValidationRuleSetting) {
     return (
       <div className="rule-row__controls">
@@ -152,9 +143,6 @@ export function ValidationRuleSettingsForm({
         <div className="rule-row__header">
           <div>
             <h2>필수 이수학점</h2>
-            <StatusBadge tone={groupEnabled ? "ready" : "empty"}>
-              {groupEnabled ? "사용" : "꺼짐"}
-            </StatusBadge>
           </div>
           <div className="rule-row__controls">
             <label>
@@ -269,7 +257,6 @@ export function ValidationRuleSettingsForm({
         <div className="rule-row__header">
           <div>
             <h2>{validationRuleLabels[setting.id]}</h2>
-            {renderStatusBadge(setting)}
             <p className="rule-row__description">
               여러 허용값은 쉼표로 입력할 수 있습니다.
             </p>
@@ -364,9 +351,6 @@ export function ValidationRuleSettingsForm({
       <section className="rule-row rule-row--compact" key="subject-info-group">
         <div className="rule-row__compact-main">
           <h2>과목정보 불일치</h2>
-          <StatusBadge tone={groupEnabled ? "ready" : "empty"}>
-            {groupEnabled ? "사용" : "꺼짐"}
-          </StatusBadge>
         </div>
         <div className="rule-row__controls">
           <label>
@@ -452,7 +436,6 @@ export function ValidationRuleSettingsForm({
             <section className="rule-row rule-row--compact" key={setting.id}>
               <div className="rule-row__compact-main">
                 <h2>{validationRuleLabels[setting.id]}</h2>
-                {renderStatusBadge(setting)}
               </div>
               {renderRuleControls(setting)}
             </section>
@@ -464,7 +447,6 @@ export function ValidationRuleSettingsForm({
             <div className="rule-row__header">
               <div>
                 <h2>{validationRuleLabels[setting.id]}</h2>
-                {renderStatusBadge(setting)}
               </div>
               {renderRuleControls(setting)}
             </div>

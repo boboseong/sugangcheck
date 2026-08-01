@@ -45,12 +45,18 @@ export function ValidationResultsPage() {
   const isValidationResultStale =
     hasValidationResult && resultRevision !== inputRevision;
   const [filters, setFilters] = useState(defaultFilters);
+  const [page, setPage] = useState(0);
   const [showValidationConfirmation, setShowValidationConfirmation] =
     useState(false);
   const filteredErrors = useMemo(
     () => filterValidationErrors(validationErrors, filters),
     [filters, validationErrors]
   );
+
+  function handleFiltersChange(nextFilters: ValidationErrorFilters) {
+    setFilters(nextFilters);
+    setPage(0);
+  }
 
   useEffect(() => {
     if (searchParams.get("confirmValidation") !== "1") {
@@ -185,13 +191,15 @@ export function ValidationResultsPage() {
         <ErrorFilters
           errors={validationErrors}
           filters={filters}
-          onChange={setFilters}
+          onChange={handleFiltersChange}
         />
         <ValidationErrorTable
           errors={filteredErrors}
           onOpenStudentReport={(studentId) =>
             navigate(`/student-report?studentId=${encodeURIComponent(studentId)}`)
           }
+          onPageChange={setPage}
+          page={page}
         />
       </div>
     </section>

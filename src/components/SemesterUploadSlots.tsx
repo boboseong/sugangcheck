@@ -238,9 +238,15 @@ export function SemesterUploadSlots({
                 <strong>{semesterLabel(target)}</strong>
                 <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
               </div>
-              <p className="upload-slot__file">{status.fileName ?? "파일 없음"}</p>
+              {/* The compact layout truncates these with an ellipsis, so the
+                  title is the only way back to the full text. */}
+              <p className="upload-slot__file" title={status.fileName}>
+                {status.fileName ?? "파일 없음"}
+              </p>
               {message ? (
-                <p className="upload-slot__message">{message}</p>
+                <p className="upload-slot__message" title={message}>
+                  {message}
+                </p>
               ) : null}
               {showUploadActions || onClearSemester ? (
                 <div className="upload-slot__actions">

@@ -52,11 +52,17 @@ function createStatus(input: StatusInput = {}): DataPreparationStatus {
   };
 }
 
-function renderDashboard(status: DataPreparationStatus) {
+function renderDashboard(
+  status: DataPreparationStatus,
+  overrides: {
+    hasValidationResult?: boolean;
+    validationErrorCount?: number;
+  } = {}
+) {
   render(
     <MemoryRouter>
       <DataPreparationDashboard
-        hasValidationResult={false}
+        hasValidationResult={overrides.hasValidationResult ?? false}
         onCancelValidationConfirmation={vi.fn()}
         onCourseSelectionFilesSelected={vi.fn()}
         onConfirmValidation={vi.fn()}
@@ -64,6 +70,7 @@ function renderDashboard(status: DataPreparationStatus) {
         onRunValidation={vi.fn()}
         showValidationConfirmation={false}
         status={status}
+        validationErrorCount={overrides.validationErrorCount}
       />
     </MemoryRouter>
   );
@@ -78,6 +85,34 @@ function card(title: string): HTMLElement {
 }
 
 describe("DataPreparationDashboard", () => {
+  it("reports the error count on the validation card", () => {
+    renderDashboard(createStatus({ canRunFullValidation: true }), {
+      hasValidationResult: true,
+      validationErrorCount: 1316
+    });
+
+    expect(
+      within(card("점검")).getByText("오류 1,316건을 찾았습니다.")
+    ).toBeInTheDocument();
+  });
+
+  it("says so when a completed run found nothing", () => {
+    renderDashboard(createStatus({ canRunFullValidation: true }), {
+      hasValidationResult: true,
+      validationErrorCount: 0
+    });
+
+    expect(within(card("점검")).getByText("오류가 없습니다.")).toBeInTheDocument();
+  });
+
+  it("explains why the validation card is not actionable yet", () => {
+    renderDashboard(createStatus());
+
+    expect(
+      within(card("점검")).getByText("점검을 실행하려면 위의 항목을 먼저 완료해 주세요.")
+    ).toBeInTheDocument();
+  });
+
   it("opens upload modals on empty upload cards without navigating tabs", () => {
     renderDashboard(createStatus());
 

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Info, ShieldCheck } from "lucide-react";
-import { IconButton } from "../ui/IconButton";
 import { Navigation } from "./Navigation";
 import { useProjectMetaStore } from "../../state/projectMetaStore";
 import { ProjectManager } from "../ProjectManager";
@@ -19,6 +18,12 @@ export function AppLayout() {
           <img className="brand__icon" src={sugangcheckIcon} alt="" aria-hidden="true" />
           <div className="brand__text">
             <p className="brand__title">수강신청 오류 점검</p>
+            {/* App-level reassurance, not project state — it sat in the topbar
+                as a button with no action and pushed the actions onto a third row. */}
+            <span className="brand__offline-badge">
+              <ShieldCheck size={14} aria-hidden="true" />
+              <span>오프라인 전용</span>
+            </span>
           </div>
         </div>
         <Navigation />
@@ -42,11 +47,12 @@ export function AppLayout() {
         <header className="topbar">
           <div className="topbar__meta">
             <p className="topbar__eyebrow">현재 프로젝트</p>
-            <p className="topbar__title">{projectName}</p>
+            <p className="topbar__title" title={projectName}>
+              {projectName}
+            </p>
           </div>
           <div className="topbar__actions" aria-label="프로젝트 상태">
             <ProjectManager />
-            <IconButton label="오프라인 전용" icon={<ShieldCheck size={18} />} />
           </div>
         </header>
         <main>

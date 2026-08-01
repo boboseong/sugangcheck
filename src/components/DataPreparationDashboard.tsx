@@ -28,6 +28,7 @@ type DashboardFileUploadHandler = (
 type DataPreparationDashboardProps = {
   confirmationMessage?: string;
   hasValidationResult: boolean;
+  validationErrorCount?: number;
   isValidationResultStale?: boolean;
   onCancelValidationConfirmation: () => void;
   onCourseSelectionFilesSelected?: DashboardFileUploadHandler;
@@ -114,7 +115,8 @@ export function DataPreparationDashboard({
   isValidating = false,
   showValidationConfirmation,
   status,
-  uploadConfirmation
+  uploadConfirmation,
+  validationErrorCount = 0
 }: DataPreparationDashboardProps) {
   const operatingSubjectBadge = importBadge(
     status.counts.operatingSubjectsByStatus
@@ -328,6 +330,19 @@ export function DataPreparationDashboard({
                 ? "확인 후 점검 가능"
               : "대기 중"}
         </p>
+        {/* The error count is the number this whole app exists to produce, so
+            it belongs on the card rather than only behind the results link. */}
+        <p className="workflow-card__detail" role="status">
+          {isValidationResultStale
+            ? "입력 자료가 바뀌었습니다. 다시 점검해주세요."
+            : hasValidationResult
+              ? validationErrorCount > 0
+                ? `오류 ${validationErrorCount.toLocaleString()}건을 찾았습니다.`
+                : "오류가 없습니다."
+              : canRunValidation
+                ? "점검을 실행할 수 있습니다."
+                : "점검을 실행하려면 위의 항목을 먼저 완료해 주세요."}
+        </p>
         <div className="workflow-card__validation-action">
           {isValidationResultStale ? (
             <Link className="button button--compact" to="/results">
@@ -349,11 +364,7 @@ export function DataPreparationDashboard({
               <Play size={15} />
               <span>{isValidating ? "점검 중…" : "점검"}</span>
             </button>
-          ) : (
-            <div className="workflow-card__blocked" role="status">
-              점검을 실행하려면 위의 항목을 먼저 완료해 주세요.
-            </div>
-          )}
+          ) : null}
           {showValidationConfirmation && confirmationMessage ? (
             <ValidationRunConfirmationDropdown
               message={confirmationMessage}

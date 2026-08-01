@@ -88,6 +88,7 @@ export function HomePage() {
             "파일을 변경하면 기존 점검 결과가 맞지 않을 수 있습니다. 업로드 후 다시 점검해 주세요. 계속할까요?",
           shouldConfirm: hasValidationResult
         }}
+        validationErrorCount={validationErrors.length}
       />
       {hasPendingOperatingSubjectCompletions ? (
         <MissingOperatingSubjectCompletionDialog

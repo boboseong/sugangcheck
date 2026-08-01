@@ -56,14 +56,14 @@ export function CourseSelectionsPage() {
     <section className="page">
       <PageHeader
         title="수강신청 결과 업로드"
-        description="수강신청 결과 파일을 학기별로 읽고 학생-과목 원천 행으로 변환합니다. 특정 학기 재업로드는 해당 학기 원천 행만 교체합니다."
+        description="수강신청 결과 파일을 학기별로 읽어 학생별 신청 내역으로 저장합니다. 특정 학기를 다시 업로드하면 해당 학기 내역만 교체됩니다."
       />
       <div className="template-action-bar">
         <UploadImportLauncher
           downloadGuide={courseSelectionDownloadGuide}
           fileUploadConfirmation={{
             message:
-              "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
+              "파일을 변경하면 기존 점검 결과가 맞지 않을 수 있습니다. 업로드 후 다시 점검해 주세요. 계속할까요?",
             shouldConfirm: hasValidationResult
           }}
           onFilesSelected={handleFilesSelected}
@@ -81,7 +81,7 @@ export function CourseSelectionsPage() {
         <SemesterUploadSlots
           clearConfirmation={{
             message:
-              "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
+              "파일을 변경하면 기존 점검 결과가 맞지 않을 수 있습니다. 업로드 후 다시 점검해 주세요. 계속할까요?",
             shouldConfirm: hasValidationResult
           }}
           compact

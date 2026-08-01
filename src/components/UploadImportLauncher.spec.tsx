@@ -27,9 +27,9 @@ vi.mock("../storage/indexedDbStorage", () => ({
 
 vi.mock("../state/projectWorkspace", () => projectWorkspaceMocks);
 
-const confirmationMessage = "기존 점검 결과를 처리합니다. 계속하시겠습니까?";
+const confirmationMessage = "기존 점검 결과를 처리합니다. 계속할까요?";
 const pageConfirmationMessage =
-  "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?";
+  "파일을 변경하면 기존 점검 결과가 맞지 않을 수 있습니다. 업로드 후 다시 점검해 주세요. 계속할까요?";
 
 const validationResult: ValidationEngineResult = {
   durationMs: 1,
@@ -301,7 +301,7 @@ describe("UploadImportLauncher", () => {
     ) as HTMLInputElement;
     fireEvent.change(externalInput, { target: { files: [file] } });
     expect(confirmSpy).toHaveBeenLastCalledWith(
-      expect.stringContaining("기존 점검 결과가 이전 결과로 표시됩니다")
+      expect.stringContaining("기존 점검 결과가 맞지 않을 수 있으므로")
     );
     externalView.unmount();
 
@@ -313,7 +313,7 @@ describe("UploadImportLauncher", () => {
     ) as HTMLInputElement;
     fireEvent.change(rulesInput, { target: { files: [file] } });
     expect(confirmSpy).toHaveBeenLastCalledWith(
-      expect.stringContaining("기존 점검 결과가 이전 결과로 표시됩니다")
+      expect.stringContaining("기존 점검 결과가 맞지 않을 수 있으므로")
     );
   });
 });

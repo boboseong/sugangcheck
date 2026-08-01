@@ -173,7 +173,7 @@ function FileUploadCard({
       </p>
       {prepared ? (
         <p className="muted-text">
-          {prepared.semesterCount.toLocaleString()}개 학기 · 원천 행{" "}
+          {prepared.semesterCount.toLocaleString()}개 학기 · 전체 행{" "}
           {prepared.rowCount.toLocaleString()}개
           {prepared.failedRowCount > 0
             ? ` · 읽지 못한 행 ${prepared.failedRowCount.toLocaleString()}개`

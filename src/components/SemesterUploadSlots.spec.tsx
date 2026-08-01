@@ -4,7 +4,7 @@ import { SemesterUploadSlots } from "./SemesterUploadSlots";
 import type { Semester } from "../types/semester";
 
 const confirmationMessage =
-  "기존 점검 결과가 삭제됩니다. 계속하시겠습니까?";
+  "기존 점검 결과가 삭제됩니다. 계속할까요?";
 const targetLabel = "1학년 1학기 파일 비우기";
 
 function renderSlots(input?: {

@@ -211,7 +211,7 @@ describe("checkDataPreparationStatus", () => {
           sourceType: "courseSelections",
           status: "needsReview",
           target,
-          message: "파싱 실패 2행"
+          message: "읽기 실패 2행"
         }
       ],
       studentSemesterPresence: [],
@@ -232,7 +232,7 @@ describe("checkDataPreparationStatus", () => {
     expect(status.issues).toContainEqual(
       expect.objectContaining({
         code: "needsReview",
-        message: "수강신청 결과 탭 1학년 1학기 업로드 확인이 필요합니다: 파싱 실패 2행",
+        message: "수강신청 결과 탭 1학년 1학기 업로드 확인이 필요합니다: 읽기 실패 2행",
         relatedIds: ["course-needs-review"],
         relatedSemester: target,
         relatedSourceType: "courseSelections"

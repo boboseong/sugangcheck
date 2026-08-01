@@ -24,7 +24,7 @@ type OperatingSubjectReviewTableProps = {
 
 const statusLabels: Record<OperatingSubject["masterMatchStatus"], string> = {
   matched: "마스터 일치",
-  unmatched: "미등록",
+  unmatched: "자동 인식 불가",
   manual: "수동 수정"
 };
 
@@ -184,7 +184,7 @@ export function OperatingSubjectReviewTable({
   if (subjects.length === 0) {
     return (
       <div className="empty-panel">
-        <p>운영과목 파일을 업로드하면 파싱 결과가 표시됩니다.</p>
+        <p>운영과목 파일을 업로드하면 과목 목록이 표시됩니다.</p>
       </div>
     );
   }
@@ -199,7 +199,7 @@ export function OperatingSubjectReviewTable({
             value={filter}
           >
             <option value="all">전체</option>
-            <option value="unmatched">미등록</option>
+            <option value="unmatched">자동 인식 불가</option>
             <option value="manual">수동 수정</option>
             <option value="matched">마스터 일치</option>
           </select>
@@ -210,7 +210,7 @@ export function OperatingSubjectReviewTable({
             onChange={(event) => setSort(event.target.value as SubjectSort)}
             value={sort}
           >
-            <option value="status">미등록 우선</option>
+            <option value="status">자동 인식 불가 우선</option>
             <option value="semester">학기순</option>
             <option value="subjectName">과목명순</option>
             <option value="credits">학점순</option>

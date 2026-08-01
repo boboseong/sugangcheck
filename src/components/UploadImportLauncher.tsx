@@ -267,7 +267,7 @@ export function UploadImportLauncher({
 
       if (target) {
         if (!isSemesterProjectImportSection(section)) {
-          window.alert("이 입력 항목은 학기별 프로젝트 불러오기를 지원하지 않습니다.");
+          window.alert("이 항목은 학기별로 나누어 불러올 수 없습니다. 전체 불러오기를 이용해 주세요.");
           return;
         }
 

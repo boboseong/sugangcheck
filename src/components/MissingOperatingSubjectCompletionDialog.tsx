@@ -46,7 +46,7 @@ export function MissingOperatingSubjectCompletionDialog({
           </div>
         </div>
         <div className="missing-operating-subject-dialog__body">
-          <p>운영과목에는 있지만, 수강신청결과에는 없는 과목 있습니다.</p>
+          <p>운영과목에는 있지만 수강신청 결과에는 없는 과목이 있습니다.</p>
           <table className="placeholder-table missing-operating-subject-table">
             <thead>
               <tr>

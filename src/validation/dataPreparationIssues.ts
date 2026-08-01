@@ -6,7 +6,7 @@ import type {
 import { semesterLabel } from "../utils/semester";
 
 export const unregisteredOperatingSubjectIssueMessage =
-  "운영과목 미등록 정보가 있습니다.";
+  "자동 인식되지 않은 운영과목이 있습니다.";
 
 export function hasDataPreparationIssueCode(
   status: DataPreparationStatus,
@@ -29,13 +29,13 @@ function issueRunNotice(issue: DataPreparationIssue): string | undefined {
     case "needsReview":
       return `${issue.message} 해당 학기는 제외됩니다.`;
     case "unregisteredOperatingSubject":
-      return `${issue.message} 운영과목 입력값 기준으로 점검하므로 과목 정보 판단에 제한이 있을 수 있습니다.`;
+      return `${issue.message} 자동 인식되지 않은 과목이 있어 일부 과목의 교과군·선택구분 정보가 정확하지 않을 수 있습니다.`;
     case "unknownStudentSemester":
       return `${issue.message} 전입/외부 이수 누락 판단이 제한될 수 있습니다.`;
     case "missingCredits":
-      return `${issue.message} 해당 행은 점검 레코드에서 제외됩니다.`;
+      return `${issue.message} 해당 행은 점검 대상에서 제외됩니다.`;
     case "incompleteExternalCourseInput":
-      return `${issue.message} 해당 행은 점검 레코드에서 제외됩니다.`;
+      return `${issue.message} 해당 행은 점검 대상에서 제외됩니다.`;
     case "pendingPrerequisiteCandidate":
       return `${issue.message} 후보 상태 규칙은 적용되지 않습니다.`;
     case "missingValidationRuleSettings":

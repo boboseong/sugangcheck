@@ -265,7 +265,7 @@ export function checkDataPreparationStatus(input: {
     issues.push(
       issue(
         "unknownStudentSemester",
-        `학생 학기별 존재 여부에 미확인 값 ${unknownStudentSemesterCount.toLocaleString()}건이 남아 있습니다.`,
+        `재학 여부가 확인되지 않은 학생·학기 조합이 ${unknownStudentSemesterCount.toLocaleString()}건 있습니다.`,
         false
       )
     );
@@ -275,7 +275,7 @@ export function checkDataPreparationStatus(input: {
     issues.push(
       issue(
         "missingCredits",
-        `학점이 해석되지 않은 과목 ${resolutionStatus.missingCreditCount.toLocaleString()}건이 있습니다.`,
+        `학점을 확인할 수 없는 과목이 ${resolutionStatus.missingCreditCount.toLocaleString()}건 있습니다.`,
         false
       )
     );
@@ -295,7 +295,7 @@ export function checkDataPreparationStatus(input: {
     issues.push(
       issue(
         "pendingPrerequisiteCandidate",
-        `점검 여부가 정해지지 않은 위계 규칙 ${pendingPrerequisiteCandidateCount.toLocaleString()}건이 남아 있습니다.`,
+        `사용 여부를 결정하지 않은 위계 규칙 후보가 ${pendingPrerequisiteCandidateCount.toLocaleString()}건 있습니다. 점검 규칙 탭에서 확인해 주세요.`,
         false
       )
     );

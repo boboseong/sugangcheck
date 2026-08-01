@@ -78,7 +78,7 @@ export function ProjectManager() {
       await action();
       await refreshProjects();
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : "프로젝트 작업에 실패했습니다.");
+      window.alert(error instanceof Error ? error.message : "프로젝트 처리 중 문제가 발생했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.");
     } finally {
       setBusy(false);
     }
@@ -174,7 +174,7 @@ export function ProjectManager() {
             result.dataPreparationStatus?.issues
               .slice(0, 5)
               .map((issue) => `- ${issue.message}`)
-              .join("\n") || "- 점검 실행 조건을 만족하지 못했습니다.";
+              .join("\n") || "- 점검을 실행하려면 운영과목과 수강신청 결과를 먼저 업로드해 주세요.";
 
           window.alert(
             `템플릿 데이터를 가져왔지만 자동 점검은 실행하지 못했습니다.\n${issues}`
@@ -403,7 +403,7 @@ export function ProjectManager() {
       <IconButton
         disabled={busy || !activeProjectId}
         icon={<Database size={18} />}
-        label="RawData 다운로드"
+        label="원본 데이터 다운로드"
         onClick={handleDownloadRawData}
       />
     </div>

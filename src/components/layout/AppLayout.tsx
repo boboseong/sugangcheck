@@ -46,7 +46,7 @@ export function AppLayout() {
           </div>
           <div className="topbar__actions" aria-label="프로젝트 상태">
             <ProjectManager />
-            <IconButton label="서버 업로드 없음" icon={<ShieldCheck size={18} />} />
+            <IconButton label="오프라인 전용" icon={<ShieldCheck size={18} />} />
           </div>
         </header>
         <main>

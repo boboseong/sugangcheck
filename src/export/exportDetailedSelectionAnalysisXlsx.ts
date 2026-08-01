@@ -78,7 +78,7 @@ export function createDetailedSelectionAnalysisWorkbook(
   ].map((wch) => ({ wch }));
   criteriaSheet["!cols"] = [14, 18, 10, 10, 28].map((wch) => ({ wch }));
 
-  utils.book_append_sheet(workbook, crosstabSheet, "크로스탭");
+  utils.book_append_sheet(workbook, crosstabSheet, "학생별선택현황");
   utils.book_append_sheet(workbook, criteriaSheet, "분석조건");
 
   return workbook;

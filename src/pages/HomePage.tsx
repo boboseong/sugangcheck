@@ -85,7 +85,7 @@ export function HomePage() {
         status={dataPreparationStatus}
         uploadConfirmation={{
           message:
-            "입력 자료가 변경되어 기존 점검 결과가 이전 결과로 표시됩니다. 계속하시겠습니까?",
+            "파일을 변경하면 기존 점검 결과가 맞지 않을 수 있습니다. 업로드 후 다시 점검해 주세요. 계속할까요?",
           shouldConfirm: hasValidationResult
         }}
       />

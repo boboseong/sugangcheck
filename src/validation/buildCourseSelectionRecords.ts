@@ -134,9 +134,9 @@ export function buildCourseSelectionRecords(input: {
       issues.push({
         message: [
           !metadata.subjectGroup || !metadata.selectionType
-            ? "과목 정보가 해석되지 않았습니다."
+            ? "과목의 교과군·선택구분 정보를 확인할 수 없습니다."
             : undefined,
-          credits.credits === undefined ? "학점이 해석되지 않았습니다." : undefined
+          credits.credits === undefined ? "학점을 확인할 수 없습니다." : undefined
         ]
           .filter(Boolean)
           .join(" "),

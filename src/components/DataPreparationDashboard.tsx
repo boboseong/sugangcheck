@@ -351,7 +351,7 @@ export function DataPreparationDashboard({
             </button>
           ) : (
             <div className="workflow-card__blocked" role="status">
-              사전 작업이 완료되지 않았습니다.
+              점검을 실행하려면 위의 항목을 먼저 완료해 주세요.
             </div>
           )}
           {showValidationConfirmation && confirmationMessage ? (

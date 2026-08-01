@@ -167,13 +167,13 @@ export function useOperatingSubjectImport() {
         parseResult.failedRows.length > 0;
       const statusMessage = [
         needsReview
-          ? `${semesterLabel(target)}로 임시 배치했습니다. 학기 매핑을 확인하세요.`
+          ? `${semesterLabel(target)}에 임시로 배치했습니다. 올바른 학기인지 확인해 주세요.`
           : undefined,
         hasTargetMismatch && detectedSemester
-          ? `파일 내부 학기는 ${semesterLabel(detectedSemester)}입니다. ${semesterLabel(target)} 슬롯으로 가져왔으니 확인하세요.`
+          ? `파일에 기록된 학기는 ${semesterLabel(detectedSemester)}이지만, ${semesterLabel(target)} 위치에 업로드되었습니다. 학기가 맞는지 확인해 주세요.`
           : undefined,
         parseResult.failedRows.length > 0
-          ? `파싱 실패 ${parseResult.failedRows.length}행`
+          ? `읽기 실패 ${parseResult.failedRows.length}행`
           : undefined,
         unmatchedCount > 0 ? `미등록 과목 ${unmatchedCount}개` : undefined
       ]

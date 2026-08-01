@@ -61,7 +61,7 @@ describe("detailed selection analysis export", () => {
     });
     const workbook = createDetailedSelectionAnalysisWorkbook(result);
     const crosstabRows = utils.sheet_to_json<unknown[]>(
-      workbook.Sheets["크로스탭"]!,
+      workbook.Sheets["학생별선택현황"]!,
       { header: 1 }
     );
     const criteriaRows = utils.sheet_to_json<unknown[]>(
@@ -70,7 +70,7 @@ describe("detailed selection analysis export", () => {
     );
 
     expect(detailedSelectionAnalysisFileName).toBe("학생선택_세부분석.xlsx");
-    expect(workbook.SheetNames).toEqual(["크로스탭", "분석조건"]);
+    expect(workbook.SheetNames).toEqual(["학생별선택현황", "분석조건"]);
     expect(crosstabRows[0]).toEqual([
       "번호",
       "학번",

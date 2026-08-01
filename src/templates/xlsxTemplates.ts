@@ -1845,14 +1845,14 @@ function parseValidationRuleSettingsTemplateSheet(
         } else {
           issues.push({
             rowNumber,
-            message: "세부 기준은 JSON 객체 형식으로 입력하세요."
+            message: "세부 기준 형식이 올바르지 않습니다. 템플릿 파일의 예시를 참고해 주세요."
           });
           return;
         }
       } catch {
         issues.push({
           rowNumber,
-          message: "세부 기준 JSON을 해석하지 못했습니다."
+          message: "세부 기준 값을 읽지 못했습니다. 빈 칸이거나 형식이 맞는지 확인해 주세요."
         });
         return;
       }

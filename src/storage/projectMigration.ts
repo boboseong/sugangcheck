@@ -316,7 +316,7 @@ export function migrateProjectState(
     )
   ) {
     throw new Error(
-      `지원하지 않는 프로젝트 스키마 버전입니다: ${projectState.schemaVersion}`
+      `이 프로젝트 파일은 현재 앱 버전에서 열 수 없습니다. 앱을 최신 버전으로 업데이트해 주세요. (버전: ${projectState.schemaVersion})`
     );
   }
 

@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Printer, School, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Download, Printer, School, Users } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { StudentSelector } from "../components/StudentSelector";
 import { StaleValidationResultNotice } from "../components/StaleValidationResultNotice";
 import { Button } from "../components/ui/Button";
+import {
+  exportSubjectGroupCreditsXlsx,
+  subjectGroupCreditsFileName
+} from "../export/exportSubjectGroupCreditsXlsx";
 import { PageHeader } from "../components/ui/PageHeader";
 import { useCourseSelectionRecordBuild } from "../hooks/useCourseSelectionRecordBuild";
 import { StudentCourseReport } from "../reports/StudentCourseReport";
@@ -12,6 +16,7 @@ import { useStudentStore } from "../state/studentStore";
 import { useNormalizedCourseSelectionStore } from "../state/normalizedCourseSelectionStore";
 import { useValidationResultStore } from "../state/validationResultStore";
 import { useValidationRevisionStore } from "../state/validationRevisionStore";
+import { downloadBlob } from "../utils/downloadBlob";
 import type { CourseSelectionRecord } from "../types/courseSelection";
 import type { Student } from "../types/student";
 import type { ValidationError } from "../types/validation";
@@ -208,6 +213,17 @@ export function StudentReportPage() {
     setAllPrintConfirmOpen(false);
   }
 
+  async function downloadSubjectGroupCredits() {
+    if (isValidationResultStale || students.length === 0) {
+      return;
+    }
+
+    await downloadBlob(
+      exportSubjectGroupCreditsXlsx(students, recordsByStudentId),
+      subjectGroupCreditsFileName
+    );
+  }
+
   return (
     <section className="page student-report-page">
       <PageHeader
@@ -262,6 +278,15 @@ export function StudentReportPage() {
           variant="secondary"
         >
           오류 학생 출력
+        </Button>
+        <Button
+          disabled={isValidationResultStale || students.length === 0}
+          icon={<Download size={18} />}
+          onClick={downloadSubjectGroupCredits}
+          title="전체 학생의 교과군별 학점을 학번 순 엑셀 파일로 저장합니다."
+          variant="secondary"
+        >
+          학점 엑셀 출력
         </Button>
       </div>
       {allPrintConfirmOpen ? (

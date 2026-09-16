@@ -2879,12 +2879,17 @@ label.button {
   background: #ffffff;
 }
 
-.student-selector label {
+.student-selector label,
+.student-selector__field {
   display: grid;
   gap: 6px;
   color: #526070;
   font-size: 13px;
   font-weight: 700;
+}
+
+.student-selector__field label {
+  display: block;
 }
 
 .student-selector input,
@@ -2893,6 +2898,22 @@ label.button {
   border: 1px solid #c9d4e5;
   border-radius: 8px;
   padding: 7px 9px;
+}
+
+.student-selector__nav {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.student-selector__nav select {
+  min-width: 0;
+}
+
+.student-selector__nav .icon-button {
+  width: 36px;
+  height: 36px;
 }
 
 .student-report {

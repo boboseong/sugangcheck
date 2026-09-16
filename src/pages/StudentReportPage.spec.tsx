@@ -10,8 +10,13 @@ import { useValidationRevisionStore } from "../state/validationRevisionStore";
 import type { ParsedCourseSelectionRow } from "../types/courseSelection";
 import type { OperatingSubject } from "../types/subject";
 import type { ValidationError } from "../types/validation";
+import { downloadBlob } from "../utils/downloadBlob";
 import { buildCourseSelectionRecords } from "../validation/buildCourseSelectionRecords";
 import { StudentReportPage } from "./StudentReportPage";
+
+vi.mock("../utils/downloadBlob", () => ({
+  downloadBlob: vi.fn().mockResolvedValue(true)
+}));
 
 const target = { grade: 1, semester: 1 } as const;
 const student = {
@@ -98,6 +103,7 @@ describe("StudentReportPage", () => {
   afterEach(() => {
     resetStores();
     vi.restoreAllMocks();
+    vi.mocked(downloadBlob).mockClear();
   });
 
   it("reflects operating subject changes made after course selection records were built", async () => {
@@ -308,11 +314,134 @@ describe("StudentReportPage", () => {
       "선택 학생 출력",
       "전체 학생 출력",
       "반별 학생 출력",
-      "오류 학생 출력"
+      "오류 학생 출력",
+      "학점 엑셀 출력"
     ]) {
       expect(screen.getByRole("button", { name })).toBeDisabled();
       fireEvent.click(screen.getByRole("button", { name }));
     }
     expect(printSpy).not.toHaveBeenCalled();
+    expect(downloadBlob).not.toHaveBeenCalled();
+  });
+
+  it("steps to the previous and next student with the selector chevrons", async () => {
+    const thirdStudent = {
+      ...student,
+      studentId: "student-3",
+      studentNo: "20101",
+      name: "박이반",
+      currentClassNo: "2",
+      currentNumber: "1"
+    };
+
+    useStudentStore.setState({ students: [student, nextErrorStudent, thirdStudent] });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <StudentReportPage />
+        </MemoryRouter>
+      );
+    });
+
+    const previousButton = screen.getByRole("button", { name: "이전 학생" });
+    const nextButton = screen.getByRole("button", { name: "다음 학생" });
+
+    expect(previousButton).toBeDisabled();
+    expect(nextButton).toBeEnabled();
+
+    fireEvent.click(nextButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "이오류 - 수강신청 확인서" })
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole("combobox", { name: "학생" })).toHaveValue(
+      nextErrorStudent.studentId
+    );
+    expect(previousButton).toBeEnabled();
+
+    fireEvent.click(nextButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "박이반 - 수강신청 확인서" })
+      ).toBeInTheDocument();
+    });
+    expect(nextButton).toBeDisabled();
+
+    fireEvent.click(previousButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "이오류 - 수강신청 확인서" })
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("keeps chevron navigation inside the selected class filter", async () => {
+    const otherClassStudent = {
+      ...student,
+      studentId: "student-3",
+      studentNo: "20101",
+      name: "박이반",
+      currentClassNo: "2",
+      currentNumber: "1"
+    };
+
+    useStudentStore.setState({ students: [student, nextErrorStudent, otherClassStudent] });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <StudentReportPage />
+        </MemoryRouter>
+      );
+    });
+
+    fireEvent.change(screen.getByRole("combobox", { name: "반" }), {
+      target: { value: "2" }
+    });
+
+    expect(screen.getByRole("combobox", { name: "학생" })).toHaveValue(
+      otherClassStudent.studentId
+    );
+    expect(screen.getByRole("button", { name: "이전 학생" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "다음 학생" })).toBeDisabled();
+  });
+
+  it("downloads the subject group credit workbook for every student", async () => {
+    const buildResult = buildCourseSelectionRecords({
+      mode: "full",
+      courseSelectionRows: [courseSelectionRow],
+      externalCourseInputs: [],
+      operatingSubjects: [initialOperatingSubject]
+    });
+
+    useCourseSelectionRawStore.setState({ courseSelectionRows: [courseSelectionRow] });
+    useNormalizedCourseSelectionStore.setState({
+      buildIssues: buildResult.issues,
+      courseSelectionRecords: buildResult.records
+    });
+    useOperatingSubjectStore.setState({ operatingSubjects: [initialOperatingSubject] });
+    useStudentStore.setState({ students: [nextErrorStudent, student] });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <StudentReportPage />
+        </MemoryRouter>
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "학점 엑셀 출력" }));
+
+    await waitFor(() => expect(downloadBlob).toHaveBeenCalledTimes(1));
+    const [blob, fileName] = vi.mocked(downloadBlob).mock.calls[0]!;
+
+    expect(fileName).toBe("학생별_교과군별학점.xlsx");
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.size).toBeGreaterThan(0);
   });
 });

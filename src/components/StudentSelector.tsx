@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Student } from "../types/student";
+import { IconButton } from "./ui/IconButton";
 
 type StudentSelectorProps = {
   students: readonly Student[];
@@ -12,6 +14,7 @@ export function StudentSelector({
   selectedStudentId,
   onSelectStudent
 }: StudentSelectorProps) {
+  const studentSelectId = useId();
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
   const classOptions = useMemo(
@@ -28,6 +31,19 @@ export function StudentSelector({
 
     return classMatches && queryMatches;
   });
+  const effectiveStudentId = filteredStudents.some(
+    (student) => student.studentId === selectedStudentId
+  )
+    ? selectedStudentId
+    : filteredStudents[0]?.studentId;
+  const currentIndex = filteredStudents.findIndex(
+    (student) => student.studentId === effectiveStudentId
+  );
+  const previousStudent = currentIndex > 0 ? filteredStudents[currentIndex - 1] : undefined;
+  const nextStudent =
+    currentIndex >= 0 && currentIndex < filteredStudents.length - 1
+      ? filteredStudents[currentIndex + 1]
+      : undefined;
 
   return (
     <div className="student-selector">
@@ -50,23 +66,38 @@ export function StudentSelector({
           value={query}
         />
       </label>
-      <label>
-        <span>학생</span>
-        <select
-          onChange={(event) => onSelectStudent(event.target.value)}
-          value={selectedStudentId ?? filteredStudents[0]?.studentId ?? ""}
-        >
-          {filteredStudents.length === 0 ? (
-            <option value="">학생 없음</option>
-          ) : (
-            filteredStudents.map((student) => (
-              <option key={student.studentId} value={student.studentId}>
-                {student.name} ({student.studentNo})
-              </option>
-            ))
-          )}
-        </select>
-      </label>
+      <div className="student-selector__field">
+        <label htmlFor={studentSelectId}>학생</label>
+        <div className="student-selector__nav">
+          <IconButton
+            disabled={!previousStudent}
+            icon={<ChevronLeft size={18} />}
+            label="이전 학생"
+            onClick={() => (previousStudent ? onSelectStudent(previousStudent.studentId) : undefined)}
+          />
+          <select
+            id={studentSelectId}
+            onChange={(event) => onSelectStudent(event.target.value)}
+            value={effectiveStudentId ?? ""}
+          >
+            {filteredStudents.length === 0 ? (
+              <option value="">학생 없음</option>
+            ) : (
+              filteredStudents.map((student) => (
+                <option key={student.studentId} value={student.studentId}>
+                  {student.name} ({student.studentNo})
+                </option>
+              ))
+            )}
+          </select>
+          <IconButton
+            disabled={!nextStudent}
+            icon={<ChevronRight size={18} />}
+            label="다음 학생"
+            onClick={() => (nextStudent ? onSelectStudent(nextStudent.studentId) : undefined)}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,13 @@ import type { Student } from "../types/student";
 import type { ValidationError } from "../types/validation";
 import { parseSemesterKey, semesterLabel } from "../utils/semester";
 import { StatusBadge } from "../components/ui/StatusBadge";
-import { calculateKoreanMathEnglishLimitCredits } from "../data/defaultCreditCriteria";
+import {
+  formatCreditLimit,
+  koreanMathEnglishSubjectGroups,
+  lifeLiberalSubjectGroups,
+  subjectGroupCreditColumns,
+  summarizeSubjectGroupCredits
+} from "../analytics/subjectGroupCreditSummary";
 
 type StudentCourseReportProps = {
   student?: Student;
@@ -28,40 +34,6 @@ type ChoiceGroupBadgeInfo = {
   label: string;
   tone: ChoiceGroupBadgeTone;
 };
-
-const subjectGroupCreditColumns = [
-  "국어",
-  "수학",
-  "영어",
-  "사회",
-  "과학",
-  "체육",
-  "예술",
-  "기술·가정/정보",
-  "제2외국어/한문",
-  "교양"
-];
-
-const koreanMathEnglishSubjectGroups = ["국어", "수학", "영어"];
-
-const lifeLiberalSubjectGroups = [
-  "기술·가정/정보",
-  "제2외국어/한문",
-  "교양"
-];
-
-function subjectGroupCredits(records: readonly CourseSelectionRecord[]): [string, number][] {
-  const totals = new Map<string, number>();
-
-  for (const record of records) {
-    totals.set(record.subjectGroup, (totals.get(record.subjectGroup) ?? 0) + record.credits);
-  }
-
-  return subjectGroupCreditColumns.map((subjectGroup) => [
-    subjectGroup,
-    totals.get(subjectGroup) ?? 0
-  ]);
-}
 
 function subjectGroupSortIndex(subjectGroup: string): number {
   const index = subjectGroupCreditColumns.indexOf(subjectGroup);
@@ -135,10 +107,6 @@ function formatSubjectGroupDetail(record: CourseSelectionRecord): string {
   return [record.subjectGroup, record.selectionType, compactGroupType(record.groupType)]
     .filter((part): part is string => Boolean(part))
     .join(" · ");
-}
-
-function formatCreditLimit(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function padSemesterRecords(
@@ -226,17 +194,15 @@ export function StudentCourseReport({
     1,
     ...semesterSummaries.map((summary) => summary.records.length)
   );
-  const groupedCredits = subjectGroupCredits(studentRecords);
-  const totalCredits = studentRecords.reduce((sum, record) => sum + record.credits, 0);
-  const kmeCredits = studentRecords
-    .filter((record) => koreanMathEnglishSubjectGroups.includes(record.subjectGroup))
-    .reduce((sum, record) => sum + record.credits, 0);
-  const kmeLimitCredits = calculateKoreanMathEnglishLimitCredits(totalCredits);
+  const {
+    groupCredits: groupedCredits,
+    totalCredits,
+    kmeCredits,
+    kmeLimitCredits,
+    lifeLiberalCredits,
+    subjectCount: totalSubjectCount
+  } = summarizeSubjectGroupCredits(studentRecords);
   const formattedKmeLimitCredits = formatCreditLimit(kmeLimitCredits);
-  const lifeLiberalCredits = studentRecords
-    .filter((record) => lifeLiberalSubjectGroups.includes(record.subjectGroup))
-    .reduce((sum, record) => sum + record.credits, 0);
-  const totalSubjectCount = studentRecords.length;
   const highlightedCellClassName = "student-report-matrix-table__cell--highlighted";
   const isRecordHighlighted = (record: CourseSelectionRecord) =>
     subjectGroupMatchesCreditColumn(record.subjectGroup, activeCreditColumn);

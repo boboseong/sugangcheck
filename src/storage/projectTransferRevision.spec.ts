@@ -22,7 +22,7 @@ describe("project transfer validation revisions", () => {
       durationMs: 1
     };
     const projectFile = createProjectFile({
-      appVersion: "0.1.15",
+      appVersion: "0.1.16",
       projectName: state.projectName,
       state,
       savedAt

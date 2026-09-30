@@ -19,10 +19,12 @@ export function AppLayout() {
           <div className="brand__text">
             <p className="brand__title">수강신청 오류 점검</p>
             {/* App-level reassurance, not project state — it sat in the topbar
-                as a button with no action and pushed the actions onto a third row. */}
+                as a button with no action and pushed the actions onto a third row.
+                Only the feedback board talks to the internet, and it never sees
+                project data, so the promise is scoped to the inspection data. */}
             <span className="brand__offline-badge">
               <ShieldCheck size={14} aria-hidden="true" />
-              <span>오프라인 전용</span>
+              <span>점검 자료 오프라인 처리</span>
             </span>
           </div>
         </div>

@@ -22,6 +22,11 @@ const ExternalCoursesPage = lazy(() =>
     default: m.ExternalCoursesPage
   }))
 );
+const FeedbackBoardPage = lazy(() =>
+  import("../pages/FeedbackBoardPage").then((m) => ({
+    default: m.FeedbackBoardPage
+  }))
+);
 const HomePage = lazy(() =>
   import("../pages/HomePage").then((m) => ({ default: m.HomePage }))
 );
@@ -87,6 +92,7 @@ export const router = createHashRouter([
       { path: "results", element: <ValidationResultsPage /> },
       { path: "student-report", element: <StudentReportPage /> },
       { path: "misc-tools", element: <MiscToolsPage /> },
+      { path: "feedback-board", element: <FeedbackBoardPage /> },
       { path: "about", element: <AboutPage /> }
     ]
   }

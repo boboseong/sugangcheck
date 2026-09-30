@@ -639,7 +639,9 @@ input[type="radio"] {
   line-height: 1.7;
 }
 
-@media (min-width: 1120px) {
+/* The dashboard sentence is ~900px wide; below this width the content column
+   is narrower than that, so let it wrap instead of overflowing. */
+@media (min-width: 1240px) {
   .page-header--single-line-description p {
     white-space: nowrap;
   }
@@ -3558,5 +3560,274 @@ label.button {
   .import-launcher-row .button,
   .dashboard-release-panel__actions .button {
     width: 100%;
+  }
+}
+
+/* Feedback board */
+.feedback-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+.feedback-main,
+.feedback-side {
+  display: grid;
+  gap: 14px;
+}
+
+.feedback-form,
+.feedback-comment-form,
+.feedback-admin-form {
+  display: grid;
+  gap: 12px;
+}
+
+.feedback-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.feedback-form label,
+.feedback-comment-form label,
+.feedback-delete-row label,
+.feedback-admin-form label {
+  display: grid;
+  gap: 6px;
+  color: #526070;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feedback-form input,
+.feedback-form textarea,
+.feedback-comment-form input,
+.feedback-comment-form textarea,
+.feedback-delete-row input,
+.feedback-admin-form input {
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid #c9d4e5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+  font-weight: 400;
+}
+
+.feedback-form textarea,
+.feedback-comment-form textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.feedback-form__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feedback-form__hint {
+  color: #526070;
+  font-size: 13px;
+}
+
+.feedback-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 13px;
+}
+
+.feedback-empty {
+  margin: 0;
+  padding: 24px;
+  border: 1px dashed #c9d4e5;
+  border-radius: 8px;
+  color: #526070;
+  text-align: center;
+}
+
+.feedback-post-list {
+  display: grid;
+  gap: 12px;
+}
+
+.feedback-post {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.feedback-post__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.feedback-post__meta {
+  display: flex;
+  gap: 10px;
+  color: #6b7a8f;
+  font-size: 12px;
+}
+
+.feedback-post__content,
+.feedback-comment__body p {
+  margin: 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.feedback-comment-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feedback-comment {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f5f7fb;
+  color: #526070;
+}
+
+.feedback-comment--admin {
+  background: #eef4ff;
+  border: 1px solid #c7d7f7;
+}
+
+.feedback-comment__body {
+  display: grid;
+  gap: 4px;
+  color: #172033;
+}
+
+.feedback-comment__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.feedback-comment__header time {
+  color: #6b7a8f;
+  font-size: 12px;
+}
+
+.feedback-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #2457d6;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.feedback-post__actions {
+  display: flex;
+  gap: 14px;
+}
+
+.feedback-text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2457d6;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feedback-text-button:hover {
+  text-decoration: underline;
+}
+
+.feedback-text-button:disabled {
+  color: #9aa7b8;
+  cursor: default;
+  text-decoration: none;
+}
+
+.feedback-text-button--danger {
+  color: #b42318;
+}
+
+.feedback-comment-form {
+  padding: 12px;
+  border: 1px solid #dce3ef;
+  border-radius: 8px;
+  background: #f9fafc;
+}
+
+.feedback-comment-form__admin-note {
+  margin: 0;
+  color: #526070;
+  font-size: 13px;
+}
+
+.feedback-comment-form__actions,
+.feedback-admin-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.feedback-delete-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff5f5;
+  color: #7f1d1d;
+  font-size: 13px;
+}
+
+.feedback-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  color: #526070;
+  font-size: 13px;
+}
+
+.feedback-admin-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 960px) {
+  .feedback-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-form__row {
+    grid-template-columns: 1fr;
   }
 }

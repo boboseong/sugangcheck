@@ -67,7 +67,7 @@ export function HomePage() {
       <PageHeader
         title="수강신청 오류 점검"
         className="page-header--single-line-description"
-        description="학생들의 수강신청 결과를 점검하기 위한 앱입니다. 모든 정보는 오프라인으로 처리되며 서버에 업로드 되는 자료는 없습니다."
+        description="학생들의 수강신청 결과를 점검하는 앱입니다. 점검 자료는 모두 오프라인으로 처리되고, 의견 게시판에 적은 글만 인터넷으로 전송됩니다."
         versionLabel={`ver ${appVersion}`}
       />
 

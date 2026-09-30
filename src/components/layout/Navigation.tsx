@@ -3,6 +3,7 @@ import {
   FileSpreadsheet,
   Home,
   ListChecks,
+  MessageSquare,
   Settings,
   Upload,
   Users,
@@ -29,7 +30,8 @@ const navItems = [
       "/detailed-selection-analysis"
     ]
   },
-  { to: "/misc-tools", label: "기타 도구", icon: Wrench }
+  { to: "/misc-tools", label: "기타 도구", icon: Wrench },
+  { to: "/feedback-board", label: "의견 게시판", icon: MessageSquare }
 ];
 
 export function Navigation() {

@@ -3,21 +3,37 @@ import { useState, type FormEvent } from "react";
 import {
   feedbackContentMaxLength,
   feedbackNicknameMaxLength,
+  type FeedbackComment,
   type FeedbackPost
 } from "../feedback/feedbackBoardApi";
 import { Button } from "./ui/Button";
 
+/** Set on items shown before the server has confirmed them. */
+export type FeedbackLocalState = {
+  localStatus?: "sending" | "failed";
+  localError?: string;
+};
+
+export type FeedbackDisplayComment = FeedbackComment & FeedbackLocalState;
+export type FeedbackDisplayPost = Omit<FeedbackPost, "comments"> &
+  FeedbackLocalState & { comments: FeedbackDisplayComment[] };
+
 type FeedbackPostCardProps = {
-  post: FeedbackPost;
+  post: FeedbackDisplayPost;
   isAdmin: boolean;
   defaultNickname: string;
   busy: boolean;
+  /** Returns false when the comment was not accepted (the form keeps its text). */
   onAddComment: (
     postId: string,
     input: { nickname: string; content: string; website: string }
-  ) => Promise<boolean>;
+  ) => boolean;
   onDeletePost: (postId: string, password?: string) => Promise<boolean>;
   onDeleteComment: (commentId: string) => Promise<boolean>;
+  onRetryPost: (postId: string) => void;
+  onDiscardPost: (postId: string) => void;
+  onRetryComment: (commentId: string) => void;
+  onDiscardComment: (commentId: string) => void;
 };
 
 export function formatFeedbackDate(iso: string): string {
@@ -37,6 +53,44 @@ export function formatFeedbackDate(iso: string): string {
   });
 }
 
+function LocalStatus({
+  state,
+  onRetry,
+  onDiscard
+}: {
+  state: FeedbackLocalState;
+  onRetry: () => void;
+  onDiscard: () => void;
+}) {
+  if (state.localStatus === "sending") {
+    return (
+      <span className="feedback-local-status" role="status">
+        등록 중…
+      </span>
+    );
+  }
+
+  if (state.localStatus === "failed") {
+    return (
+      <span className="feedback-local-status feedback-local-status--failed" role="alert">
+        <span>등록하지 못했습니다. {state.localError}</span>
+        <button className="feedback-text-button" onClick={onRetry} type="button">
+          다시 시도
+        </button>
+        <button
+          className="feedback-text-button feedback-text-button--danger"
+          onClick={onDiscard}
+          type="button"
+        >
+          지우기
+        </button>
+      </span>
+    );
+  }
+
+  return null;
+}
+
 export function FeedbackPostCard({
   post,
   isAdmin,
@@ -44,7 +98,11 @@ export function FeedbackPostCard({
   busy,
   onAddComment,
   onDeletePost,
-  onDeleteComment
+  onDeleteComment,
+  onRetryPost,
+  onDiscardPost,
+  onRetryComment,
+  onDiscardComment
 }: FeedbackPostCardProps) {
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentNickname, setCommentNickname] = useState(defaultNickname);
@@ -52,16 +110,17 @@ export function FeedbackPostCard({
   const [commentWebsite, setCommentWebsite] = useState("");
   const [showDeleteRow, setShowDeleteRow] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const isConfirmed = post.localStatus === undefined;
 
-  async function submitComment(event: FormEvent<HTMLFormElement>) {
+  function submitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const ok = await onAddComment(post.id, {
+    const accepted = onAddComment(post.id, {
       nickname: isAdmin ? "운영자" : commentNickname,
       content: commentContent,
       website: commentWebsite
     });
 
-    if (ok) {
+    if (accepted) {
       setCommentContent("");
       setShowCommentForm(false);
     }
@@ -78,7 +137,10 @@ export function FeedbackPostCard({
   }
 
   return (
-    <article className="feedback-post" aria-label={`${post.nickname}의 글`}>
+    <article
+      className={isConfirmed ? "feedback-post" : "feedback-post feedback-post--local"}
+      aria-label={`${post.nickname}의 글`}
+    >
       <header className="feedback-post__header">
         <strong>{post.nickname}</strong>
         <span className="feedback-post__meta">
@@ -87,6 +149,11 @@ export function FeedbackPostCard({
         </span>
       </header>
       <p className="feedback-post__content">{post.content}</p>
+      <LocalStatus
+        onDiscard={() => onDiscardPost(post.id)}
+        onRetry={() => onRetryPost(post.id)}
+        state={post}
+      />
 
       {post.comments.length > 0 ? (
         <ul className="feedback-comment-list" aria-label="댓글">
@@ -109,7 +176,7 @@ export function FeedbackPostCard({
                   <time dateTime={comment.createdAt}>
                     {formatFeedbackDate(comment.createdAt)}
                   </time>
-                  {isAdmin ? (
+                  {isAdmin && comment.localStatus === undefined ? (
                     <button
                       className="feedback-text-button"
                       disabled={busy}
@@ -121,32 +188,38 @@ export function FeedbackPostCard({
                   ) : null}
                 </div>
                 <p>{comment.content}</p>
+                <LocalStatus
+                  onDiscard={() => onDiscardComment(comment.id)}
+                  onRetry={() => onRetryComment(comment.id)}
+                  state={comment}
+                />
               </div>
             </li>
           ))}
         </ul>
       ) : null}
 
-      <div className="feedback-post__actions">
-        <button
-          className="feedback-text-button"
-          disabled={busy}
-          onClick={() => setShowCommentForm((value) => !value)}
-          type="button"
-        >
-          {showCommentForm ? "댓글 취소" : "댓글 달기"}
-        </button>
-        <button
-          className="feedback-text-button feedback-text-button--danger"
-          disabled={busy}
-          onClick={() => setShowDeleteRow((value) => !value)}
-          type="button"
-        >
-          {showDeleteRow ? "삭제 취소" : "글 삭제"}
-        </button>
-      </div>
+      {isConfirmed ? (
+        <div className="feedback-post__actions">
+          <button
+            className="feedback-text-button"
+            onClick={() => setShowCommentForm((value) => !value)}
+            type="button"
+          >
+            {showCommentForm ? "댓글 취소" : "댓글 달기"}
+          </button>
+          <button
+            className="feedback-text-button feedback-text-button--danger"
+            disabled={busy}
+            onClick={() => setShowDeleteRow((value) => !value)}
+            type="button"
+          >
+            {showDeleteRow ? "삭제 취소" : "글 삭제"}
+          </button>
+        </div>
+      ) : null}
 
-      {showCommentForm ? (
+      {isConfirmed && showCommentForm ? (
         <form className="feedback-comment-form" onSubmit={submitComment}>
           {isAdmin ? (
             <p className="feedback-comment-form__admin-note">
@@ -183,14 +256,12 @@ export function FeedbackPostCard({
             value={commentWebsite}
           />
           <div className="feedback-comment-form__actions">
-            <Button disabled={busy} type="submit">
-              댓글 등록
-            </Button>
+            <Button type="submit">댓글 등록</Button>
           </div>
         </form>
       ) : null}
 
-      {showDeleteRow ? (
+      {isConfirmed && showDeleteRow ? (
         <form className="feedback-delete-row" onSubmit={confirmDelete}>
           {isAdmin ? (
             <span>운영자 권한으로 이 글을 삭제합니다.</span>

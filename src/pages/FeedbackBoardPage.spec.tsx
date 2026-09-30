@@ -61,11 +61,13 @@ describe("FeedbackBoardPage", () => {
     expect(screen.getByRole("heading", { name: "전체 글 (1)" })).toBeInTheDocument();
   });
 
-  it("submits a new post with the app version and reloads the list", async () => {
-    apiMocks.createFeedbackPost.mockResolvedValue({
-      id: "post-2",
-      createdAt: "2026-09-30T05:00:00.000Z"
-    });
+  it("shows a new post at once and confirms it in the background", async () => {
+    let confirmPost: (value: { id: string; createdAt: string }) => void = () => {};
+    apiMocks.createFeedbackPost.mockReturnValue(
+      new Promise((resolve) => {
+        confirmPost = resolve;
+      })
+    );
 
     render(<FeedbackBoardPage />);
     await screen.findByText("엑셀 내보내기가 편해요.");
@@ -81,18 +83,64 @@ describe("FeedbackBoardPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "등록" }));
 
-    await waitFor(() => {
-      expect(apiMocks.createFeedbackPost).toHaveBeenCalledWith({
-        nickname: "새 교사",
-        content: "잘 쓰고 있습니다.",
-        appVersion,
-        password: "1234",
-        website: ""
-      });
+    // Visible before the server has answered, and the form is already cleared.
+    expect(screen.getByText("잘 쓰고 있습니다.")).toBeInTheDocument();
+    expect(screen.getByText("등록 중…")).toBeInTheDocument();
+    expect(screen.getByLabelText("내용")).toHaveValue("");
+    expect(screen.getByRole("heading", { name: "전체 글 (2)" })).toBeInTheDocument();
+    expect(apiMocks.createFeedbackPost).toHaveBeenCalledWith({
+      id: expect.stringMatching(/^[A-Za-z0-9-]{8,64}$/),
+      nickname: "새 교사",
+      content: "잘 쓰고 있습니다.",
+      appVersion,
+      password: "1234",
+      website: ""
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("글이 등록되었습니다.");
-    expect(apiMocks.listFeedbackPosts).toHaveBeenCalledTimes(2);
     expect(localStorage.getItem("sugangcheck.feedbackBoard.nickname")).toBe("새 교사");
+
+    confirmPost({ id: "ignored", createdAt: "2026-09-30T05:00:00.000Z" });
+
+    await waitFor(() => {
+      expect(screen.queryByText("등록 중…")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("잘 쓰고 있습니다.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(apiMocks.listFeedbackPosts).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("keeps a post that failed to send and retries it with the same id", async () => {
+    const { FeedbackBoardError } = await import("../feedback/feedbackBoardApi");
+    apiMocks.createFeedbackPost
+      .mockRejectedValueOnce(new FeedbackBoardError("timeout"))
+      .mockResolvedValueOnce({ id: "ignored", createdAt: "2026-09-30T05:00:00.000Z" });
+
+    render(<FeedbackBoardPage />);
+    await screen.findByText("엑셀 내보내기가 편해요.");
+
+    fireEvent.change(screen.getByLabelText("닉네임"), {
+      target: { value: "새 교사" }
+    });
+    fireEvent.change(screen.getByLabelText("내용"), {
+      target: { value: "다시 보내질 글" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "등록" }));
+
+    expect(await screen.findByText(/등록하지 못했습니다/)).toBeInTheDocument();
+    expect(screen.getByText("다시 보내질 글")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+
+    await waitFor(() => {
+      expect(apiMocks.createFeedbackPost).toHaveBeenCalledTimes(2);
+    });
+    const [first] = apiMocks.createFeedbackPost.mock.calls[0] ?? [];
+    const [second] = apiMocks.createFeedbackPost.mock.calls[1] ?? [];
+    expect(second.id).toBe(first.id);
+    await waitFor(() => {
+      expect(screen.queryByText(/등록하지 못했습니다/)).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("다시 보내질 글")).toBeInTheDocument();
   });
 
   it("adds a comment under a post", async () => {
@@ -121,8 +169,10 @@ describe("FeedbackBoardPage", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "댓글 등록" }));
 
+    expect(screen.getByText("저도 동의해요")).toBeInTheDocument();
     await waitFor(() => {
       expect(apiMocks.createFeedbackComment).toHaveBeenCalledWith({
+        id: expect.stringMatching(/^[A-Za-z0-9-]{8,64}$/),
         postId: "post-1",
         nickname: "동료교사",
         content: "저도 동의해요",
@@ -134,6 +184,9 @@ describe("FeedbackBoardPage", () => {
 
   it("deletes a post with its password", async () => {
     apiMocks.deleteFeedbackPost.mockResolvedValue(undefined);
+    apiMocks.listFeedbackPosts
+      .mockResolvedValueOnce(samplePage)
+      .mockResolvedValue({ ...samplePage, total: 0, posts: [] });
 
     render(<FeedbackBoardPage />);
     await screen.findByText("엑셀 내보내기가 편해요.");
@@ -150,6 +203,10 @@ describe("FeedbackBoardPage", () => {
         password: "1234",
         adminKey: undefined
       });
+    });
+    // Removed from the screen without waiting for the list to reload.
+    await waitFor(() => {
+      expect(screen.queryByText("엑셀 내보내기가 편해요.")).not.toBeInTheDocument();
     });
   });
 
@@ -198,7 +255,10 @@ describe("FeedbackBoardPage", () => {
 
     render(<FeedbackBoardPage />);
 
-    expect(await screen.findByText("엑셀 내보내기가 편해요.")).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent("마지막으로 불러온 목록을 보여드립니다.");
+    // The cached list is on screen straight away, before the request settles.
+    expect(screen.getByText("엑셀 내보내기가 편해요.")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "마지막으로 불러온 목록을 보여드립니다."
+    );
   });
 });

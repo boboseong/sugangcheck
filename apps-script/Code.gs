@@ -40,6 +40,7 @@ function ensureSheet_(ss, name, headers) {
 
 function doGet(e) {
   var params = (e && e.parameter) || {};
+  beginResponse_(params);
   var action = params.action || "list";
   try {
     if (action === "list") {
@@ -55,9 +56,11 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  var params = (e && e.parameter) || {};
+  beginResponse_(params);
   var body = {};
   try {
-    body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    body = JSON.parse(params.payload || (e && e.postData && e.postData.contents) || "{}");
   } catch (err) {
     return json_({ ok: false, error: "invalid_json" });
   }
@@ -144,10 +147,11 @@ function createPost_(body) {
   var password = String(body.password || "").trim();
   var passwordHash = password ? hash_(password) : "";
   var appVersion = cleanText_(body.appVersion, 30);
-  var id = Utilities.getUuid();
+  var id = clientId_(body.id) || Utilities.getUuid();
   var createdAt = new Date().toISOString();
-  appendRow_(POSTS_SHEET, [id, createdAt, nickname, content, appVersion, passwordHash, "active"]);
-  return { ok: true, id: id, createdAt: createdAt };
+  return appendOnce_(POSTS_SHEET, POST_HEADERS, id, function () {
+    return [id, createdAt, nickname, content, appVersion, passwordHash, "active"];
+  });
 }
 
 function createComment_(body) {
@@ -163,10 +167,13 @@ function createComment_(body) {
   var content = cleanText_(body.content, MAX_CONTENT);
   if (!nickname) return { ok: false, error: "nickname_required" };
   if (!content) return { ok: false, error: "content_required" };
-  var id = Utilities.getUuid();
+  var id = clientId_(body.id) || Utilities.getUuid();
   var createdAt = new Date().toISOString();
-  appendRow_(COMMENTS_SHEET, [id, postId, createdAt, nickname, content, isAdmin, "active"]);
-  return { ok: true, id: id, createdAt: createdAt, isAdmin: isAdmin };
+  var result = appendOnce_(COMMENTS_SHEET, COMMENT_HEADERS, id, function () {
+    return [id, postId, createdAt, nickname, content, isAdmin, "active"];
+  });
+  result.isAdmin = isAdmin;
+  return result;
 }
 
 function deletePost_(body) {
@@ -234,11 +241,24 @@ function findRow_(sheetName, headers, key, value) {
   return null;
 }
 
-function appendRow_(sheetName, values) {
+// The app retries a request when Google's response is slow or lost, and sends
+// the same id each time. A row is written only the first time that id is seen.
+function clientId_(value) {
+  var id = String(value == null ? "" : value).trim();
+  return /^[A-Za-z0-9-]{8,64}$/.test(id) ? id : "";
+}
+
+function appendOnce_(sheetName, headers, id, buildRow) {
   var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  lock.waitLock(20000);
   try {
-    SpreadsheetApp.getActive().getSheetByName(sheetName).appendRow(values);
+    var existing = findRow_(sheetName, headers, "id", id);
+    if (existing) {
+      return { ok: true, id: id, createdAt: existing.row.createdAt, duplicate: true };
+    }
+    var row = buildRow();
+    SpreadsheetApp.getActive().getSheetByName(sheetName).appendRow(row);
+    return { ok: true, id: id, createdAt: row[headers.indexOf("createdAt")] };
   } finally {
     lock.releaseLock();
   }
@@ -248,6 +268,21 @@ function setCell_(sheetName, rowIndex, colIndex, value) {
   SpreadsheetApp.getActive().getSheetByName(sheetName).getRange(rowIndex, colIndex).setValue(value);
 }
 
+// A request made from a hidden frame (transport=frame) is answered with a tiny
+// page that posts the result to the app window. That path does not go through
+// the JSON hand-off host, which stalls for tens of seconds from time to time.
+var frameRequestId_ = null;
+
+function beginResponse_(params) {
+  frameRequestId_ = params.transport === "frame" ? String(params.rid || "") : null;
+}
+
 function json_(payload) {
+  if (frameRequestId_ !== null) {
+    var message = JSON.stringify({ source: "sugangcheck-feedback", rid: frameRequestId_, payload: payload })
+      .replace(/</g, "\\u003c");
+    return HtmlService.createHtmlOutput("<script>window.top.postMessage(" + message + ", \"*\");</script>")
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
   return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
 }

@@ -1,4 +1,11 @@
-import { feedbackBoardApiUrl } from "../app/externalLinks";
+import {
+  createFeedbackId,
+  sendByFetch,
+  sendByFrame,
+  type FeedbackRequest
+} from "./feedbackTransport";
+
+export { createFeedbackId };
 
 export type FeedbackComment = {
   id: string;
@@ -28,7 +35,19 @@ export type FeedbackPostPage = {
 export const feedbackBoardPageSize = 20;
 export const feedbackNicknameMaxLength = 20;
 export const feedbackContentMaxLength = 2000;
-export const feedbackRequestTimeoutMs = 15_000;
+
+// A request is normally answered through the hidden frame in 1–3s. If no answer
+// has come by the next start time, another attempt is started alongside it and
+// whichever answers first wins. The second attempt is a plain fetch: it uses a
+// different Google path, and unlike a frame it can tell when there is no
+// connection at all.
+export const feedbackAttemptPlan = [
+  { startMs: 0, transport: "frame" },
+  { startMs: 4_000, transport: "fetch" },
+  { startMs: 8_000, transport: "frame" },
+  { startMs: 16_000, transport: "frame" }
+] as const;
+export const feedbackRequestDeadlineMs = 60_000;
 
 type ApiEnvelope<T> = ({ ok: true } & T) | { ok: false; error?: string };
 
@@ -47,7 +66,7 @@ export function feedbackErrorMessage(code: string): string {
     case "network":
       return "게시판에 연결하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.";
     case "timeout":
-      return "게시판 응답이 없습니다. 학교 네트워크에서 Google 접속이 막혀 있을 수 있습니다.";
+      return "게시판 서버(Google)의 응답이 1분 넘게 없습니다. 잠시 후 다시 시도해 주세요.";
     case "nickname_required":
       return "닉네임을 입력해 주세요.";
     case "content_required":
@@ -65,66 +84,163 @@ export function feedbackErrorMessage(code: string): string {
   }
 }
 
-async function parseEnvelope<T>(response: Response): Promise<T> {
-  let payload: ApiEnvelope<T>;
+type AttemptOutcome<T> =
+  | { kind: "ok"; payload: T }
+  /** The script answered and said no. */
+  | { kind: "rejected"; code: string }
+  /** No usable answer from this attempt; another attempt may still succeed. */
+  | { kind: "lost"; code: "invalid_response" }
+  /** There is no connection, so further attempts are pointless. */
+  | { kind: "offline" };
+
+// When the hand-off for a fetched POST is lost, Google bounces the browser back
+// to the script as a plain GET, which answers with the post list. That is not
+// the answer to the POST, so it counts as a lost response.
+function isBouncedPost(request: FeedbackRequest, payload: object): boolean {
+  return request.method === "POST" && Array.isArray((payload as { posts?: unknown }).posts);
+}
+
+async function runAttempt<T>(
+  request: FeedbackRequest,
+  transport: "frame" | "fetch",
+  signal: AbortSignal
+): Promise<AttemptOutcome<T>> {
+  let payload: unknown;
 
   try {
-    payload = (await response.json()) as ApiEnvelope<T>;
-  } catch {
-    throw new FeedbackBoardError("invalid_response");
+    payload =
+      transport === "frame"
+        ? await sendByFrame(request, signal)
+        : await sendByFetch(request, signal);
+  } catch (error) {
+    // Only a fetch can fail to connect; a body that is not JSON is Google's own
+    // error page rather than the script's answer.
+    return error instanceof TypeError
+      ? { kind: "offline" }
+      : { kind: "lost", code: "invalid_response" };
   }
 
   if (!payload || typeof payload !== "object" || !("ok" in payload)) {
-    throw new FeedbackBoardError("invalid_response");
+    return { kind: "lost", code: "invalid_response" };
   }
 
-  if (!payload.ok) {
-    throw new FeedbackBoardError(payload.error ?? "unknown");
+  const envelope = payload as ApiEnvelope<T>;
+
+  if (!envelope.ok) {
+    return { kind: "rejected", code: envelope.error ?? "unknown" };
   }
 
-  return payload;
+  if (isBouncedPost(request, envelope)) {
+    return { kind: "lost", code: "invalid_response" };
+  }
+
+  return { kind: "ok", payload: envelope };
 }
 
-// A firewall that silently drops Google traffic leaves fetch hanging with no
-// error, so every request gives up after a fixed wait instead.
-async function fetchWithTimeout(
-  input: string,
-  init: RequestInit
-): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), feedbackRequestTimeoutMs);
+// Every action is safe to repeat: reads and deletes by nature, creates because
+// the server writes a given id only once.
+function requestWithRetry<T>(request: FeedbackRequest): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      reject(new FeedbackBoardError("network"));
+      return;
+    }
 
-  try {
-    return await fetch(input, { ...init, signal: controller.signal });
-  } catch {
-    throw new FeedbackBoardError(controller.signal.aborted ? "timeout" : "network");
-  } finally {
-    clearTimeout(timer);
-  }
-}
+    const maxAttempts = feedbackAttemptPlan.length;
+    const controllers = new Set<AbortController>();
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let started = 0;
+    let lost = 0;
+    let settled = false;
 
-async function getJson<T>(params: Record<string, string>): Promise<T> {
-  const url = new URL(feedbackBoardApiUrl);
+    function finish(settle: () => void) {
+      if (settled) {
+        return;
+      }
 
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value);
-  }
+      settled = true;
+      timers.forEach((timer) => clearTimeout(timer));
+      controllers.forEach((controller) => controller.abort());
+      settle();
+    }
 
-  const response = await fetchWithTimeout(url.toString(), { method: "GET" });
+    function startAttempt() {
+      if (settled || started >= maxAttempts) {
+        return;
+      }
 
-  return parseEnvelope<T>(response);
-}
+      const plan = feedbackAttemptPlan[started];
 
-// Apps Script only answers cross-origin POSTs without a preflight, so the JSON
-// travels as text/plain and the script parses it itself.
-async function postJson<T>(body: Record<string, unknown>): Promise<T> {
-  const response = await fetchWithTimeout(feedbackBoardApiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(body)
+      if (!plan) {
+        return;
+      }
+
+      started += 1;
+      const controller = new AbortController();
+      controllers.add(controller);
+
+      void runAttempt<T>(request, plan.transport, controller.signal).then((outcome) => {
+        controllers.delete(controller);
+
+        if (settled) {
+          return;
+        }
+
+        if (outcome.kind === "ok") {
+          finish(() => resolve(outcome.payload));
+          return;
+        }
+
+        if (outcome.kind === "rejected") {
+          finish(() => reject(new FeedbackBoardError(outcome.code)));
+          return;
+        }
+
+        if (outcome.kind === "offline") {
+          finish(() => reject(new FeedbackBoardError("network")));
+          return;
+        }
+
+        lost += 1;
+
+        if (started < maxAttempts) {
+          startAttempt();
+        } else if (lost >= started) {
+          finish(() => reject(new FeedbackBoardError(outcome.code)));
+        }
+      });
+    }
+
+    feedbackAttemptPlan.forEach((plan, index) => {
+      if (index === 0) {
+        return;
+      }
+
+      timers.push(
+        setTimeout(() => {
+          if (started <= index) {
+            startAttempt();
+          }
+        }, plan.startMs)
+      );
+    });
+
+    timers.push(
+      setTimeout(() => {
+        finish(() => reject(new FeedbackBoardError("timeout")));
+      }, feedbackRequestDeadlineMs)
+    );
+
+    startAttempt();
   });
+}
 
-  return parseEnvelope<T>(response);
+function getJson<T>(params: Record<string, string>): Promise<T> {
+  return requestWithRetry<T>({ method: "GET", params });
+}
+
+function postJson<T>(body: Record<string, unknown>): Promise<T> {
+  return requestWithRetry<T>({ method: "POST", body });
 }
 
 export async function listFeedbackPosts(page = 1): Promise<FeedbackPostPage> {
@@ -146,6 +262,8 @@ export async function listFeedbackPosts(page = 1): Promise<FeedbackPostPage> {
 }
 
 export type CreateFeedbackPostInput = {
+  /** Client-generated; the server writes each id once, so retries are safe. */
+  id: string;
   nickname: string;
   content: string;
   appVersion: string;
@@ -160,6 +278,8 @@ export async function createFeedbackPost(
 }
 
 export type CreateFeedbackCommentInput = {
+  /** Client-generated; the server writes each id once, so retries are safe. */
+  id: string;
   postId: string;
   nickname: string;
   content: string;

@@ -3645,6 +3645,36 @@ label.button {
   font-size: 13px;
 }
 
+.feedback-notice--progress {
+  border-color: #c7d7f7;
+  background: #eef4ff;
+  color: #1d3f91;
+}
+
+.feedback-refreshing {
+  color: #6b7a8f;
+  font-size: 12px;
+}
+
+.feedback-post--local {
+  border-style: dashed;
+  background: #fbfcfe;
+}
+
+.feedback-local-status {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #6b7a8f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.feedback-local-status--failed {
+  color: #9a3412;
+}
+
 .feedback-empty {
   margin: 0;
   padding: 24px;

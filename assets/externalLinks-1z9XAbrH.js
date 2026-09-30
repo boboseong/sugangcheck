@@ -1,0 +1,1 @@
+var e="https://github.com/boboseong/sugangcheck",s=`${e}/releases/latest`,r="https://script.google.com/macros/s/AKfycbzb9noF6MKw6lQQKKUtYUQmUFU_W-TwAEjHHVFkxZPilF5eNRtDzFm5cvicJrBB27CehQ/exec";export{s as n,e as r,r as t};

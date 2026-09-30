@@ -1,1 +1,0 @@
-import{_t as e}from"./index-B6xqRexP.js";var a=[["path",{d:"m16 18 6-6-6-6",key:"eg8j8"}],["path",{d:"m8 6-6 6 6 6",key:"ppft3o"}]],r=e("code",a),t="https://github.com/boboseong/sugangcheck",s=`${t}/releases/latest`;export{t as n,r,s as t};

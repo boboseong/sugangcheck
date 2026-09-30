@@ -1,0 +1,1 @@
+var n="기타",t="전입/외부 이수";function u(a){const e=a?.trim();if(!e)return t;const r=e.toLocaleLowerCase().replace(/\s+/g,"");return["전입","전입보완","전학","transfer"].includes(r)?"전입":["외부","외부이수","external","externalcourse"].includes(r)?"외부 이수":e}export{t as n,u as r,n as t};

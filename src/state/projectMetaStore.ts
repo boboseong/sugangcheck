@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { currentProjectSchemaVersion } from "../storage/projectMigration";
 
-export const appVersion = "0.1.14";
+export const appVersion = "0.1.15";
 export const defaultProjectName = "새 점검 프로젝트";
 
 type ProjectMetaPatch = {
